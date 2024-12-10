@@ -60,6 +60,25 @@ pub(crate) fn msg_length(status: u8) -> usize {
 }
 
 impl MidiMessage {
+    /// Returns true if the note is on. This excludes note on where the velocity is zero.
+    pub fn is_note_on(&self) -> bool {
+        use MidiMessage::*;
+        match self {
+            NoteOn { vel, .. } => vel.as_int() != 0,
+            _ => false,
+        }
+    }
+
+    /// Returns true if the note is off. This includes note on where the velocity is zero.
+    pub fn is_note_off(&self) -> bool {
+        use MidiMessage::*;
+        match self {
+            NoteOff { .. } => true,
+            NoteOn { vel, .. } => vel.as_int() == 0,
+            _ => false,
+        }
+    }
+
     /// Extract the data bytes from a raw slice.
     pub(crate) fn read_data_u8(status: u8, raw: &mut &[u8]) -> Result<[u7; 2]> {
         let len = msg_length(status);
