@@ -53,16 +53,16 @@ pub enum MidiMessage {
     /// Set the pitch bend value for the entire channel.
     PitchBend(PitchBend),
 }
-impl MidiMessage {
-    /// Midi messages have a known length.
-    pub(crate) fn msg_length(status: u8) -> usize {
-        const LENGTH_BY_STATUS: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 1, 1, 2, 0];
-        LENGTH_BY_STATUS[(status >> 4) as usize] as usize
-    }
+/// Midi messages have a known length.
+pub(crate) fn msg_length(status: u8) -> usize {
+    const LENGTH_BY_STATUS: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 1, 1, 2, 0];
+    LENGTH_BY_STATUS[(status >> 4) as usize] as usize
+}
 
+impl MidiMessage {
     /// Extract the data bytes from a raw slice.
     pub(crate) fn read_data_u8(status: u8, raw: &mut &[u8]) -> Result<[u7; 2]> {
-        let len = Self::msg_length(status);
+        let len = msg_length(status);
         let data = raw
             .split_checked(len)
             .ok_or_else(|| err_invalid!("truncated midi message"))?;
@@ -74,16 +74,18 @@ impl MidiMessage {
     }
 
     /// read a raw event from a midi source
+    ///
+    /// This should potentially replace read_data_u8 as mutating the slice is not necessary.
     pub fn read_packet(data: &[u8]) -> Result<Self> {
         let status = data.first().ok_or(err_invalid!("failed to read status"))?;
         if !(0x80..=0xEF).contains(status) {
             return Err(err_invalid!("Not a midi message").into());
         }
-        let data_len = Self::msg_length(*status);
+        let data_len = msg_length(*status);
 
         let data = match data_len {
-            1 => [u7::check_int(data[0])?, u7::from(0)],
-            2 => [u7::check_int(data[0])?, u7::check_int(data[1])?],
+            1 => [u7::check_int(data[1])?, u7::from(0)],
+            2 => [u7::check_int(data[1])?, u7::check_int(data[2])?],
             _ => [u7::from(0), u7::from(0)],
         };
 
@@ -140,7 +142,7 @@ impl MidiMessage {
 
     /// Get the data bytes from a databyte slice.
     pub(crate) fn get_data_u7(status: u8, data: &[u7]) -> Result<[u7; 2]> {
-        let len = Self::msg_length(status);
+        let len = msg_length(status);
         ensure!(data.len() >= len, err_invalid!("truncated midi message"));
         Ok(match len {
             1 => [data[0], u7::from(0)],

@@ -11,7 +11,6 @@
 
 use crate::{
     live::{LiveEvent, SystemRealtime},
-    message::MidiMessage,
     prelude::*,
 };
 
@@ -67,7 +66,7 @@ impl<B: Buffer> MidiStream<B> {
                         //Note that if `msg_length` returns 0, this `if` will never execute, since
                         //at this point the length of `self.data` is at least 1 (since a data byte
                         //was just pushed).
-                        if self.data.as_slice().len() == MidiMessage::msg_length(status) {
+                        if self.data.as_slice().len() == crate::message::msg_length(status) {
                             self.event(status, handle_ev);
                             self.data.clear();
                         }
