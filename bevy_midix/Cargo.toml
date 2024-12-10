@@ -1,0 +1,40 @@
+[package]
+name = "bevy_midix"
+version = "0.0.1"
+authors = [
+    "Black Phlox <bphlox@gmail.com>",
+    "dsgallups <dsgallups@protonmail.com>",
+]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/dsgallups/midix"
+documentation = "https://docs.rs/bevy_midix"
+description = "Send and receive MIDI data to and from bevy and other programs or controllers."
+keywords = ["gamedev", "bevy", "midi", "encoding", "control"]
+categories = ["game-development", "game-engines", "encoding"]
+exclude = ["assets/*"]
+
+[dependencies]
+midir = "0.10"
+crossbeam-channel = "0.5.8"
+midix = { path = "../midix" }
+
+[dev-dependencies]
+bevy_egui = { version = "0.31.1", features = ["immutable_ctx"] }
+strum = { version = "0.26", features = ["derive"] }
+bevy_mod_picking = "0.20"
+
+[dependencies.bevy]
+version = "0.15"
+default-features = false
+features = ["multi_threaded"]
+
+[dev-dependencies.bevy]
+version = "0.15"
+default-features = true
+
+[target.'cfg(target_os = "linux")'.dev-dependencies.bevy]
+version = "0.15"
+features = ["x11", "wayland"]
+default-features = false
