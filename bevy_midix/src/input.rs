@@ -1,9 +1,9 @@
-use super::{MidiMessage, KEY_RANGE};
 use bevy::prelude::Plugin;
 use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind; // XXX: do we expose this?
 pub use midir::{Ignore, MidiInputPort};
+use midix::MidiMessage;
 use std::error::Error;
 use std::fmt::Display;
 use std::future::Future;
@@ -241,13 +241,11 @@ impl Future for MidiInputTask {
                         &port,
                         self.settings.port_name,
                         move |stamp, message, _| {
-                            if message.len() != 3 {
+                            let Ok(message) = MidiMessage::read_packet(message) else {
                                 return;
-                            }
-                            let _ = s.send(Reply::Midi(MidiData {
-                                stamp,
-                                message: [message[0], message[1], message[2]].into(),
-                            }));
+                            };
+
+                            let _ = s.send(Reply::Midi(MidiData { stamp, message }));
                         },
                         (),
                     );
@@ -291,10 +289,10 @@ impl Future for MidiInputTask {
                             &port,
                             self.settings.port_name,
                             move |stamp, message, _| {
-                                let _ = s.send(Reply::Midi(MidiData {
-                                    stamp,
-                                    message: [message[0], message[1], message[2]].into(),
-                                }));
+                                let Ok(message) = MidiMessage::read_packet(message) else {
+                                    return;
+                                };
+                                let _ = s.send(Reply::Midi(MidiData { stamp, message }));
                             },
                             (),
                         );
@@ -343,16 +341,20 @@ fn get_available_ports(input: &midir::MidiInput) -> Reply {
 // A system which debug prints note events
 fn debug(mut midi: EventReader<MidiData>) {
     for data in midi.read() {
-        let pitch = data.message.msg[1];
-        let octave = pitch / 12;
-        let key = KEY_RANGE[pitch as usize % 12];
-
-        if data.message.is_note_on() {
-            debug!("NoteOn: {}{:?} - Raw: {:?}", key, octave, data.message.msg);
-        } else if data.message.is_note_off() {
-            debug!("NoteOff: {}{:?} - Raw: {:?}", key, octave, data.message.msg);
-        } else {
-            debug!("Other: {:?}", data.message.msg);
+        match data.message {
+            MidiMessage::NoteOn { key, vel } => {
+                let note = key.note();
+                let octave = key.octave();
+                debug!("NoteOn: {note}{octave}({vel}) - Raw: {:?}", data.message);
+            }
+            MidiMessage::NoteOff { key, vel } => {
+                let note = key.note();
+                let octave = key.octave();
+                debug!("NoteOff: {note}{octave}({vel}) - Raw: {:?}", data.message);
+            }
+            other => {
+                debug!("Other: {:?}", other);
+            }
         }
     }
 }

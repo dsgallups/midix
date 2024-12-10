@@ -94,6 +94,25 @@ impl Note {
         }
     }
 }
+impl fmt::Display for Note {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Note::*;
+        match self {
+            C => write!(f, "C"),
+            CSharp => write!(f, "C#/Db"),
+            D => write!(f, "D"),
+            DSharp => write!(f, "D#/Eb"),
+            E => write!(f, "E"),
+            F => write!(f, "F"),
+            FSharp => write!(f, "F#/Gb"),
+            G => write!(f, "G"),
+            GSharp => write!(f, "G#Ab"),
+            A => write!(f, "A"),
+            ASharp => write!(f, "A#/Bb"),
+            B => write!(f, "B"),
+        }
+    }
+}
 
 pub struct Octave(i8);
 
@@ -105,5 +124,11 @@ impl Octave {
     }
     pub fn as_number(&self) -> i8 {
         self.0
+    }
+}
+
+impl fmt::Display for Octave {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
     }
 }
