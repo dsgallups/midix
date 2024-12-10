@@ -108,18 +108,9 @@ impl<'a> TrackEventKind<'a> {
         }
         //Delegate further parsing depending on status
         let kind = match status {
-            0x80..=0xEF => {
-                /**running_status = Some(status);
-                let data = crate::message::read_data_u8(status, raw)?;
-                let (channel, message) = crate::message::read(status, data);
-                TrackEventKind::Midi {
-                    channel: Channel::new(channel),
-                    message,
-                }*/
-                TrackEventKind::Midi(
-                    MidiMessage::read(raw).context(err_invalid!("failed to read midi message"))?,
-                )
-            }
+            0x80..=0xEF => TrackEventKind::Midi(
+                MidiMessage::read(raw).context(err_invalid!("failed to read midi message"))?,
+            ),
             0xFF => {
                 *running_status = None;
                 TrackEventKind::Meta(
@@ -161,8 +152,8 @@ impl<'a> TrackEventKind<'a> {
         // - Escape (0xF7) cancels and cannot use running status
         // - Meta Messages (0xFF) cancel and cannot use running status
         match self {
-            TrackEventKind::Midi { channel, message } => {
-                let status = message.status_nibble() << 4 | channel.as_int();
+            TrackEventKind::Midi(message) => {
+                let status = message.status();
                 if Some(status) != *running_status {
                     //Explicitly write status
                     out.write(&[status])?;
@@ -195,10 +186,7 @@ impl<'a> TrackEventKind<'a> {
     /// Meta messages and arbitrary escapes yield `None` when converted.
     pub fn as_live_event(&self) -> Option<LiveEvent<'a>> {
         match self {
-            TrackEventKind::Midi { channel, message } => Some(LiveEvent::Midi {
-                channel: *channel,
-                message: *message,
-            }),
+            TrackEventKind::Midi(message) => Some(LiveEvent::Midi(*message)),
             TrackEventKind::SysEx(data) => {
                 if data.last() == Some(&0xF7) {
                     let data_u7 = u7::slice_from_int(data);
@@ -220,7 +208,7 @@ impl<'a> TrackEventKind<'a> {
     pub fn to_static(&self) -> TrackEventKind<'static> {
         use self::TrackEventKind::*;
         match *self {
-            Midi { channel, message } => Midi { channel, message },
+            Midi(message) => Midi(message),
             SysEx(_) => SysEx(b""),
             Escape(_) => Escape(b""),
             Meta(meta) => Meta(meta.to_static()),

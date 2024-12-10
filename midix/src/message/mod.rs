@@ -24,7 +24,37 @@ impl MidiMessage {
         self.message.is_note_off()
     }
 
-    fn read(raw: &mut &[u8]) -> Result<Self> {
+    pub fn status(&self) -> u8 {
+        self.message.status_nibble() << 4 | self.channel.as_int()
+    }
+
+    pub(crate) fn read(raw: &mut &[u8]) -> Result<Self> {
+        /*
+        // MIDI message
+        let data = crate::message::get_data_u7(status, data)?;
+        let (channel, message) = crate::message::read(status, data);
+        Ok(LiveEvent::Midi {
+            channel: Channel::new(channel),
+            message,
+        })
+
+        running_status = Some(status);
+        let data = crate::message::read_data_u8(status, raw)?;
+        let (channel, message) = crate::message::read(status, data);
+        TrackEventKind::Midi {
+            channel: Channel::new(channel),
+            message,
+        }
+
+        // MIDI message
+        let data = crate::message::get_data_u7(status, data)?;
+        let (channel, message) = crate::message::read(status, data);
+        Ok(LiveEvent::Midi {
+            channel: Channel::new(channel),
+            message,
+        })
+
+        */
         todo!();
     }
 
@@ -65,6 +95,14 @@ impl MidiMessage {
     }
     /// Write the data part of this message, not including the status.
     pub(crate) fn write<W: Write>(&self, out: &mut W) -> WriteResult<W> {
+        /*
+        assumes message is data, but we are refactoring this
+
+        if Some(status) != *running_status {
+            *running_status = Some(status);
+            out.write(&[status])?;
+        }
+        message.write(out)?;*/
         self.message.write(out)
     }
 }

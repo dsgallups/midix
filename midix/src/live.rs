@@ -14,9 +14,9 @@
 //! Note that MIDI byte streams, which are not clearly delimited packets, must be parsed through
 //! the [`stream`](../stream/index.html) api.
 
-use crate::{channel::Channel, message::MidiEvent, prelude::*};
 #[cfg(feature = "alloc")]
 use crate::{event::TrackEventKind, Arena};
+use crate::{prelude::*, MidiMessage};
 
 /// A live event produced by an OS API or generated on-the-fly, in contrast with "dead"
 /// [`TrackEvent`](../struct.TrackEvent.html)s stored in a `.mid` file.
@@ -27,12 +27,7 @@ pub enum LiveEvent<'a> {
     /// A MIDI message associated with a channel, carrying musical data.
     ///
     /// Status byte in the range `0x80 ..= 0xEF`.
-    Midi {
-        /// The MIDI channel that this message is associated with.
-        channel: Channel,
-        /// The MIDI message type and associated data.
-        message: MidiEvent,
-    },
+    Midi(MidiMessage),
     /// A System Common message, as defined by the MIDI spec, including System Exclusive events.
     ///
     /// Status byte in the range `0xF0 ..= 0xF7`.
@@ -63,13 +58,16 @@ impl<'a> LiveEvent<'a> {
     pub(crate) fn read(status: u8, data: &[u7]) -> Result<LiveEvent> {
         match status {
             0x80..=0xEF => {
+                /*
                 // MIDI message
                 let data = crate::message::get_data_u7(status, data)?;
                 let (channel, message) = crate::message::read(status, data);
                 Ok(LiveEvent::Midi {
                     channel: Channel::new(channel),
                     message,
-                })
+                })*/
+                todo!()
+                //let msg = MidiMessage::read(&[u8])
             }
             0xF8..=0xFF => {
                 // System Realtime
@@ -102,8 +100,8 @@ impl<'a> LiveEvent<'a> {
         out: &mut W,
     ) -> WriteResult<W> {
         match self {
-            LiveEvent::Midi { channel, message } => {
-                let status = message.status_nibble() << 4 | channel.as_int();
+            LiveEvent::Midi(message) => {
+                let status = message.status();
                 if Some(status) != *running_status {
                     *running_status = Some(status);
                     out.write(&[status])?;
@@ -153,7 +151,7 @@ impl<'a> LiveEvent<'a> {
     pub fn to_static(&self) -> LiveEvent<'static> {
         use self::LiveEvent::*;
         match *self {
-            Midi { channel, message } => Midi { channel, message },
+            Midi(message) => Midi(message),
             Common(sysc) => Common(sysc.to_static()),
             Realtime(realt) => Realtime(realt),
         }
@@ -174,10 +172,7 @@ impl<'a> LiveEvent<'a> {
     #[cfg(feature = "alloc")]
     pub fn as_track_event<'b>(&self, arena: &'b Arena) -> TrackEventKind<'b> {
         match self {
-            LiveEvent::Midi { channel, message } => TrackEventKind::Midi {
-                channel: *channel,
-                message: *message,
-            },
+            LiveEvent::Midi(message) => TrackEventKind::Midi(*message),
             LiveEvent::Common(common) => match common {
                 SystemCommon::SysEx(data) => {
                     let mut sysex_bytes = Vec::with_capacity(data.len() + 1);
