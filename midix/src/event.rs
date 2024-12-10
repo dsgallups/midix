@@ -5,7 +5,7 @@ use crate::{
     live::{LiveEvent, SystemCommon},
     prelude::*,
     primitive::{read_varlen_slice, write_varlen_slice, SmpteTime},
-    MidiEvent,
+    MidiMessage,
 };
 
 /// Represents a parsed SMF track event.
@@ -78,12 +78,7 @@ pub enum TrackEventKind<'a> {
     /// A message associated to a MIDI channel carrying musical data.
     ///
     /// Usually, the bulk of MIDI data is these kind of messages.
-    Midi {
-        /// The MIDI channel that this event is associated with.
-        channel: Channel,
-        /// The MIDI message type and associated data.
-        message: MidiEvent,
-    },
+    Midi(MidiMessage),
     /// A System Exclusive message, carrying arbitrary data.
     ///
     /// The data bytes included here do not include the implicit `0xF0` prefix.
@@ -114,13 +109,16 @@ impl<'a> TrackEventKind<'a> {
         //Delegate further parsing depending on status
         let kind = match status {
             0x80..=0xEF => {
-                *running_status = Some(status);
+                /**running_status = Some(status);
                 let data = crate::message::read_data_u8(status, raw)?;
                 let (channel, message) = crate::message::read(status, data);
                 TrackEventKind::Midi {
                     channel: Channel::new(channel),
                     message,
-                }
+                }*/
+                TrackEventKind::Midi(
+                    MidiMessage::read(raw).context(err_invalid!("failed to read midi message"))?,
+                )
             }
             0xFF => {
                 *running_status = None;

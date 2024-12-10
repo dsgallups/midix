@@ -24,6 +24,10 @@ impl MidiMessage {
         self.message.is_note_off()
     }
 
+    fn read(raw: &mut &[u8]) -> Result<Self> {
+        todo!();
+    }
+
     /// read a raw event from a midi source
     ///
     /// This should potentially replace read_data_u8 as mutating the slice is not necessary.
