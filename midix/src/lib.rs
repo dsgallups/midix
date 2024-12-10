@@ -100,12 +100,12 @@
 //! [`LiveEvent::write`](live/enum.LiveEvent.html#method.write) method:
 //!
 //! ```rust
-//! use midix::{live::LiveEvent, MidiMessage};
+//! use midix::{live::LiveEvent, Channel, MidiMessage};
 //! # fn write_midi(bytes: &[u8]) {}
 //!
 //! fn note_on(channel: u8, key: u8) {
 //!     let ev = LiveEvent::Midi {
-//!         channel: channel.into(),
+//!         channel: Channel::new(channel),
 //!         message: MidiMessage::NoteOn {
 //!             key: key.into(),
 //!             vel: 127.into(),
@@ -208,11 +208,12 @@ mod prelude {
         }};
     }
 }
-
 mod arena;
+mod channel;
 mod event;
 pub mod io;
 pub mod live;
+mod message;
 mod primitive;
 mod riff;
 mod smf;
@@ -226,8 +227,10 @@ pub use crate::{
     smf::{BytemappedTrack, Smf, SmfBytemap, Track},
 };
 pub use crate::{
+    channel::Channel,
     error::{Error, ErrorKind, Result},
-    event::{MetaMessage, MidiMessage, PitchBend, TrackEvent, TrackEventKind},
+    event::{MetaMessage, PitchBend, TrackEvent, TrackEventKind},
+    message::MidiMessage,
     primitive::{Format, Fps, SmpteTime, Timing},
     smf::{parse, write, EventBytemapIter, EventIter, Header, TrackIter},
 };

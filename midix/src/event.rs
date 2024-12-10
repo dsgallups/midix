@@ -1,9 +1,11 @@
 //! All sort of events and their parsers.
 
 use crate::{
+    channel::Channel,
     live::{LiveEvent, SystemCommon},
     prelude::*,
     primitive::{read_varlen_slice, write_varlen_slice, SmpteTime},
+    MidiMessage,
 };
 
 /// Represents a parsed SMF track event.
@@ -78,7 +80,7 @@ pub enum TrackEventKind<'a> {
     /// Usually, the bulk of MIDI data is these kind of messages.
     Midi {
         /// The MIDI channel that this event is associated with.
-        channel: u4,
+        channel: Channel,
         /// The MIDI message type and associated data.
         message: MidiMessage,
     },
@@ -115,7 +117,10 @@ impl<'a> TrackEventKind<'a> {
                 *running_status = Some(status);
                 let data = MidiMessage::read_data_u8(status, raw)?;
                 let (channel, message) = MidiMessage::read(status, data);
-                TrackEventKind::Midi { channel, message }
+                TrackEventKind::Midi {
+                    channel: Channel::new(channel),
+                    message,
+                }
             }
             0xFF => {
                 *running_status = None;
@@ -225,162 +230,6 @@ impl<'a> TrackEventKind<'a> {
     }
 }
 
-/// Represents a MIDI message, usually associated to a MIDI channel.
-///
-/// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
-/// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
-/// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub enum MidiMessage {
-    /// Stop playing a note.
-    NoteOff {
-        /// The MIDI key to stop playing.
-        key: u7,
-        /// The velocity with which to stop playing it.
-        vel: u7,
-    },
-    /// Start playing a note.
-    NoteOn {
-        /// The key to start playing.
-        key: u7,
-        /// The velocity (strength) with which to press it.
-        ///
-        /// Note that by convention a `NoteOn` message with a velocity of 0 is equivalent to a
-        /// `NoteOff`.
-        vel: u7,
-    },
-    /// Modify the velocity of a note after it has been played.
-    Aftertouch {
-        /// The key for which to modify its velocity.
-        key: u7,
-        /// The new velocity for the key.
-        vel: u7,
-    },
-    /// Modify the value of a MIDI controller.
-    Controller {
-        /// The controller to modify.
-        ///
-        /// See the MIDI spec for the meaning of each index.
-        controller: u7,
-        /// The value to set it to.
-        value: u7,
-    },
-    /// Change the program (also known as instrument) for a channel.
-    ProgramChange {
-        /// The new program (instrument) to use for the channel.
-        program: u7,
-    },
-    /// Change the note velocity of a whole channel at once, without starting new notes.
-    ChannelAftertouch {
-        /// The new velocity for all notes currently playing in the channel.
-        vel: u7,
-    },
-    /// Set the pitch bend value for the entire channel.
-    PitchBend {
-        /// The new pitch-bend value.
-        bend: PitchBend,
-    },
-}
-impl MidiMessage {
-    /// Midi messages have a known length.
-    pub(crate) fn msg_length(status: u8) -> usize {
-        const LENGTH_BY_STATUS: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 1, 1, 2, 0];
-        LENGTH_BY_STATUS[(status >> 4) as usize] as usize
-    }
-
-    /// Extract the data bytes from a raw slice.
-    pub(crate) fn read_data_u8(status: u8, raw: &mut &[u8]) -> Result<[u7; 2]> {
-        let len = Self::msg_length(status);
-        let data = raw
-            .split_checked(len)
-            .ok_or_else(|| err_invalid!("truncated midi message"))?;
-        Ok(match len {
-            1 => [u7::check_int(data[0])?, u7::from(0)],
-            2 => [u7::check_int(data[0])?, u7::check_int(data[1])?],
-            _ => [u7::from(0), u7::from(0)],
-        })
-    }
-
-    /// Get the data bytes from a databyte slice.
-    pub(crate) fn get_data_u7(status: u8, data: &[u7]) -> Result<[u7; 2]> {
-        let len = Self::msg_length(status);
-        ensure!(data.len() >= len, err_invalid!("truncated midi message"));
-        Ok(match len {
-            1 => [data[0], u7::from(0)],
-            2 => [data[0], data[1]],
-            _ => [u7::from(0), u7::from(0)],
-        })
-    }
-
-    /// Receives status byte and midi args separately.
-    ///
-    /// Panics if the `status` is not a MIDI message status (0x80..=0xEF).
-    pub(crate) fn read(status: u8, data: [u7; 2]) -> (u4, MidiMessage) {
-        let channel = u4::from(status);
-        let msg = match status >> 4 {
-            0x8 => MidiMessage::NoteOff {
-                key: data[0],
-                vel: data[1],
-            },
-            0x9 => MidiMessage::NoteOn {
-                key: data[0],
-                vel: data[1],
-            },
-            0xA => MidiMessage::Aftertouch {
-                key: data[0],
-                vel: data[1],
-            },
-            0xB => MidiMessage::Controller {
-                controller: data[0],
-                value: data[1],
-            },
-            0xC => MidiMessage::ProgramChange { program: data[0] },
-            0xD => MidiMessage::ChannelAftertouch { vel: data[0] },
-            0xE => {
-                //Note the little-endian order, contrasting with the default big-endian order of
-                //Standard Midi Files
-                let lsb = data[0].as_int() as u16;
-                let msb = data[1].as_int() as u16;
-                MidiMessage::PitchBend {
-                    bend: PitchBend(u14::from(msb << 7 | lsb)),
-                }
-            }
-            _ => panic!("parsed midi message before checking that status is in range"),
-        };
-        (channel, msg)
-    }
-    /// Get the raw status nibble for this MIDI message type.
-    pub(crate) fn status_nibble(&self) -> u8 {
-        match self {
-            MidiMessage::NoteOff { .. } => 0x8,
-            MidiMessage::NoteOn { .. } => 0x9,
-            MidiMessage::Aftertouch { .. } => 0xA,
-            MidiMessage::Controller { .. } => 0xB,
-            MidiMessage::ProgramChange { .. } => 0xC,
-            MidiMessage::ChannelAftertouch { .. } => 0xD,
-            MidiMessage::PitchBend { .. } => 0xE,
-        }
-    }
-    /// Write the data part of this message, not including the status.
-    pub(crate) fn write<W: Write>(&self, out: &mut W) -> WriteResult<W> {
-        match self {
-            MidiMessage::NoteOff { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
-            MidiMessage::NoteOn { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
-            MidiMessage::Aftertouch { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
-            MidiMessage::Controller { controller, value } => {
-                out.write(&[controller.as_int(), value.as_int()])?
-            }
-            MidiMessage::ProgramChange { program } => out.write(&[program.as_int()])?,
-            MidiMessage::ChannelAftertouch { vel } => out.write(&[vel.as_int()])?,
-            MidiMessage::PitchBend { bend } => {
-                let raw = bend.0.as_int();
-                out.write(&[(raw & 0x7F) as u8, (raw >> 7) as u8])?
-            }
-        }
-        Ok(())
-    }
-}
-
 /// The value of a pitch bend, represented as 14 bits.
 ///
 /// A value of `0x0000` indicates full bend downwards.
@@ -476,7 +325,7 @@ pub enum MetaMessage<'a> {
     /// Name of the device that this file was intended to be played with.
     DeviceName(&'a [u8]),
     /// Number of the MIDI channel that this file was intended to be played with.
-    MidiChannel(u4),
+    MidiChannel(Channel),
     /// Number of the MIDI port that this file was intended to be played with.
     MidiPort(u7),
     /// Obligatory at track end.
@@ -559,7 +408,7 @@ impl<'a> MetaMessage<'a> {
             0x07 => MetaMessage::CuePoint(data),
             0x08 => MetaMessage::ProgramName(data),
             0x09 => MetaMessage::DeviceName(data),
-            0x20 if data.len() >= 1 => MetaMessage::MidiChannel(u4::read(&mut data)?),
+            0x20 if data.len() >= 1 => MetaMessage::MidiChannel(Channel::new(u4::read(&mut data)?)),
             0x21 if data.len() >= 1 => MetaMessage::MidiPort(u7::read(&mut data)?),
             0x2F => MetaMessage::EndOfTrack,
             0x51 if data.len() >= 3 => MetaMessage::Tempo(u24::read(&mut data)?),

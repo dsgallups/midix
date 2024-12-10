@@ -10,8 +10,8 @@
 //! in the middle of another message.
 
 use crate::{
-    event::MidiMessage,
     live::{LiveEvent, SystemRealtime},
+    message::MidiMessage,
     prelude::*,
 };
 
