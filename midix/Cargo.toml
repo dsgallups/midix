@@ -39,3 +39,8 @@ parallel = ["std", "rayon"]
 
 [dependencies]
 rayon = { version = "1", optional = true }
+
+[dev-dependencies]
+pretty_assertions = { default-features = false, features = [
+    "alloc",
+], version = "1.4.1" }

@@ -51,10 +51,7 @@ pub enum MidiMessage {
         vel: u7,
     },
     /// Set the pitch bend value for the entire channel.
-    PitchBend {
-        /// The new pitch-bend value.
-        bend: PitchBend,
-    },
+    PitchBend(PitchBend),
 }
 impl MidiMessage {
     /// Midi messages have a known length.
@@ -116,9 +113,7 @@ impl MidiMessage {
                 //Standard Midi Files
                 let lsb = data[0].as_int() as u16;
                 let msb = data[1].as_int() as u16;
-                MidiMessage::PitchBend {
-                    bend: PitchBend(u14::from(msb << 7 | lsb)),
-                }
+                MidiMessage::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
             }
             _ => panic!("parsed midi message before checking that status is in range"),
         };
@@ -147,8 +142,8 @@ impl MidiMessage {
             }
             MidiMessage::ProgramChange { program } => out.write(&[program.as_int()])?,
             MidiMessage::ChannelAftertouch { vel } => out.write(&[vel.as_int()])?,
-            MidiMessage::PitchBend { bend } => {
-                let raw = bend.0.as_int();
+            MidiMessage::PitchBend(bend) => {
+                let raw = bend.as_u16();
                 out.write(&[(raw & 0x7F) as u8, (raw >> 7) as u8])?
             }
         }

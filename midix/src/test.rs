@@ -53,10 +53,12 @@ fn test_rewrite(filename: &str) {
     time(&format!("{} (rewrite)", filename), || {
         smf.write(&mut file).expect("failed to rewrite midi file");
     });
+
     println!("reparsing...");
     let clone_smf = time(&format!("{} (reparse)", filename), || {
         parse_collect::Smf::parse(&file).expect("failed to reparse midi file")
     });
+
     assert_eq!(
         smf, clone_smf,
         "reparsed midi file is not identical to the original"

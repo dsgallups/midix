@@ -214,6 +214,7 @@ mod event;
 pub mod io;
 pub mod live;
 mod message;
+mod pitch_bend;
 mod primitive;
 mod riff;
 mod smf;
@@ -229,8 +230,9 @@ pub use crate::{
 pub use crate::{
     channel::Channel,
     error::{Error, ErrorKind, Result},
-    event::{MetaMessage, PitchBend, TrackEvent, TrackEventKind},
+    event::{MetaMessage, TrackEvent, TrackEventKind},
     message::MidiMessage,
+    pitch_bend::PitchBend,
     primitive::{Format, Fps, SmpteTime, Timing},
     smf::{parse, write, EventBytemapIter, EventIter, Header, TrackIter},
 };
