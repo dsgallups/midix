@@ -2,7 +2,7 @@
 name = "midix"
 version = "0.0.1"
 edition = "2021"
-authors = ["dsgallups <dsgallups@protonmail.com>"]
+authors = ["negamartin", "dsgallups <dsgallups@protonmail.com>"]
 description = "Fast MIDI decoder and encoder both for .mid files and real-time MIDI events"
 repository = "https://github.com/dsgallups/midix"
 documentation = "https://docs.rs/midix"

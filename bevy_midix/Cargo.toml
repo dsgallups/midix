@@ -1,7 +1,10 @@
 [package]
 name = "bevy_midix"
 version = "0.0.1"
-authors = ["dsgallups <dsgallups@protonmail.com>"]
+authors = [
+    "Black Phlox <bphlox@gmail.com>",
+    "dsgallups <dsgallups@protonmail.com>",
+]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
