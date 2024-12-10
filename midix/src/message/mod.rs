@@ -1,4 +1,62 @@
-use crate::{num::u7, prelude::*, Key, PitchBend, Velocity};
+use crate::{num::u7, prelude::*, Channel, Key, PitchBend, Velocity};
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct MidiMessage {
+    channel: Channel,
+    message: MidiMessageInner,
+}
+
+impl MidiMessage {
+    /// Returns true if the note is on. This excludes note on where the velocity is zero.
+    pub fn is_note_on(&self) -> bool {
+        self.message.is_note_on()
+    }
+
+    /// Returns true if the note is off. This includes note on where the velocity is zero.
+    pub fn is_note_off(&self) -> bool {
+        self.message.is_note_off()
+    }
+
+    /// read a raw event from a midi source
+    ///
+    /// This should potentially replace read_data_u8 as mutating the slice is not necessary.
+    pub fn read_packet(data: &[u8]) -> Result<Self> {
+        let _message = MidiMessageInner::read_packet(data)?;
+
+        todo!()
+    }
+
+    /// Get the raw midi packet for this message
+    pub fn to_raw(&self) -> Vec<u8> {
+        let raw_status = self.status_nibble();
+
+        match self.message {
+            MidiMessageInner::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiMessageInner::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiMessageInner::Aftertouch { key, vel } => {
+                vec![raw_status, key.as_int(), vel.as_int()]
+            }
+            MidiMessageInner::Controller { controller, value } => {
+                vec![raw_status, controller.as_int(), value.as_int()]
+            }
+            MidiMessageInner::ProgramChange { program } => vec![raw_status, program.as_int()],
+            MidiMessageInner::ChannelAftertouch { vel } => vec![raw_status, vel.as_int()],
+            MidiMessageInner::PitchBend(bend) => {
+                let raw = bend.as_u16();
+                vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
+            }
+        }
+    }
+
+    /// Get the raw status nibble for this MIDI message type.
+    pub(crate) fn status_nibble(&self) -> u8 {
+        self.message.status_nibble()
+    }
+    /// Write the data part of this message, not including the status.
+    pub(crate) fn write<W: Write>(&self, out: &mut W) -> WriteResult<W> {
+        self.message.write(out)
+    }
+}
 
 /// Represents a MIDI message, usually associated to a MIDI channel.
 ///
@@ -59,6 +117,66 @@ pub(crate) fn msg_length(status: u8) -> usize {
     LENGTH_BY_STATUS[(status >> 4) as usize] as usize
 }
 
+/// Extract the data bytes from a raw slice.
+pub(crate) fn read_data_u8(status: u8, raw: &mut &[u8]) -> Result<[u7; 2]> {
+    let len = msg_length(status);
+    let data = raw
+        .split_checked(len)
+        .ok_or_else(|| err_invalid!("truncated midi message"))?;
+    Ok(match len {
+        1 => [u7::check_int(data[0])?, u7::from(0)],
+        2 => [u7::check_int(data[0])?, u7::check_int(data[1])?],
+        _ => [u7::from(0), u7::from(0)],
+    })
+}
+
+/// Get the data bytes from a databyte slice.
+pub(crate) fn get_data_u7(status: u8, data: &[u7]) -> Result<[u7; 2]> {
+    let len = msg_length(status);
+    ensure!(data.len() >= len, err_invalid!("truncated midi message"));
+    Ok(match len {
+        1 => [data[0], u7::from(0)],
+        2 => [data[0], data[1]],
+        _ => [u7::from(0), u7::from(0)],
+    })
+}
+
+/// Receives status byte and midi args separately.
+///
+/// Panics if the `status` is not a MIDI message status (0x80..=0xEF).
+pub(crate) fn read(status: u8, data: [u7; 2]) -> (u4, MidiMessageInner) {
+    let channel = u4::from(status);
+    let msg = match status >> 4 {
+        0x8 => MidiMessageInner::NoteOff {
+            key: Key::new(data[0]),
+            vel: Velocity::new(data[1]),
+        },
+        0x9 => MidiMessageInner::NoteOn {
+            key: Key::new(data[0]),
+            vel: Velocity::new(data[1]),
+        },
+        0xA => MidiMessageInner::Aftertouch {
+            key: Key::new(data[0]),
+            vel: Velocity::new(data[1]),
+        },
+        0xB => MidiMessageInner::Controller {
+            controller: data[0],
+            value: data[1],
+        },
+        0xC => MidiMessageInner::ProgramChange { program: data[0] },
+        0xD => MidiMessageInner::ChannelAftertouch { vel: data[0] },
+        0xE => {
+            //Note the little-endian order, contrasting with the default big-endian order of
+            //Standard Midi Files
+            let lsb = data[0].as_int() as u16;
+            let msb = data[1].as_int() as u16;
+            MidiMessageInner::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
+        }
+        _ => panic!("parsed midi message before checking that status is in range"),
+    };
+    (channel, msg)
+}
+
 impl MidiMessageInner {
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
@@ -77,19 +195,6 @@ impl MidiMessageInner {
             NoteOn { vel, .. } => vel.as_int() == 0,
             _ => false,
         }
-    }
-
-    /// Extract the data bytes from a raw slice.
-    pub(crate) fn read_data_u8(status: u8, raw: &mut &[u8]) -> Result<[u7; 2]> {
-        let len = msg_length(status);
-        let data = raw
-            .split_checked(len)
-            .ok_or_else(|| err_invalid!("truncated midi message"))?;
-        Ok(match len {
-            1 => [u7::check_int(data[0])?, u7::from(0)],
-            2 => [u7::check_int(data[0])?, u7::check_int(data[1])?],
-            _ => [u7::from(0), u7::from(0)],
-        })
     }
 
     /// read a raw event from a midi source
@@ -161,52 +266,6 @@ impl MidiMessageInner {
         }
     }
 
-    /// Get the data bytes from a databyte slice.
-    pub(crate) fn get_data_u7(status: u8, data: &[u7]) -> Result<[u7; 2]> {
-        let len = msg_length(status);
-        ensure!(data.len() >= len, err_invalid!("truncated midi message"));
-        Ok(match len {
-            1 => [data[0], u7::from(0)],
-            2 => [data[0], data[1]],
-            _ => [u7::from(0), u7::from(0)],
-        })
-    }
-
-    /// Receives status byte and midi args separately.
-    ///
-    /// Panics if the `status` is not a MIDI message status (0x80..=0xEF).
-    pub(crate) fn read(status: u8, data: [u7; 2]) -> (u4, MidiMessageInner) {
-        let channel = u4::from(status);
-        let msg = match status >> 4 {
-            0x8 => MidiMessageInner::NoteOff {
-                key: Key::new(data[0]),
-                vel: Velocity::new(data[1]),
-            },
-            0x9 => MidiMessageInner::NoteOn {
-                key: Key::new(data[0]),
-                vel: Velocity::new(data[1]),
-            },
-            0xA => MidiMessageInner::Aftertouch {
-                key: Key::new(data[0]),
-                vel: Velocity::new(data[1]),
-            },
-            0xB => MidiMessageInner::Controller {
-                controller: data[0],
-                value: data[1],
-            },
-            0xC => MidiMessageInner::ProgramChange { program: data[0] },
-            0xD => MidiMessageInner::ChannelAftertouch { vel: data[0] },
-            0xE => {
-                //Note the little-endian order, contrasting with the default big-endian order of
-                //Standard Midi Files
-                let lsb = data[0].as_int() as u16;
-                let msb = data[1].as_int() as u16;
-                MidiMessageInner::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
-            }
-            _ => panic!("parsed midi message before checking that status is in range"),
-        };
-        (channel, msg)
-    }
     /// Get the raw status nibble for this MIDI message type.
     pub(crate) fn status_nibble(&self) -> u8 {
         match self {

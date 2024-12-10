@@ -115,8 +115,8 @@ impl<'a> TrackEventKind<'a> {
         let kind = match status {
             0x80..=0xEF => {
                 *running_status = Some(status);
-                let data = MidiMessageInner::read_data_u8(status, raw)?;
-                let (channel, message) = MidiMessageInner::read(status, data);
+                let data = crate::message::read_data_u8(status, raw)?;
+                let (channel, message) = crate::message::read(status, data);
                 TrackEventKind::Midi {
                     channel: Channel::new(channel),
                     message,
