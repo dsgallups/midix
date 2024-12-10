@@ -1,4 +1,4 @@
-use crate::{num::u7, prelude::*, PitchBend};
+use crate::{num::u7, prelude::*, Key, PitchBend};
 
 /// Represents a MIDI message, usually associated to a MIDI channel.
 ///
@@ -10,14 +10,14 @@ pub enum MidiMessage {
     /// Stop playing a note.
     NoteOff {
         /// The MIDI key to stop playing.
-        key: u7,
+        key: Key,
         /// The velocity with which to stop playing it.
         vel: u7,
     },
     /// Start playing a note.
     NoteOn {
         /// The key to start playing.
-        key: u7,
+        key: Key,
         /// The velocity (strength) with which to press it.
         ///
         /// Note that by convention a `NoteOn` message with a velocity of 0 is equivalent to a

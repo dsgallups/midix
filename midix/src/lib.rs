@@ -212,6 +212,7 @@ mod arena;
 mod channel;
 mod event;
 pub mod io;
+mod key;
 pub mod live;
 mod message;
 mod pitch_bend;
@@ -231,6 +232,7 @@ pub use crate::{
     channel::Channel,
     error::{Error, ErrorKind, Result},
     event::{MetaMessage, TrackEvent, TrackEventKind},
+    key::Key,
     message::MidiMessage,
     pitch_bend::PitchBend,
     primitive::{Format, Fps, SmpteTime, Timing},
