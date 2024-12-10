@@ -3,7 +3,7 @@ use bevy::{
     pbr::AmbientLight,
     prelude::*,
 };
-use bevy_midi::prelude::*;
+use bevy_midix::prelude::*;
 use bevy_mod_picking::prelude::{DefaultPickingPlugins, *};
 
 fn main() {

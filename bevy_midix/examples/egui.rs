@@ -8,7 +8,7 @@ use bevy_egui::{
     },
     EguiContext, EguiPlugin,
 };
-use bevy_midi::prelude::*;
+use bevy_midix::prelude::*;
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
 
 //Adapted to bevy_egui from https://github.com/gamercade-io/gamercade_console/blob/audio_editor/gamercade_editor/src/ui/audio/instrument_editor/piano_roll.rs

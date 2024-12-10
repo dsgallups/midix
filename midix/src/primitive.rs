@@ -450,7 +450,7 @@ pub(crate) fn read_varlen_slice<'a>(raw: &mut &'a [u8]) -> Result<&'a [u8]> {
             if cfg!(feature = "strict") {
                 bail!(err_malformed!("incomplete varlen slice"))
             } else {
-                mem::replace(raw, &[])
+                std::mem::take(raw)
             }
         }
     })

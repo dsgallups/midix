@@ -11,7 +11,7 @@ use core::cell::UnsafeCell;
 /// Consider the following code:
 ///
 /// ```rust,compile_fail
-/// use midly::{TrackEvent, TrackEventKind, MetaMessage};
+/// use midix::{TrackEvent, TrackEventKind, MetaMessage};
 ///
 /// let mut track = Vec::new();
 /// for i in 0..64 {
@@ -31,9 +31,9 @@ use core::cell::UnsafeCell;
 /// Instead, use the [`Arena`](struct.Arena.html) type like the following code:
 ///
 /// ```rust
-/// use midly::{TrackEvent, TrackEventKind, MetaMessage};
+/// use midix::{TrackEvent, TrackEventKind, MetaMessage};
 ///
-/// let arena = midly::Arena::new();
+/// let arena = midix::Arena::new();
 /// let mut track = Vec::new();
 /// for i in 0..64 {
 ///     let marker_name = format!("Marker {}", i);
@@ -82,11 +82,16 @@ impl Arena {
         // length does not require dereferencing the contents.
         unsafe { (*self.allocations.get()).len() }
     }
+    /// Get the amount of allocations in the arena.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
     /// Add a set of bytes to the arena, returning a longer-lived mutable reference to a copy of
     /// these same bytes.
     #[inline]
-    pub fn add<'a, 'b>(&'a self, bytes: &'b [u8]) -> &'a mut [u8] {
+    pub fn add<'a>(&'a self, bytes: &[u8]) -> &'a mut [u8] {
         self.add_boxed(Box::from(bytes))
     }
 
@@ -94,14 +99,15 @@ impl Arena {
     ///
     /// This method is very similar to `add`, but avoids an allocation and a copy.
     #[inline]
-    pub fn add_vec<'a>(&'a self, bytes: Vec<u8>) -> &'a mut [u8] {
+    pub fn add_vec(&self, bytes: Vec<u8>) -> &mut [u8] {
         self.add_boxed(bytes.into_boxed_slice())
     }
 
     /// Add a set of databytes to the arena, returning a longer-lived mutable reference to a copy
     /// of these same databytes.
     #[inline]
-    pub fn add_u7<'a, 'b>(&'a self, databytes: &'b [u7]) -> &'a mut [u7] {
+    #[allow(clippy::mut_from_ref)]
+    pub fn add_u7<'a>(&'a self, databytes: &[u7]) -> &'a mut [u7] {
         // SAFETY:
         // The returned `&mut [u8]` is transformed into a `&mut [u7]` without checking its
         // contents, which is safe because it was originally a `&[u7]`.
@@ -112,7 +118,8 @@ impl Arena {
     ///
     /// This method is very similar to `add_u7`, but avoids an allocation and a copy.
     #[inline]
-    pub fn add_u7_vec<'a>(&'a self, databytes: Vec<u7>) -> &'a mut [u7] {
+    #[allow(clippy::mut_from_ref)]
+    pub fn add_u7_vec(&self, databytes: Vec<u7>) -> &mut [u7] {
         // SAFETY:
         // Two unsafe actions are done:
         // First, a `Vec<u7>` is transmuted into a `Vec<u8>`. This is valid because `u7` has the
@@ -128,7 +135,8 @@ impl Arena {
     }
 
     #[inline]
-    fn add_boxed<'a>(&'a self, boxed_bytes: Box<[u8]>) -> &'a mut [u8] {
+    #[allow(clippy::mut_from_ref)]
+    fn add_boxed(&self, boxed_bytes: Box<[u8]>) -> &mut [u8] {
         // SAFETY:
         // This block moves `boxed_bytes` into `self` and returns a mutable reference to its
         // contents.

@@ -3,7 +3,7 @@ use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
 };
-use bevy_midi::prelude::*;
+use bevy_midix::prelude::*;
 
 const KEY_PORT_MAP: [(KeyCode, usize); 10] = [
     (KeyCode::Digit0, 0),

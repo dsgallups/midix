@@ -1,4 +1,4 @@
-use midly::Smf;
+use midix::Smf;
 use std::{
     env,
     error::Error,
@@ -62,7 +62,7 @@ fn fs_vs_cpu(path: &Path) -> Result<(), Box<dyn Error>> {
 
 fn bytes_per_event(path: &Path) -> Result<(), Box<dyn Error>> {
     let file = fs::read(path)?;
-    let (_header, tracks) = midly::parse(&file)?;
+    let (_header, tracks) = midix::parse(&file)?;
     let mut total_bytes = 0;
     let mut total_events = 0;
     let mut min_bpe = std::f64::INFINITY;

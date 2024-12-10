@@ -88,7 +88,7 @@ impl<'a> Smf<'a> {
 
     /// Encodes and writes the file to the given generic writer.
     ///
-    /// Note that this function requires a `midly::io::Write` writer, not a `std::io::Write` writer.
+    /// Note that this function requires a `midix::io::Write` writer, not a `std::io::Write` writer.
     /// This makes it possible to support `no_std` environments, as well as custom writer errors.
     /// If you're looking to write to a `File`, see the [`save`](#method.save) method.
     /// If you're looking to write to a `std::io::Write` writer, see the
@@ -103,7 +103,7 @@ impl<'a> Smf<'a> {
     /// Encodes and writes the file to the given `std::io::Write` writer.
     ///
     /// This function is similar to the [`write`](#method.write) method, but writes to a
-    /// `std::io::Write` writer instead of a `midly::io::Write` writer.
+    /// `std::io::Write` writer instead of a `midix::io::Write` writer.
     ///
     /// This function is only available with the `std` feature enabled.
     #[cfg(feature = "std")]
@@ -376,7 +376,7 @@ where
 }
 
 /// Similar to [`write`](fn.write.html), but writes to a `std::io::Write` writer instead of a
-/// `midly::io::Write` writer.
+/// `midix::io::Write` writer.
 ///
 /// This function is only available with the `std` feature enabled.
 #[cfg(feature = "std")]
@@ -399,11 +399,12 @@ struct ChunkIter<'a> {
 }
 impl<'a> ChunkIter<'a> {
     #[inline]
-    fn new(raw: &'a [u8]) -> ChunkIter {
+    fn new(raw: &'a [u8]) -> ChunkIter<'a> {
         ChunkIter { raw }
     }
 
     #[inline]
+    #[allow(clippy::wrong_self_convention)]
     fn as_tracks(self, track_count_hint: u16) -> TrackIter<'a> {
         TrackIter {
             chunks: self,
@@ -455,7 +456,7 @@ impl<'a> Chunk<'a> {
                         bail!(err_malformed!("reached eof before chunk ended"));
                     } else {
                         //Just use the remainder of the file
-                        mem::replace(raw, &[])
+                        std::mem::take(raw)
                     }
                 }
             };

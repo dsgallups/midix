@@ -98,7 +98,7 @@ pub enum TrackEventKind<'a> {
 impl<'a> TrackEventKind<'a> {
     fn read(raw: &mut &'a [u8], running_status: &mut Option<u8>) -> Result<TrackEventKind<'a>> {
         //Read status
-        let mut status = *raw.get(0).ok_or(err_invalid!("failed to read status"))?;
+        let mut status = *raw.first().ok_or(err_invalid!("failed to read status"))?;
         if status < 0x80 {
             //Running status!
             status = running_status.ok_or(err_invalid!(
@@ -412,7 +412,7 @@ impl PitchBend {
     /// Integers outside this range will be clamped.
     #[inline]
     pub fn from_int(int: i16) -> PitchBend {
-        PitchBend(u14::new((int.max(-0x2000).min(0x1FFF) + 0x2000) as u16))
+        PitchBend(u14::new((int.clamp(-0x2000, 0x1FFF) + 0x2000) as u16))
     }
 
     /// Create a `PitchBend` value from a number in the range `[-1.0, 1.0)`.
@@ -420,7 +420,7 @@ impl PitchBend {
     /// Floats outside this range will be clamped.
     #[inline]
     pub fn from_f32(float: f32) -> PitchBend {
-        PitchBend::from_int((float.max(-1.0).min(1.0) * 0x2000 as f32) as i16)
+        PitchBend::from_int((float.clamp(-1.0, 1.0) * 0x2000 as f32) as i16)
     }
 
     /// Create a `PitchBend` value from a number in the range `[-1.0, 1.0)`.
@@ -428,7 +428,7 @@ impl PitchBend {
     /// Floats outside this range will be clamped.
     #[inline]
     pub fn from_f64(float: f64) -> PitchBend {
-        PitchBend::from_int((float.max(-1.0).min(1.0) * 0x2000 as f64) as i16)
+        PitchBend::from_int((float.clamp(-1.0, 1.0) * 0x2000 as f64) as i16)
     }
 
     /// Returns an int in the range `[-0x2000, 0x1FFF]`.

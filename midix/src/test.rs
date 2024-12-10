@@ -1,4 +1,4 @@
-use crate::{EventIter, Result as MidlyResult, TrackEvent};
+use crate::{EventIter, Result as midixResult, TrackEvent};
 use std::{fs, path::Path, time::Instant};
 
 /// Open and read the content of a file.
@@ -75,13 +75,13 @@ mod parse_collect {
     }
     #[cfg(not(feature = "alloc"))]
     impl<'a> Smf<'a> {
-        pub fn parse(raw: &[u8]) -> MidlyResult<Smf> {
+        pub fn parse(raw: &[u8]) -> midixResult<Smf> {
             let (header, tracks) = crate::parse(raw)?;
             Ok(Smf {
                 header,
                 tracks: tracks
-                    .map(|events| events.and_then(|evs| evs.collect::<MidlyResult<Vec<_>>>()))
-                    .collect::<MidlyResult<Vec<_>>>()?,
+                    .map(|events| events.and_then(|evs| evs.collect::<midixResult<Vec<_>>>()))
+                    .collect::<midixResult<Vec<_>>>()?,
             })
         }
         pub fn write<W: crate::io::Write>(&self, out: &mut W) -> Result<(), W::Error> {
@@ -104,15 +104,15 @@ mod parse_bytemap {
     }
     #[cfg(not(feature = "alloc"))]
     impl<'a> Smf<'a> {
-        pub fn parse(raw: &[u8]) -> MidlyResult<Smf> {
+        pub fn parse(raw: &[u8]) -> midixResult<Smf> {
             let (header, tracks) = crate::parse(raw)?;
             Ok(Smf {
                 header,
                 tracks: tracks
                     .map(|events| {
-                        events.and_then(|evs| evs.bytemapped().collect::<MidlyResult<Vec<_>>>())
+                        events.and_then(|evs| evs.bytemapped().collect::<midixResult<Vec<_>>>())
                     })
-                    .collect::<MidlyResult<Vec<_>>>()?,
+                    .collect::<midixResult<Vec<_>>>()?,
             })
         }
     }
@@ -121,7 +121,7 @@ mod parse_bytemap {
         //NOT consecutive (because delta times must interrupt every single event)
         for (bytes, _ev) in track.iter() {
             let mut advanced = false;
-            while !raw.starts_with(*bytes) {
+            while !raw.starts_with(bytes) {
                 advanced = true;
                 match raw.get(1..) {
                     Some(new_raw) => raw = new_raw,
@@ -137,16 +137,17 @@ mod parse_bytemap {
 mod parse_lazy {
     use super::*;
     pub struct Smf<'a> {
+        #[allow(dead_code)]
         pub header: crate::Header,
         pub tracks: crate::TrackIter<'a>,
     }
     impl Smf<'_> {
-        pub fn parse(raw: &[u8]) -> MidlyResult<Smf> {
+        pub fn parse(raw: &[u8]) -> midixResult<Smf> {
             let (header, tracks) = crate::parse(raw)?;
             Ok(Smf { header, tracks })
         }
     }
-    pub fn len(_raw: &[u8], track: MidlyResult<EventIter>) -> usize {
+    pub fn len(_raw: &[u8], track: midixResult<EventIter>) -> usize {
         match track {
             Ok(track) => track.count(),
             Err(err) => panic!("failed to parse track: {}", err),

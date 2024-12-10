@@ -1249,6 +1249,7 @@ dependencies = [
  "bevy_mod_picking",
  "crossbeam-channel",
  "midir",
+ "midix",
  "strum",
 ]
 

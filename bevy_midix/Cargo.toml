@@ -12,14 +12,10 @@ keywords = ["gamedev", "bevy", "midi", "encoding", "control"]
 categories = ["game-development", "game-engines", "encoding"]
 exclude = ["assets/*"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-name = "bevy_midi"
-
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.8"
+midix = { path = "../midix" }
 
 [dev-dependencies]
 bevy_egui = { version = "0.31.1", features = ["immutable_ctx"] }

@@ -83,7 +83,7 @@ mod error_impl {
 /// Otherwise, only `Display` and `Debug` are implemented (the `source` method on the `Error` type
 /// itself is still available, though).
 ///
-/// For more information about the error policy used by `midly`, see
+/// For more information about the error policy used by `midix`, see
 /// [`ErrorKind`](enum.ErrorKind.html).
 #[derive(Clone)]
 pub struct Error {

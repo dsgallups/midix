@@ -1,8 +1,8 @@
 //! Provides abstractions over writers, even in `no_std` environments.
 //!
 //! When the `std` feature is enabled, `IoWrap` and `SeekableWrap` provide a bridge between the
-//! `std::io` API and the `midly::io` API.
-//! Besides, `write` methods that work with `midly::io::Write` types usually provide a `write_std`
+//! `std::io` API and the `midix::io` API.
+//! Besides, `write` methods that work with `midix::io::Write` types usually provide a `write_std`
 //! variant that works with `std::io::Write` types when the `std` feature is enabled.
 
 use crate::prelude::*;
@@ -91,7 +91,7 @@ impl<W: Write> Seek for NotSeekable<W> {
     }
 }
 
-impl<'a, W: Write> Write for &'a mut W {
+impl<W: Write> Write for &mut W {
     type Error = W::Error;
     type Seekable = W::Seekable;
     #[inline]
@@ -239,7 +239,7 @@ impl<'a> Cursor<'a> {
         self.buf.split_at_mut(self.cur)
     }
 }
-impl<'a> Write for Cursor<'a> {
+impl Write for Cursor<'_> {
     type Error = CursorError;
     type Seekable = Self;
     #[inline]
@@ -268,7 +268,7 @@ impl<'a> Write for Cursor<'a> {
         Some(self)
     }
 }
-impl<'a> Seek for Cursor<'a> {
+impl Seek for Cursor<'_> {
     #[inline]
     fn tell(&mut self) -> StdResult<u64, Self::Error> {
         Ok(self.cur as u64)
@@ -292,7 +292,7 @@ pub enum CursorError {
     /// The input SMF was invalid.
     InvalidInput(&'static str),
 }
-impl<'a> Write for &'a mut [u8] {
+impl Write for &mut [u8] {
     type Error = CursorError;
     type Seekable = NotSeekable<Self>;
     #[inline]
@@ -303,7 +303,7 @@ impl<'a> Write for &'a mut [u8] {
             Err(CursorError::OutOfSpace)
         } else {
             self[..buf.len()].copy_from_slice(buf);
-            let slice = mem::replace(self, &mut []);
+            let slice = std::mem::take(self);
             *self = &mut slice[buf.len()..];
             Ok(())
         }
@@ -314,9 +314,9 @@ impl<'a> Write for &'a mut [u8] {
     }
 }
 
-/// Bridge between a `midly::io::Write` type and a `std::io::Write` type.
+/// Bridge between a `midix::io::Write` type and a `std::io::Write` type.
 ///
-/// Always available, but only implements `midly::io::Write` when the `std` feature is enabled.
+/// Always available, but only implements `midix::io::Write` when the `std` feature is enabled.
 #[derive(Debug, Clone, Default)]
 pub struct IoWrap<T>(pub T);
 #[cfg(feature = "std")]
@@ -333,9 +333,9 @@ impl<T: io::Write> Write for IoWrap<T> {
     }
 }
 
-/// Bridge between a `midly::io::{Write, Seek}` type and a `std::io::{Write, Seek}` type.
+/// Bridge between a `midix::io::{Write, Seek}` type and a `std::io::{Write, Seek}` type.
 ///
-/// Always available, but only implements `midly::io::{Write, Seek}` when the `std` feature is
+/// Always available, but only implements `midix::io::{Write, Seek}` when the `std` feature is
 /// enabled.
 #[derive(Debug, Clone, Default)]
 pub struct SeekableWrap<T>(pub T);

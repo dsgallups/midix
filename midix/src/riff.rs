@@ -17,7 +17,7 @@ impl<'a> Iterator for ChunkIter<'a> {
             let len = u32::from_le_bytes(len);
             let data = match self.0.split_checked(len as usize) {
                 Some(data) => data,
-                None => mem::replace(&mut self.0, &[]),
+                None => std::mem::take(&mut self.0),
             };
             if len % 2 == 1 {
                 let _pad = self.0.split_checked(1);

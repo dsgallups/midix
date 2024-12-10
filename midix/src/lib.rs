@@ -1,12 +1,12 @@
 //! # Overview
 //!
-//! `midly` is a full-featured MIDI parser and writer, focused on performance.
+//! `midix` is a full-featured MIDI parser and writer, focused on performance.
 //!
 //! Parsing a `.mid` file can be as simple as:
 //!
 //! ```rust
 //! # #[cfg(feature = "alloc")] {
-//! use midly::Smf;
+//! use midix::Smf;
 //!
 //! let smf = Smf::parse(include_bytes!("../test-asset/Clementi.mid")).unwrap();
 //!
@@ -29,7 +29,7 @@
 //! ```rust
 //! # #[cfg(feature = "alloc")] {
 //! use std::fs;
-//! use midly::Smf;
+//! use midix::Smf;
 //!
 //! // Load bytes into a buffer
 //! let bytes = fs::read("test-asset/Clementi.mid").unwrap();
@@ -46,7 +46,7 @@
 //! ```rust
 //! # #[cfg(feature = "std")] {
 //! # use std::fs;
-//! # use midly::Smf;
+//! # use midix::Smf;
 //! // Parse file
 //! let bytes = fs::read("test-asset/Clementi.mid").unwrap();
 //! let smf = Smf::parse(&bytes).unwrap();
@@ -61,7 +61,7 @@
 //! ```rust
 //! # #[cfg(feature = "std")] {
 //! # use std::fs;
-//! # use midly::Smf;
+//! # use midix::Smf;
 //! # let bytes = fs::read("test-asset/Clementi.mid").unwrap();
 //! # let smf = Smf::parse(&bytes).unwrap();
 //! let mut in_memory = Vec::new();
@@ -77,7 +77,7 @@
 //! [`LiveEvent`](live/enum.LiveEvent.html) can be used to parse the raw MIDI bytes:
 //!
 //! ```rust
-//! use midly::{live::LiveEvent, MidiMessage};
+//! use midix::{live::LiveEvent, MidiMessage};
 //!
 //! fn on_midi(event: &[u8]) {
 //!     let event = LiveEvent::parse(event).unwrap();
@@ -100,7 +100,7 @@
 //! [`LiveEvent::write`](live/enum.LiveEvent.html#method.write) method:
 //!
 //! ```rust
-//! use midly::{live::LiveEvent, MidiMessage};
+//! use midix::{live::LiveEvent, MidiMessage};
 //! # fn write_midi(bytes: &[u8]) {}
 //!
 //! fn note_on(channel: u8, key: u8) {
@@ -140,7 +140,7 @@
 //! - `std` (enabled by default)
 //!
 //!   This feature enables integration with `std`, for example implementing `std::error::Error` for
-//!   [`midly::Error`](struct.Error.html), support for writing to `std::io::Write` streams, among
+//!   [`midix::Error`](struct.Error.html), support for writing to `std::io::Write` streams, among
 //!   others.
 //!
 //!   Disabling this feature will make the crate `no_std`.
@@ -157,7 +157,7 @@
 //!
 //! - `strict`
 //!
-//!   By default `midly` will attempt to plow through non-standard and even obviously corrupted
+//!   By default `midix` will attempt to plow through non-standard and even obviously corrupted
 //!   files, throwing away any unreadable data, or even entire tracks in the worst scenario.
 //!   By enabling the `strict` feature the parser will reject uncompliant data and do
 //!   additional checking, throwing errors of the kind

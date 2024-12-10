@@ -135,6 +135,7 @@ impl<B: Buffer> MidiStream<B> {
 /// macro, and very rarely should be implemented manually.
 pub trait Buffer {
     /// Add a new slice of data to the tail of the buffer.
+    #[allow(clippy::result_unit_err)]
     fn push(&mut self, data: &[u7]) -> StdResult<(), ()>;
     /// Clear the entire buffer.
     fn clear(&mut self);
@@ -168,24 +169,24 @@ impl Buffer for Vec<u7> {
 /// a `MidiStream`.
 ///
 /// ```rust
-/// midly::stack_buffer! {
+/// midix::stack_buffer! {
 ///     struct MyBuffer([u8; 12345]);
 /// }
 ///
-/// use midly::stream::MidiStream;
+/// use midix::stream::MidiStream;
 /// let stream = MidiStream::with_buffer(MyBuffer::new());
 /// ```
 ///
 /// Buffers can have attributes, documentation, and be made `pub`lic.
 ///
 /// ```rust
-/// midly::stack_buffer! {
+/// midix::stack_buffer! {
 ///     /// A very small buffer.
 ///     #[repr(C)]
 ///     pub struct MyBuffer([u8; 16]);
 /// }
 ///
-/// use midly::stream::MidiStream;
+/// use midix::stream::MidiStream;
 /// let stream = MidiStream::<MyBuffer>::default();
 /// ```
 #[macro_export]

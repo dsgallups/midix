@@ -9,15 +9,15 @@ const MIDI_DIR: &str = "../test-asset";
 const MIDI_EXT: &[&str] = &["mid", "midi", "rmi"];
 
 const PARSERS: &[(&str, fn(&Path) -> Result<usize, String>)] = &[
-    (&"midly", parse_midly),
+    (&"midix", parse_midix),
     (&"nom-midi", parse_nom),
     (&"rimd", parse_rimd),
     (&"augmented-midi", parse_augmented_midi),
 ];
 
-fn parse_midly(path: &Path) -> Result<usize, String> {
+fn parse_midix(path: &Path) -> Result<usize, String> {
     let data = fs::read(path).map_err(|err| format!("{}", err))?;
-    let smf = midly::Smf::parse(&data).map_err(|err| format!("{}", err))?;
+    let smf = midix::Smf::parse(&data).map_err(|err| format!("{}", err))?;
     Ok(smf.tracks.len())
 }
 

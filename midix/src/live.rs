@@ -234,7 +234,7 @@ impl<'a> SystemCommon<'a> {
         let ev = match status {
             0xF0 => {
                 //SysEx
-                SystemCommon::SysEx(&data[..])
+                SystemCommon::SysEx(data)
             }
             0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame
@@ -259,7 +259,7 @@ impl<'a> SystemCommon<'a> {
             }
             0xF1..=0xF5 => {
                 //Unknown system common event
-                SystemCommon::Undefined(status, &data[..])
+                SystemCommon::Undefined(status, data)
             }
             _ => {
                 //Invalid/Unknown/Unreachable event
