@@ -14,7 +14,7 @@
 //! Note that MIDI byte streams, which are not clearly delimited packets, must be parsed through
 //! the [`stream`](../stream/index.html) api.
 
-use crate::{channel::Channel, message::MidiMessage, prelude::*};
+use crate::{channel::Channel, message::MidiMessageInner, prelude::*};
 #[cfg(feature = "alloc")]
 use crate::{event::TrackEventKind, Arena};
 
@@ -31,7 +31,7 @@ pub enum LiveEvent<'a> {
         /// The MIDI channel that this message is associated with.
         channel: Channel,
         /// The MIDI message type and associated data.
-        message: MidiMessage,
+        message: MidiMessageInner,
     },
     /// A System Common message, as defined by the MIDI spec, including System Exclusive events.
     ///
@@ -64,8 +64,8 @@ impl<'a> LiveEvent<'a> {
         match status {
             0x80..=0xEF => {
                 // MIDI message
-                let data = MidiMessage::get_data_u7(status, data)?;
-                let (channel, message) = MidiMessage::read(status, data);
+                let data = MidiMessageInner::get_data_u7(status, data)?;
+                let (channel, message) = MidiMessageInner::read(status, data);
                 Ok(LiveEvent::Midi {
                     channel: Channel::new(channel),
                     message,
