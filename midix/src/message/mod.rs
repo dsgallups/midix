@@ -118,6 +118,26 @@ impl MidiMessage {
         Ok(msg)
     }
 
+    /// Get the raw midi packet for this message
+    pub fn to_raw(&self) -> Vec<u8> {
+        let raw_status = self.status_nibble();
+
+        match self {
+            MidiMessage::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiMessage::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiMessage::Aftertouch { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiMessage::Controller { controller, value } => {
+                vec![raw_status, controller.as_int(), value.as_int()]
+            }
+            MidiMessage::ProgramChange { program } => vec![raw_status, program.as_int()],
+            MidiMessage::ChannelAftertouch { vel } => vec![raw_status, vel.as_int()],
+            MidiMessage::PitchBend(bend) => {
+                let raw = bend.as_u16();
+                vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
+            }
+        }
+    }
+
     /// Get the data bytes from a databyte slice.
     pub(crate) fn get_data_u7(status: u8, data: &[u7]) -> Result<[u7; 2]> {
         let len = Self::msg_length(status);
