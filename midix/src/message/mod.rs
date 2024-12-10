@@ -73,6 +73,51 @@ impl MidiMessage {
         })
     }
 
+    /// read a raw event from a midi source
+    pub fn read_packet(data: &[u8]) -> Result<Self> {
+        let status = data.first().ok_or(err_invalid!("failed to read status"))?;
+        if !(0x80..=0xEF).contains(status) {
+            return Err(err_invalid!("Not a midi message").into());
+        }
+        let data_len = Self::msg_length(*status);
+
+        let data = match data_len {
+            1 => [u7::check_int(data[0])?, u7::from(0)],
+            2 => [u7::check_int(data[0])?, u7::check_int(data[1])?],
+            _ => [u7::from(0), u7::from(0)],
+        };
+
+        let msg = match status >> 4 {
+            0x8 => MidiMessage::NoteOff {
+                key: Key::new(data[0]),
+                vel: Velocity::new(data[1]),
+            },
+            0x9 => MidiMessage::NoteOn {
+                key: Key::new(data[0]),
+                vel: Velocity::new(data[1]),
+            },
+            0xA => MidiMessage::Aftertouch {
+                key: Key::new(data[0]),
+                vel: Velocity::new(data[1]),
+            },
+            0xB => MidiMessage::Controller {
+                controller: data[0],
+                value: data[1],
+            },
+            0xC => MidiMessage::ProgramChange { program: data[0] },
+            0xD => MidiMessage::ChannelAftertouch { vel: data[0] },
+            0xE => {
+                //Note the little-endian order, contrasting with the default big-endian order of
+                //Standard Midi Files
+                let lsb = data[0].as_int() as u16;
+                let msb = data[1].as_int() as u16;
+                MidiMessage::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
+            }
+            _ => panic!("parsed midi message before checking that status is in range"),
+        };
+        Ok(msg)
+    }
+
     /// Get the data bytes from a databyte slice.
     pub(crate) fn get_data_u7(status: u8, data: &[u7]) -> Result<[u7; 2]> {
         let len = Self::msg_length(status);
