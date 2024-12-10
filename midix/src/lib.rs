@@ -100,7 +100,7 @@
 //! [`LiveEvent::write`](live/enum.LiveEvent.html#method.write) method:
 //!
 //! ```rust
-//! use midix::{live::LiveEvent, Channel, Key, MidiMessage};
+//! use midix::{live::LiveEvent, Channel, Key, Velocity, MidiMessage};
 //! # fn write_midi(bytes: &[u8]) {}
 //!
 //! fn note_on(channel: u8, key: u8) {
@@ -108,7 +108,7 @@
 //!         channel: Channel::new(channel),
 //!         message: MidiMessage::NoteOn {
 //!             key: Key::new(key),
-//!             vel: 127.into(),
+//!             vel: Velocity::new(127),
 //!         },
 //!     };
 //! #   let mut stack_buf = [0; 3];
@@ -220,6 +220,7 @@ mod primitive;
 mod riff;
 mod smf;
 pub mod stream;
+mod velocity;
 
 #[cfg(feature = "std")]
 pub use crate::smf::write_std;
@@ -237,6 +238,7 @@ pub use crate::{
     pitch_bend::PitchBend,
     primitive::{Format, Fps, SmpteTime, Timing},
     smf::{parse, write, EventBytemapIter, EventIter, Header, TrackIter},
+    velocity::Velocity,
 };
 
 /// Exotically-sized integers used by the MIDI standard.

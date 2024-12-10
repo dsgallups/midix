@@ -1,4 +1,4 @@
-use crate::{num::u7, prelude::*, Key, PitchBend};
+use crate::{num::u7, prelude::*, Key, PitchBend, Velocity};
 
 /// Represents a MIDI message, usually associated to a MIDI channel.
 ///
@@ -12,7 +12,7 @@ pub enum MidiMessage {
         /// The MIDI key to stop playing.
         key: Key,
         /// The velocity with which to stop playing it.
-        vel: u7,
+        vel: Velocity,
     },
     /// Start playing a note.
     NoteOn {
@@ -22,14 +22,14 @@ pub enum MidiMessage {
         ///
         /// Note that by convention a `NoteOn` message with a velocity of 0 is equivalent to a
         /// `NoteOff`.
-        vel: u7,
+        vel: Velocity,
     },
     /// Modify the velocity of a note after it has been played.
     Aftertouch {
         /// The key for which to modify its velocity.
-        key: u7,
+        key: Key,
         /// The new velocity for the key.
-        vel: u7,
+        vel: Velocity,
     },
     /// Modify the value of a MIDI controller.
     Controller {
@@ -92,15 +92,15 @@ impl MidiMessage {
         let msg = match status >> 4 {
             0x8 => MidiMessage::NoteOff {
                 key: Key::new(data[0]),
-                vel: data[1],
+                vel: Velocity::new(data[1]),
             },
             0x9 => MidiMessage::NoteOn {
                 key: Key::new(data[0]),
-                vel: data[1],
+                vel: Velocity::new(data[1]),
             },
             0xA => MidiMessage::Aftertouch {
-                key: data[0],
-                vel: data[1],
+                key: Key::new(data[0]),
+                vel: Velocity::new(data[1]),
             },
             0xB => MidiMessage::Controller {
                 controller: data[0],

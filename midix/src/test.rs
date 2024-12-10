@@ -1,4 +1,4 @@
-use crate::{channel::Channel, EventIter, Key, Result as midixResult, TrackEvent};
+use crate::{channel::Channel, EventIter, Key, Result as midixResult, TrackEvent, Velocity};
 use std::{fs, path::Path, time::Instant};
 
 /// Open and read the content of a file.
@@ -237,7 +237,7 @@ fn live_trailing_bytes() {
             channel: Channel::new(3),
             message: MidiMessage::NoteOn {
                 key: Key::new(0x7F),
-                vel: 0x7F.into()
+                vel: Velocity::new(0x7F)
             }
         }
     );
@@ -247,7 +247,7 @@ fn live_trailing_bytes() {
             channel: Channel::new(3),
             message: MidiMessage::NoteOn {
                 key: Key::new(0x7F),
-                vel: 0x7F.into()
+                vel: Velocity::new(0x7F)
             }
         }
     );
