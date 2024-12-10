@@ -234,7 +234,7 @@ pub use crate::{
     error::{Error, ErrorKind, Result},
     event::{MetaMessage, TrackEvent, TrackEventKind},
     key::Key,
-    message::MidiMessageInner,
+    message::{MidiEvent, MidiMessage},
     pitch_bend::PitchBend,
     primitive::{Format, Fps, SmpteTime, Timing},
     smf::{parse, write, EventBytemapIter, EventIter, Header, TrackIter},

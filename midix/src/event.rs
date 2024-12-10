@@ -5,7 +5,7 @@ use crate::{
     live::{LiveEvent, SystemCommon},
     prelude::*,
     primitive::{read_varlen_slice, write_varlen_slice, SmpteTime},
-    MidiMessageInner,
+    MidiEvent,
 };
 
 /// Represents a parsed SMF track event.
@@ -82,7 +82,7 @@ pub enum TrackEventKind<'a> {
         /// The MIDI channel that this event is associated with.
         channel: Channel,
         /// The MIDI message type and associated data.
-        message: MidiMessageInner,
+        message: MidiEvent,
     },
     /// A System Exclusive message, carrying arbitrary data.
     ///

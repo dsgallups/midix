@@ -229,13 +229,13 @@ fn test_live_api(file: &str) {
 #[test]
 fn live_trailing_bytes() {
     // Make sure that the live API allows trailing bytes
-    use crate::{live::LiveEvent, MidiMessageInner};
+    use crate::{live::LiveEvent, MidiEvent};
 
     assert_eq!(
         LiveEvent::parse(&[0x93, 0x7F, 0x7F, 0x34]).unwrap(),
         LiveEvent::Midi {
             channel: Channel::new(3),
-            message: MidiMessageInner::NoteOn {
+            message: MidiEvent::NoteOn {
                 key: Key::new(0x7F),
                 vel: Velocity::new(0x7F)
             }
@@ -245,7 +245,7 @@ fn live_trailing_bytes() {
         LiveEvent::parse(&[0x93, 0x7F, 0x7F, 0x80, 0xFF]).unwrap(),
         LiveEvent::Midi {
             channel: Channel::new(3),
-            message: MidiMessageInner::NoteOn {
+            message: MidiEvent::NoteOn {
                 key: Key::new(0x7F),
                 vel: Velocity::new(0x7F)
             }

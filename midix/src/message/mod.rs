@@ -1,9 +1,16 @@
 use crate::{num::u7, prelude::*, Channel, Key, PitchBend, Velocity};
 
+/// Represents a MIDI message, usually associated to a MIDI channel.
+///
+/// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
+/// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
+/// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub struct MidiMessage {
+    /// The MIDI channel that this event is associated with.
     channel: Channel,
-    message: MidiMessageInner,
+    /// The MIDI message type and associated data.
+    message: MidiEvent,
 }
 
 impl MidiMessage {
@@ -21,7 +28,7 @@ impl MidiMessage {
     ///
     /// This should potentially replace read_data_u8 as mutating the slice is not necessary.
     pub fn read_packet(data: &[u8]) -> Result<Self> {
-        let _message = MidiMessageInner::read_packet(data)?;
+        let _message = MidiEvent::read_packet(data)?;
 
         todo!()
     }
@@ -31,17 +38,17 @@ impl MidiMessage {
         let raw_status = self.status_nibble();
 
         match self.message {
-            MidiMessageInner::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiMessageInner::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiMessageInner::Aftertouch { key, vel } => {
+            MidiEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiEvent::Aftertouch { key, vel } => {
                 vec![raw_status, key.as_int(), vel.as_int()]
             }
-            MidiMessageInner::Controller { controller, value } => {
+            MidiEvent::Controller { controller, value } => {
                 vec![raw_status, controller.as_int(), value.as_int()]
             }
-            MidiMessageInner::ProgramChange { program } => vec![raw_status, program.as_int()],
-            MidiMessageInner::ChannelAftertouch { vel } => vec![raw_status, vel.as_int()],
-            MidiMessageInner::PitchBend(bend) => {
+            MidiEvent::ProgramChange { program } => vec![raw_status, program.as_int()],
+            MidiEvent::ChannelAftertouch { vel } => vec![raw_status, vel.as_int()],
+            MidiEvent::PitchBend(bend) => {
                 let raw = bend.as_u16();
                 vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
             }
@@ -64,7 +71,7 @@ impl MidiMessage {
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub enum MidiMessageInner {
+pub enum MidiEvent {
     /// Stop playing a note.
     NoteOff {
         /// The MIDI key to stop playing.
@@ -144,43 +151,43 @@ pub(crate) fn get_data_u7(status: u8, data: &[u7]) -> Result<[u7; 2]> {
 /// Receives status byte and midi args separately.
 ///
 /// Panics if the `status` is not a MIDI message status (0x80..=0xEF).
-pub(crate) fn read(status: u8, data: [u7; 2]) -> (u4, MidiMessageInner) {
+pub(crate) fn read(status: u8, data: [u7; 2]) -> (u4, MidiEvent) {
     let channel = u4::from(status);
     let msg = match status >> 4 {
-        0x8 => MidiMessageInner::NoteOff {
+        0x8 => MidiEvent::NoteOff {
             key: Key::new(data[0]),
             vel: Velocity::new(data[1]),
         },
-        0x9 => MidiMessageInner::NoteOn {
+        0x9 => MidiEvent::NoteOn {
             key: Key::new(data[0]),
             vel: Velocity::new(data[1]),
         },
-        0xA => MidiMessageInner::Aftertouch {
+        0xA => MidiEvent::Aftertouch {
             key: Key::new(data[0]),
             vel: Velocity::new(data[1]),
         },
-        0xB => MidiMessageInner::Controller {
+        0xB => MidiEvent::Controller {
             controller: data[0],
             value: data[1],
         },
-        0xC => MidiMessageInner::ProgramChange { program: data[0] },
-        0xD => MidiMessageInner::ChannelAftertouch { vel: data[0] },
+        0xC => MidiEvent::ProgramChange { program: data[0] },
+        0xD => MidiEvent::ChannelAftertouch { vel: data[0] },
         0xE => {
             //Note the little-endian order, contrasting with the default big-endian order of
             //Standard Midi Files
             let lsb = data[0].as_int() as u16;
             let msb = data[1].as_int() as u16;
-            MidiMessageInner::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
+            MidiEvent::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
         }
         _ => panic!("parsed midi message before checking that status is in range"),
     };
     (channel, msg)
 }
 
-impl MidiMessageInner {
+impl MidiEvent {
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
-        use MidiMessageInner::*;
+        use MidiEvent::*;
         match self {
             NoteOn { vel, .. } => vel.as_int() != 0,
             _ => false,
@@ -189,7 +196,7 @@ impl MidiMessageInner {
 
     /// Returns true if the note is off. This includes note on where the velocity is zero.
     pub fn is_note_off(&self) -> bool {
-        use MidiMessageInner::*;
+        use MidiEvent::*;
         match self {
             NoteOff { .. } => true,
             NoteOn { vel, .. } => vel.as_int() == 0,
@@ -214,30 +221,30 @@ impl MidiMessageInner {
         };
 
         let msg = match status >> 4 {
-            0x8 => MidiMessageInner::NoteOff {
+            0x8 => MidiEvent::NoteOff {
                 key: Key::new(data[0]),
                 vel: Velocity::new(data[1]),
             },
-            0x9 => MidiMessageInner::NoteOn {
+            0x9 => MidiEvent::NoteOn {
                 key: Key::new(data[0]),
                 vel: Velocity::new(data[1]),
             },
-            0xA => MidiMessageInner::Aftertouch {
+            0xA => MidiEvent::Aftertouch {
                 key: Key::new(data[0]),
                 vel: Velocity::new(data[1]),
             },
-            0xB => MidiMessageInner::Controller {
+            0xB => MidiEvent::Controller {
                 controller: data[0],
                 value: data[1],
             },
-            0xC => MidiMessageInner::ProgramChange { program: data[0] },
-            0xD => MidiMessageInner::ChannelAftertouch { vel: data[0] },
+            0xC => MidiEvent::ProgramChange { program: data[0] },
+            0xD => MidiEvent::ChannelAftertouch { vel: data[0] },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
                 let lsb = data[0].as_int() as u16;
                 let msb = data[1].as_int() as u16;
-                MidiMessageInner::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
+                MidiEvent::PitchBend(PitchBend::new(u14::from(msb << 7 | lsb)))
             }
             _ => panic!("parsed midi message before checking that status is in range"),
         };
@@ -249,17 +256,17 @@ impl MidiMessageInner {
         let raw_status = self.status_nibble();
 
         match self {
-            MidiMessageInner::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiMessageInner::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiMessageInner::Aftertouch { key, vel } => {
+            MidiEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            MidiEvent::Aftertouch { key, vel } => {
                 vec![raw_status, key.as_int(), vel.as_int()]
             }
-            MidiMessageInner::Controller { controller, value } => {
+            MidiEvent::Controller { controller, value } => {
                 vec![raw_status, controller.as_int(), value.as_int()]
             }
-            MidiMessageInner::ProgramChange { program } => vec![raw_status, program.as_int()],
-            MidiMessageInner::ChannelAftertouch { vel } => vec![raw_status, vel.as_int()],
-            MidiMessageInner::PitchBend(bend) => {
+            MidiEvent::ProgramChange { program } => vec![raw_status, program.as_int()],
+            MidiEvent::ChannelAftertouch { vel } => vec![raw_status, vel.as_int()],
+            MidiEvent::PitchBend(bend) => {
                 let raw = bend.as_u16();
                 vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
             }
@@ -269,29 +276,27 @@ impl MidiMessageInner {
     /// Get the raw status nibble for this MIDI message type.
     pub(crate) fn status_nibble(&self) -> u8 {
         match self {
-            MidiMessageInner::NoteOff { .. } => 0x8,
-            MidiMessageInner::NoteOn { .. } => 0x9,
-            MidiMessageInner::Aftertouch { .. } => 0xA,
-            MidiMessageInner::Controller { .. } => 0xB,
-            MidiMessageInner::ProgramChange { .. } => 0xC,
-            MidiMessageInner::ChannelAftertouch { .. } => 0xD,
-            MidiMessageInner::PitchBend { .. } => 0xE,
+            MidiEvent::NoteOff { .. } => 0x8,
+            MidiEvent::NoteOn { .. } => 0x9,
+            MidiEvent::Aftertouch { .. } => 0xA,
+            MidiEvent::Controller { .. } => 0xB,
+            MidiEvent::ProgramChange { .. } => 0xC,
+            MidiEvent::ChannelAftertouch { .. } => 0xD,
+            MidiEvent::PitchBend { .. } => 0xE,
         }
     }
     /// Write the data part of this message, not including the status.
     pub(crate) fn write<W: Write>(&self, out: &mut W) -> WriteResult<W> {
         match self {
-            MidiMessageInner::NoteOff { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
-            MidiMessageInner::NoteOn { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
-            MidiMessageInner::Aftertouch { key, vel } => {
-                out.write(&[key.as_int(), vel.as_int()])?
-            }
-            MidiMessageInner::Controller { controller, value } => {
+            MidiEvent::NoteOff { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
+            MidiEvent::NoteOn { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
+            MidiEvent::Aftertouch { key, vel } => out.write(&[key.as_int(), vel.as_int()])?,
+            MidiEvent::Controller { controller, value } => {
                 out.write(&[controller.as_int(), value.as_int()])?
             }
-            MidiMessageInner::ProgramChange { program } => out.write(&[program.as_int()])?,
-            MidiMessageInner::ChannelAftertouch { vel } => out.write(&[vel.as_int()])?,
-            MidiMessageInner::PitchBend(bend) => {
+            MidiEvent::ProgramChange { program } => out.write(&[program.as_int()])?,
+            MidiEvent::ChannelAftertouch { vel } => out.write(&[vel.as_int()])?,
+            MidiEvent::PitchBend(bend) => {
                 let raw = bend.as_u16();
                 out.write(&[(raw & 0x7F) as u8, (raw >> 7) as u8])?
             }
