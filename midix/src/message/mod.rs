@@ -91,11 +91,11 @@ impl MidiMessage {
         let channel = u4::from(status);
         let msg = match status >> 4 {
             0x8 => MidiMessage::NoteOff {
-                key: data[0],
+                key: Key::new(data[0]),
                 vel: data[1],
             },
             0x9 => MidiMessage::NoteOn {
-                key: data[0],
+                key: Key::new(data[0]),
                 vel: data[1],
             },
             0xA => MidiMessage::Aftertouch {

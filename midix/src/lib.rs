@@ -100,14 +100,14 @@
 //! [`LiveEvent::write`](live/enum.LiveEvent.html#method.write) method:
 //!
 //! ```rust
-//! use midix::{live::LiveEvent, Channel, MidiMessage};
+//! use midix::{live::LiveEvent, Channel, Key, MidiMessage};
 //! # fn write_midi(bytes: &[u8]) {}
 //!
 //! fn note_on(channel: u8, key: u8) {
 //!     let ev = LiveEvent::Midi {
 //!         channel: Channel::new(channel),
 //!         message: MidiMessage::NoteOn {
-//!             key: key.into(),
+//!             key: Key::new(key),
 //!             vel: 127.into(),
 //!         },
 //!     };
