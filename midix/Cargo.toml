@@ -38,6 +38,7 @@ std = ["alloc"]
 parallel = ["std", "rayon"]
 
 [dependencies]
+midly = "0.5.3"
 rayon = { version = "1", optional = true }
 
 [dev-dependencies]

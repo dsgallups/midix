@@ -25,7 +25,7 @@ impl MidiMessage {
     }
 
     pub fn status(&self) -> u8 {
-        self.message.status_nibble() << 4 | self.channel.as_int()
+        self.message.status_nibble() << 4 | self.channel.bits()
     }
 
     /// Get the raw midi packet for this message

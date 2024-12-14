@@ -15,13 +15,7 @@ impl Channel {
     }
 
     /// Returns the 4-bit channel number
-    ///
-    /// TODO: big-endian or little-endian?
     pub fn bits(&self) -> u8 {
-        self.0
-    }
-    /// Returns the channel as a byte. top bits are zeroed.
-    pub fn as_int(&self) -> u8 {
         self.0
     }
 }

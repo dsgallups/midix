@@ -16,6 +16,10 @@ mod pitch_bend;
 mod primitive;
 mod velocity;
 
+pub mod midly {
+    pub use midly::*;
+}
+
 pub use crate::{
     channel::Channel,
     error::{Error, ErrorKind, Result},
