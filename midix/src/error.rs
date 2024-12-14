@@ -1,5 +1,15 @@
 use core::fmt;
 
+#[macro_use]
+macro_rules! io_error {
+    ($kind:expr, $msg:expr) => {
+        std::io::Error::new($kind, $msg)
+    };
+    ($msg:expr) => {
+        std::io::Error::new(std::io::ErrorKind::Other, $msg)
+    };
+}
+
 #[cfg(all(debug_assertions, feature = "alloc"))]
 mod error_impl {
     use super::{Error, ErrorExt, ErrorKind};

@@ -7,8 +7,9 @@ extern crate alloc;
 #[macro_use]
 mod error;
 
+pub mod bytes;
 mod channel;
-mod event;
+pub mod event;
 mod key;
 pub mod live;
 mod message;

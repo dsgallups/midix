@@ -290,11 +290,10 @@ impl Future for MidiInputTask {
                             &port,
                             self.settings.port_name,
                             move |stamp, message, _| {
-                                /* TODO
                                 let Ok(message) = MidiEvent::read_packet(message) else {
                                     return;
                                 };
-                                let _ = s.send(Reply::Midi(MidiData { stamp, message }));*/
+                                let _ = s.send(Reply::Midi(MidiData { stamp, message }));
                             },
                             (),
                         );
