@@ -1,3 +1,5 @@
+use crate::bytes::MidiBits;
+
 /// The value of a pitch bend, represented as 14 bits.
 ///
 /// A value of `0x0000` indicates full bend downwards.
@@ -5,6 +7,20 @@
 /// A value of `0x3FFF` indicates full bend upwards.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub struct PitchBend(u16);
+
+impl MidiBits for PitchBend {
+    type BitRepresentation = u16;
+    fn as_bits(&self) -> Self::BitRepresentation {
+        self.0
+    }
+    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        todo!();
+    }
+}
+
 impl PitchBend {
     /// Create a new pitch bend
     pub fn new(bend: impl Into<u16>) -> Self {

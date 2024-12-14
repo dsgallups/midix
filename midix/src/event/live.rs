@@ -14,7 +14,9 @@
 //! Note that MIDI byte streams, which are not clearly delimited packets, must be parsed through
 //! the [`stream`](../stream/index.html) api.
 
-use crate::MidiMessage;
+use std::io::ErrorKind;
+
+use crate::{bytes::FromMidiMessage, ChannelVoiceMessage};
 
 use super::{SystemCommon, SystemRealtime};
 
@@ -27,7 +29,7 @@ pub enum LiveEvent<'a> {
     /// A MIDI message associated with a channel, carrying musical data.
     ///
     /// Status byte in the range `0x80 ..= 0xEF`.
-    Midi(MidiMessage),
+    ChannelVoice(ChannelVoiceMessage),
     /// A System Common message, as defined by the MIDI spec, including System Exclusive events.
     ///
     /// Status byte in the range `0xF0 ..= 0xF7`.
@@ -36,4 +38,34 @@ pub enum LiveEvent<'a> {
     ///
     /// Status byte in the range `0xF8 ..= 0xFF`.
     Realtime(SystemRealtime),
+}
+
+impl<'a> FromMidiMessage for LiveEvent<'a> {
+    const MIN_STATUS_BYTE: u8 = 0b1000000;
+    const MAX_STATUS_BYTE: u8 = 0b1111111;
+
+    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        match status {
+            0x80..=0xEF => {
+                // Channel Voice message
+                Ok(Self::ChannelVoice(
+                    ChannelVoiceMessage::from_status_and_data(status, data)?,
+                ))
+            }
+            0xF8..=0xFF => {
+                // System Realtime
+                let ev = SystemRealtime::new(status);
+                Ok(LiveEvent::Realtime(ev))
+            }
+            _ => {
+                // System Common
+                let ev = SystemCommon::read(status, data)?;
+                Ok(LiveEvent::Common(ev))
+            }
+        };
+        todo!()
+    }
 }

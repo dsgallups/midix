@@ -10,12 +10,10 @@ mod error;
 pub mod bytes;
 mod channel;
 pub mod event;
-mod key;
 pub mod live;
 mod message;
-mod pitch_bend;
 mod primitive;
-mod velocity;
+pub(crate) mod utils;
 
 pub mod midly {
     pub use midly::*;
@@ -25,9 +23,6 @@ pub use crate::{
     channel::Channel,
     error::{Error, ErrorKind, Result},
     event::{MetaMessage, TrackEvent, TrackEventKind},
-    key::Key,
-    message::{MidiEvent, MidiMessage},
-    pitch_bend::PitchBend,
+    message::{ChannelVoiceEvent, ChannelVoiceMessage},
     primitive::{Format, Fps, SmpteTime, Timing},
-    velocity::Velocity,
 };

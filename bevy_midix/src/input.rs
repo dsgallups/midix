@@ -3,7 +3,7 @@ use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind; // XXX: do we expose this?
 pub use midir::{Ignore, MidiInputPort};
-use midix::MidiEvent;
+use midix::ChannelVoiceEvent;
 use std::error::Error;
 use std::fmt::Display;
 use std::future::Future;
@@ -110,7 +110,7 @@ impl MidiInputConnection {
 #[derive(Resource, Event)]
 pub struct MidiData {
     pub stamp: u64,
-    pub message: MidiEvent,
+    pub message: ChannelVoiceEvent,
 }
 
 /// The [`Error`] type for midi input operations, accessible as an [`Event`](bevy::ecs::event::Event).
@@ -290,10 +290,11 @@ impl Future for MidiInputTask {
                             &port,
                             self.settings.port_name,
                             move |stamp, message, _| {
-                                let Ok(message) = MidiEvent::read_packet(message) else {
+                                let event =  LiveEv
+                                /*let Ok(message) = MidiEvent::read_packet(message) else {
                                     return;
-                                };
-                                let _ = s.send(Reply::Midi(MidiData { stamp, message }));
+                                };*/
+                                //let _ = s.send(Reply::Midi(MidiData { stamp, message }));
                             },
                             (),
                         );
@@ -343,12 +344,12 @@ fn get_available_ports(input: &midir::MidiInput) -> Reply {
 fn debug(mut midi: EventReader<MidiData>) {
     for data in midi.read() {
         match data.message {
-            MidiEvent::NoteOn { key, vel } => {
+            ChannelVoiceEvent::NoteOn { key, vel } => {
                 let note = key.note();
                 let octave = key.octave();
                 debug!("NoteOn: {note}{octave}({vel}) - Raw: {:?}", data.message);
             }
-            MidiEvent::NoteOff { key, vel } => {
+            ChannelVoiceEvent::NoteOff { key, vel } => {
                 let note = key.note();
                 let octave = key.octave();
                 debug!("NoteOff: {note}{octave}({vel}) - Raw: {:?}", data.message);

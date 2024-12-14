@@ -1,4 +1,19 @@
-use crate::{Channel, Key, PitchBend, Velocity};
+use controller::Controller;
+use key::Key;
+use pitch_bend::PitchBend;
+use program::Program;
+use velocity::Velocity;
+
+use crate::{
+    bytes::{FromMidiMessage, MidiBits, ReadDataBytes},
+    utils::check_u7,
+    Channel,
+};
+pub mod controller;
+pub mod key;
+pub mod pitch_bend;
+pub mod program;
+pub mod velocity;
 
 /// Represents a MIDI message, usually associated to a MIDI channel.
 ///
@@ -6,14 +21,62 @@ use crate::{Channel, Key, PitchBend, Velocity};
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct MidiMessage {
+pub struct ChannelVoiceMessage {
     /// The MIDI channel that this event is associated with.
     channel: Channel,
     /// The MIDI message type and associated data.
-    message: MidiEvent,
+    message: ChannelVoiceEvent,
 }
 
-impl MidiMessage {
+impl FromMidiMessage for ChannelVoiceMessage {
+    const MIN_STATUS_BYTE: u8 = 0x80;
+    const MAX_STATUS_BYTE: u8 = 0xEF;
+    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        let msg = match status >> 4 {
+            0x8 => ChannelVoiceEvent::NoteOff {
+                key: Key::from_bits(*data.get_byte(0)?)?,
+                vel: Velocity::from_bits(*data.get_byte(1)?)?,
+            },
+            0x9 => ChannelVoiceEvent::NoteOn {
+                key: Key::from_bits(*data.get_byte(0)?)?,
+                vel: Velocity::from_bits(*data.get_byte(1)?)?,
+            },
+            0xA => ChannelVoiceEvent::Aftertouch {
+                key: Key::from_bits(*data.get_byte(0)?)?,
+                vel: Velocity::from_bits(*data.get_byte(1)?)?,
+            },
+            0xB => ChannelVoiceEvent::Controller {
+                controller: Controller::from_bits(*data.get_byte(0)?)?,
+                value: check_u7(*data.get_byte(1)?)?,
+            },
+            0xC => ChannelVoiceEvent::ProgramChange {
+                program: Program::from_bits(*data.get_byte(0)?)?,
+            },
+            0xD => ChannelVoiceEvent::ChannelPressureAfterTouch {
+                vel: Velocity::from_bits(*data.get_byte(0)?)?,
+            },
+            0xE => {
+                //Note the little-endian order, contrasting with the default big-endian order of
+                //Standard Midi Files
+                let lsb = data[0].as_int() as u16;
+                let msb = data[1].as_int() as u16;
+                ChannelVoiceEvent::PitchBend {
+                    bend: PitchBend(u14::from(msb << 7 | lsb)),
+                }
+            }
+            _ => panic!("parsed midi message before checking that status is in range"),
+        };
+        todo!()
+    }
+}
+
+impl ChannelVoiceMessage {
+    const MIN_STATUS_BYTE: u8 = 0x80;
+    const MAX_STATUS_BYTE: u8 = 0xEF;
+
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
         self.message.is_note_on()
@@ -33,17 +96,17 @@ impl MidiMessage {
         let raw_status = self.status_nibble();
 
         match self.message {
-            MidiEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiEvent::Aftertouch { key, vel } => {
+            ChannelVoiceEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            ChannelVoiceEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            ChannelVoiceEvent::Aftertouch { key, vel } => {
                 vec![raw_status, key.as_int(), vel.as_int()]
             }
-            MidiEvent::Controller { controller, value } => {
+            ChannelVoiceEvent::Controller { controller, value } => {
                 vec![raw_status, controller, value]
             }
-            MidiEvent::ProgramChange { program } => vec![raw_status, program],
-            MidiEvent::ChannelAftertouch { vel } => vec![raw_status, vel],
-            MidiEvent::PitchBend(bend) => {
+            ChannelVoiceEvent::ProgramChange { program } => vec![raw_status, program],
+            ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => vec![raw_status, vel],
+            ChannelVoiceEvent::PitchBend(bend) => {
                 let raw = bend.as_u16();
                 vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
             }
@@ -62,7 +125,7 @@ impl MidiMessage {
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub enum MidiEvent {
+pub enum ChannelVoiceEvent {
     /// Stop playing a note.
     NoteOff {
         /// The MIDI key to stop playing.
@@ -92,19 +155,19 @@ pub enum MidiEvent {
         /// The controller to modify.
         ///
         /// See the MIDI spec for the meaning of each index.
-        controller: u8,
+        controller: Controller,
         /// The value to set it to.
         value: u8,
     },
     /// Change the program (also known as instrument) for a channel.
     ProgramChange {
         /// The new program (instrument) to use for the channel.
-        program: u8,
+        program: Program,
     },
     /// Change the note velocity of a whole channel at once, without starting new notes.
-    ChannelAftertouch {
+    ChannelPressureAfterTouch {
         /// The new velocity for all notes currently playing in the channel.
-        vel: u8,
+        vel: Velocity,
     },
     /// Set the pitch bend value for the entire channel.
     PitchBend(PitchBend),
@@ -118,42 +181,42 @@ pub(crate) fn msg_length(status: u8) -> usize {
 /// Receives status byte and midi args separately.
 ///
 /// Panics if the `status` is not a MIDI message status (0x80..=0xEF).
-pub(crate) fn read(status: u8, data: [u8; 2]) -> (u8, MidiEvent) {
+pub(crate) fn read(status: u8, data: [u8; 2]) -> (u8, ChannelVoiceEvent) {
     let msg = match status >> 4 {
-        0x8 => MidiEvent::NoteOff {
+        0x8 => ChannelVoiceEvent::NoteOff {
             key: Key::new(data[0]),
             vel: Velocity::new(data[1]),
         },
-        0x9 => MidiEvent::NoteOn {
+        0x9 => ChannelVoiceEvent::NoteOn {
             key: Key::new(data[0]),
             vel: Velocity::new(data[1]),
         },
-        0xA => MidiEvent::Aftertouch {
+        0xA => ChannelVoiceEvent::Aftertouch {
             key: Key::new(data[0]),
             vel: Velocity::new(data[1]),
         },
-        0xB => MidiEvent::Controller {
+        0xB => ChannelVoiceEvent::Controller {
             controller: data[0],
             value: data[1],
         },
-        0xC => MidiEvent::ProgramChange { program: data[0] },
-        0xD => MidiEvent::ChannelAftertouch { vel: data[0] },
+        0xC => ChannelVoiceEvent::ProgramChange { program: data[0] },
+        0xD => ChannelVoiceEvent::ChannelPressureAfterTouch { vel: data[0] },
         0xE => {
             //Note the little-endian order, contrasting with the default big-endian order of
             //Standard Midi Files
             let lsb = data[0] as u16;
             let msb = data[1] as u16;
-            MidiEvent::PitchBend(PitchBend::new(msb << 7 | lsb))
+            ChannelVoiceEvent::PitchBend(PitchBend::new(msb << 7 | lsb))
         }
         _ => panic!("parsed midi message before checking that status is in range"),
     };
     (status, msg)
 }
 
-impl MidiEvent {
+impl ChannelVoiceEvent {
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
-        use MidiEvent::*;
+        use ChannelVoiceEvent::*;
         match self {
             NoteOn { vel, .. } => vel.as_int() != 0,
             _ => false,
@@ -162,7 +225,7 @@ impl MidiEvent {
 
     /// Returns true if the note is off. This includes note on where the velocity is zero.
     pub fn is_note_off(&self) -> bool {
-        use MidiEvent::*;
+        use ChannelVoiceEvent::*;
         match self {
             NoteOff { .. } => true,
             NoteOn { vel, .. } => vel.as_int() == 0,
@@ -175,17 +238,17 @@ impl MidiEvent {
         let raw_status = self.status_nibble();
 
         match self {
-            MidiEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            MidiEvent::Aftertouch { key, vel } => {
+            ChannelVoiceEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            ChannelVoiceEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            ChannelVoiceEvent::Aftertouch { key, vel } => {
                 vec![raw_status, key.as_int(), vel.as_int()]
             }
-            MidiEvent::Controller { controller, value } => {
+            ChannelVoiceEvent::Controller { controller, value } => {
                 vec![raw_status, *controller, *value]
             }
-            MidiEvent::ProgramChange { program } => vec![raw_status, *program],
-            MidiEvent::ChannelAftertouch { vel } => vec![raw_status, *vel],
-            MidiEvent::PitchBend(bend) => {
+            ChannelVoiceEvent::ProgramChange { program } => vec![raw_status, *program],
+            ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => vec![raw_status, *vel],
+            ChannelVoiceEvent::PitchBend(bend) => {
                 let raw = bend.as_u16();
                 vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
             }
@@ -195,13 +258,13 @@ impl MidiEvent {
     /// Get the raw status nibble for this MIDI message type.
     pub(crate) fn status_nibble(&self) -> u8 {
         match self {
-            MidiEvent::NoteOff { .. } => 0x8,
-            MidiEvent::NoteOn { .. } => 0x9,
-            MidiEvent::Aftertouch { .. } => 0xA,
-            MidiEvent::Controller { .. } => 0xB,
-            MidiEvent::ProgramChange { .. } => 0xC,
-            MidiEvent::ChannelAftertouch { .. } => 0xD,
-            MidiEvent::PitchBend { .. } => 0xE,
+            ChannelVoiceEvent::NoteOff { .. } => 0x8,
+            ChannelVoiceEvent::NoteOn { .. } => 0x9,
+            ChannelVoiceEvent::Aftertouch { .. } => 0xA,
+            ChannelVoiceEvent::Controller { .. } => 0xB,
+            ChannelVoiceEvent::ProgramChange { .. } => 0xC,
+            ChannelVoiceEvent::ChannelPressureAfterTouch { .. } => 0xD,
+            ChannelVoiceEvent::PitchBend { .. } => 0xE,
         }
     }
 }

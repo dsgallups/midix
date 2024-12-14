@@ -5,7 +5,7 @@ pub use live::*;
 mod system;
 pub use system::*;
 
-use crate::{channel::Channel, primitive::SmpteTime, MidiMessage};
+use crate::{channel::Channel, primitive::SmpteTime, ChannelVoiceMessage};
 
 /// Represents a parsed SMF track event.
 ///
@@ -28,7 +28,7 @@ pub enum TrackEventKind<'a> {
     /// A message associated to a MIDI channel carrying musical data.
     ///
     /// Usually, the bulk of MIDI data is these kind of messages.
-    Midi(MidiMessage),
+    Midi(ChannelVoiceMessage),
     /// A System Exclusive message, carrying arbitrary data.
     ///
     /// The data bytes included here do not include the implicit `0xF0` prefix.
