@@ -1,9 +1,9 @@
-use super::MidiMessage;
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind;
 pub use midir::MidiOutputPort;
+use midix::MidiEvent;
 use std::fmt::Display;
 use std::{error::Error, future::Future};
 use MidiOutputError::{ConnectionError, PortRefreshError, SendDisconnectedError, SendError};
@@ -69,7 +69,7 @@ impl MidiOutput {
     }
 
     /// Send a midi message.
-    pub fn send(&self, msg: MidiMessage) {
+    pub fn send(&self, msg: MidiEvent) {
         self.sender
             .send(Message::Midi(msg))
             .expect("Couldn't send MIDI message");
@@ -103,7 +103,7 @@ impl MidiOutputConnection {
 pub enum MidiOutputError {
     ConnectionError(ConnectErrorKind),
     SendError(midir::SendError),
-    SendDisconnectedError(MidiMessage),
+    SendDisconnectedError(MidiEvent),
     PortRefreshError,
 }
 
@@ -181,7 +181,7 @@ enum Message {
     RefreshPorts,
     ConnectToPort(MidiOutputPort),
     DisconnectFromPort,
-    Midi(MidiMessage),
+    Midi(MidiEvent),
 }
 
 enum Reply {
@@ -278,7 +278,7 @@ impl Future for MidiOutputTask {
                 },
                 Midi(message) => {
                     if let Some((conn, _)) = &mut self.connection {
-                        if let Err(e) = conn.send(&message.msg) {
+                        if let Err(e) = conn.send(&message.to_raw()) {
                             self.sender.send(Reply::Error(SendError(e))).unwrap();
                         }
                     } else {

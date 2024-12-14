@@ -4,6 +4,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_midix::prelude::*;
+use midix::MidiEvent;
 
 const KEY_PORT_MAP: [(KeyCode, usize); 10] = [
     (KeyCode::Digit0, 0),
@@ -112,14 +113,12 @@ fn show_last_message(
         let text = &mut instructions.single_mut();
         text.0 = format!(
             "Last Message: {} - {:?}",
-            if data.message.is_note_on() {
-                "NoteOn"
-            } else if data.message.is_note_off() {
-                "NoteOff"
-            } else {
-                "Other"
+            match data.message {
+                MidiEvent::NoteOn { .. } => "NoteOn",
+                MidiEvent::NoteOff { .. } => "NoteOff",
+                _ => "Other",
             },
-            data.message.msg
+            data.message
         );
     }
 }

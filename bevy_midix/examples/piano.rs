@@ -4,7 +4,6 @@ use bevy::{
     prelude::*,
 };
 use bevy_midix::prelude::*;
-use bevy_mod_picking::prelude::{DefaultPickingPlugins, *};
 
 fn main() {
     App::new()
@@ -17,7 +16,6 @@ fn main() {
             filter: "bevy_midi=debug".to_string(),
             ..default()
         }))
-        .add_plugins(DefaultPickingPlugins)
         .add_plugins(MidiInputPlugin)
         .init_resource::<MidiInputSettings>()
         .add_plugins(MidiOutputPlugin)
@@ -72,8 +70,8 @@ fn setup(
     let mut white_key_0: Handle<Mesh> = asset_server.load("models/white_key_0.gltf#Mesh0/Primitive0");
     let mut white_key_1: Handle<Mesh> = asset_server.load("models/white_key_1.gltf#Mesh0/Primitive0");
     let mut white_key_2: Handle<Mesh> = asset_server.load("models/white_key_2.gltf#Mesh0/Primitive0");
-    let b_mat = materials.add(Color::rgb(0.1, 0.1, 0.1));
-    let w_mat = materials.add(Color::rgb(1.0, 1.0, 1.0));
+    let b_mat = materials.add(Color::srgb(0.1, 0.1, 0.1));
+    let w_mat = materials.add(Color::srgb(1.0, 1.0, 1.0));
 
     //Create keyboard layout
     let pos_black = pos + Vec3::new(0., 0.06, 0.);
@@ -115,13 +113,6 @@ fn spawn_note(
             key_val: format!("{}{}", key, oct),
             y_reset: pos.y,
         },
-        PickableBundle::default(),
-        On::<Pointer<Down>>::target_commands_mut(|_click, entity_commands| {
-            entity_commands.insert(PressedKey);
-        }),
-        On::<Pointer<Up>>::target_commands_mut(|_click, entity_commands| {
-            entity_commands.remove::<PressedKey>();
-        }),
     ));
 }
 
@@ -143,9 +134,13 @@ fn handle_midi_input(
     query: Query<(Entity, &Key)>,
 ) {
     for data in midi_events.read() {
-        let [_, index, _value] = data.message.msg;
+        let raw = data.message.to_raw();
+        let [_, index, _value] = raw.as_slice() else {
+            continue;
+        };
         let off = index % 12;
         let oct = index.overflowing_div(12).0;
+        #[allow(clippy::iter_nth)]
         let key_str = KEY_RANGE.iter().nth(off.into()).unwrap();
 
         if data.message.is_note_on() {
@@ -160,14 +155,13 @@ fn handle_midi_input(
                     commands.entity(entity).remove::<PressedKey>();
                 }
             }
-        } else {
         }
     }
 }
 
 fn connect_to_first_input_port(input: Res<MidiInput>) {
     if input.is_changed() {
-        if let Some((_, port)) = input.ports().get(0) {
+        if let Some((_, port)) = input.ports().first() {
             input.connect(port.clone());
         }
     }
@@ -175,7 +169,7 @@ fn connect_to_first_input_port(input: Res<MidiInput>) {
 
 fn connect_to_first_output_port(input: Res<MidiOutput>) {
     if input.is_changed() {
-        if let Some((_, port)) = input.ports().get(0) {
+        if let Some((_, port)) = input.ports().first() {
             input.connect(port.clone());
         }
     }
