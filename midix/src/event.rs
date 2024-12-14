@@ -1,12 +1,6 @@
 //! All sort of events and their parsers.
 
-use crate::{
-    channel::Channel,
-    live::{LiveEvent, SystemCommon},
-    prelude::*,
-    primitive::{read_varlen_slice, write_varlen_slice, SmpteTime},
-    MidiMessage,
-};
+use crate::{channel::Channel, primitive::SmpteTime, MidiMessage};
 
 /// Represents a parsed SMF track event.
 ///
@@ -15,58 +9,9 @@ use crate::{
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub struct TrackEvent<'a> {
     /// How many MIDI ticks after the previous event should this event fire.
-    pub delta: u28,
+    pub delta: u32,
     /// The type of event along with event-specific data.
     pub kind: TrackEventKind<'a>,
-}
-impl<'a> TrackEvent<'a> {
-    /// Advances the slice and updates `running_status`.
-    ///
-    /// In case of failure the slice might be left in the middle of an event!
-    pub(crate) fn read(
-        raw: &mut &'a [u8],
-        running_status: &mut Option<u8>,
-    ) -> Result<TrackEvent<'a>> {
-        let delta = u28::read_u7(raw).context(err_invalid!("failed to read event deltatime"))?;
-        let kind = TrackEventKind::read(raw, running_status)
-            .context(err_invalid!("failed to parse event"))?;
-        Ok(TrackEvent { delta, kind })
-    }
-
-    pub(crate) fn read_bytemap(
-        raw: &mut &'a [u8],
-        running_status: &mut Option<u8>,
-    ) -> Result<(&'a [u8], TrackEvent<'a>)> {
-        let delta = u28::read_u7(raw).context(err_invalid!("failed to read event deltatime"))?;
-        let old_raw = *raw;
-        let kind = TrackEventKind::read(raw, running_status)
-            .context(err_invalid!("failed to parse event"))?;
-        Ok((
-            &old_raw[..old_raw.len() - raw.len()],
-            TrackEvent { delta, kind },
-        ))
-    }
-
-    pub(crate) fn write<W: Write>(
-        &self,
-        running_status: &mut Option<u8>,
-        out: &mut W,
-    ) -> WriteResult<W> {
-        self.delta.write_varlen(out)?;
-        self.kind.write(running_status, out)?;
-        Ok(())
-    }
-
-    /// Remove any lifetimed data from this event to create a `TrackEvent` with `'static`
-    /// lifetime that can be stored and moved everywhere, solving borrow checker issues.
-    ///
-    /// WARNING: Any bytestrings in the input will be replaced by empty bytestrings.
-    pub fn to_static(&self) -> TrackEvent<'static> {
-        TrackEvent {
-            delta: self.delta,
-            kind: self.kind.to_static(),
-        }
-    }
 }
 
 /// Represents the different kinds of SMF events and their associated data.
@@ -91,129 +36,6 @@ pub enum TrackEventKind<'a> {
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
     Meta(MetaMessage<'a>),
-}
-impl<'a> TrackEventKind<'a> {
-    fn read(raw: &mut &'a [u8], running_status: &mut Option<u8>) -> Result<TrackEventKind<'a>> {
-        //Read status
-        let mut status = *raw.first().ok_or(err_invalid!("failed to read status"))?;
-        if status < 0x80 {
-            //Running status!
-            status = running_status.ok_or(err_invalid!(
-                "event missing status with no running status active"
-            ))?;
-        } else {
-            //Advance slice 1 byte to consume status. Note that because we already did `get()`, we
-            //can use panicking index here
-            *raw = &raw[1..];
-        }
-        //Delegate further parsing depending on status
-        let kind = match status {
-            0x80..=0xEF => TrackEventKind::Midi(
-                MidiMessage::read(raw).context(err_invalid!("failed to read midi message"))?,
-            ),
-            0xFF => {
-                *running_status = None;
-                TrackEventKind::Meta(
-                    MetaMessage::read(raw).context(err_invalid!("failed to read meta event"))?,
-                )
-            }
-            0xF0 => {
-                *running_status = None;
-                TrackEventKind::SysEx(
-                    read_varlen_slice(raw).context(err_invalid!("failed to read sysex event"))?,
-                )
-            }
-            0xF7 => {
-                *running_status = None;
-                TrackEventKind::Escape(
-                    read_varlen_slice(raw).context(err_invalid!("failed to read escape event"))?,
-                )
-            }
-            0xF1..=0xF6 => bail!(err_invalid!(
-                "standard midi files cannot contain system common events"
-            )),
-            0xF8..=0xFE => bail!(err_invalid!(
-                "standard midi files cannot contain system realtime events"
-            )),
-            0x00..=0x7F => panic!("invalid running status without top bit set"),
-        };
-        Ok(kind)
-    }
-
-    /// Writes a single event to the given output writer.
-    ///
-    /// `running_status` keeps track of the last MIDI status, in order to make proper use of
-    /// running status. It should be shared between consecutive calls, and should initially be set
-    /// to `None`.
-    fn write<W: Write>(&self, running_status: &mut Option<u8>, out: &mut W) -> WriteResult<W> {
-        //Running Status rules:
-        // - MIDI Messages (0x80 ..= 0xEF) alter and use running status
-        // - System Exclusive (0xF0) cancels and cannot use running status
-        // - Escape (0xF7) cancels and cannot use running status
-        // - Meta Messages (0xFF) cancel and cannot use running status
-        match self {
-            TrackEventKind::Midi(message) => {
-                let status = message.status();
-                if Some(status) != *running_status {
-                    //Explicitly write status
-                    out.write(&[status])?;
-                    *running_status = Some(status);
-                }
-                message.write(out)?;
-            }
-            TrackEventKind::SysEx(data) => {
-                *running_status = None;
-                out.write(&[0xF0])?;
-                write_varlen_slice(data, out)?;
-            }
-            TrackEventKind::Escape(data) => {
-                *running_status = None;
-                out.write(&[0xF7])?;
-                write_varlen_slice(data, out)?;
-            }
-            TrackEventKind::Meta(meta) => {
-                *running_status = None;
-                out.write(&[0xFF])?;
-                meta.write(out)?;
-            }
-        }
-        Ok(())
-    }
-
-    /// Lossy conversion from a track event to a live event.
-    ///
-    /// Only channel MIDI messages and not-split SysEx messages can be converted.
-    /// Meta messages and arbitrary escapes yield `None` when converted.
-    pub fn as_live_event(&self) -> Option<LiveEvent<'a>> {
-        match self {
-            TrackEventKind::Midi(message) => Some(LiveEvent::Midi(*message)),
-            TrackEventKind::SysEx(data) => {
-                if data.last() == Some(&0xF7) {
-                    let data_u7 = u7::slice_from_int(data);
-                    if data_u7.len() == data.len() - 1 {
-                        return Some(LiveEvent::Common(SystemCommon::SysEx(data_u7)));
-                    }
-                }
-                None
-            }
-            TrackEventKind::Escape(_data) => None,
-            TrackEventKind::Meta(_meta) => None,
-        }
-    }
-
-    /// Remove any lifetimed data from this event to create a `TrackEventKind` with `'static`
-    /// lifetime that can be stored and moved everywhere, solving borrow checker issues.
-    ///
-    /// WARNING: Any bytestrings in the input will be replaced by empty bytestrings.
-    pub fn to_static(&self) -> TrackEventKind<'static> {
-        use self::TrackEventKind::*;
-        match *self {
-            Midi(message) => Midi(message),
-            SysEx(_) => SysEx(b""),
-            Escape(_) => Escape(b""),
-            Meta(meta) => Meta(meta.to_static()),
-        }
-    }
 }
 
 /// A "meta message", as defined by the SMF spec.
@@ -244,14 +66,14 @@ pub enum MetaMessage<'a> {
     /// Number of the MIDI channel that this file was intended to be played with.
     MidiChannel(Channel),
     /// Number of the MIDI port that this file was intended to be played with.
-    MidiPort(u7),
+    MidiPort(u8),
     /// Obligatory at track end.
     EndOfTrack,
     /// Amount of microseconds per beat (quarter note).
     ///
     /// Usually appears at the beginning of a track, before any midi events are sent, but there
     /// are no guarantees.
-    Tempo(u24),
+    Tempo(u32),
     /// The MIDI SMPTE offset meta message specifies an offset for the starting point of a MIDI
     /// track from the start of a sequence in terms of SMPTE time (hours:minutes:seconds:frames:subframes).
     ///
@@ -300,89 +122,6 @@ impl<'a> MetaMessage<'a> {
             KeySignature(v0, v1) => KeySignature(v0, v1),
             SequencerSpecific(_) => SequencerSpecific(b""),
             Unknown(v, _) => Unknown(v, b""),
-        }
-    }
-
-    #[allow(clippy::len_zero)]
-    fn read(raw: &mut &'a [u8]) -> Result<MetaMessage<'a>> {
-        let type_byte = u8::read(raw).context(err_invalid!("failed to read meta message type"))?;
-        let mut data =
-            read_varlen_slice(raw).context(err_invalid!("failed to read meta message data"))?;
-        Ok(match type_byte {
-            0x00 => MetaMessage::TrackNumber({
-                if data.len() >= 2 {
-                    Some(u16::read(&mut data)?)
-                } else {
-                    None
-                }
-            }),
-            0x01 => MetaMessage::Text(data),
-            0x02 => MetaMessage::Copyright(data),
-            0x03 => MetaMessage::TrackName(data),
-            0x04 => MetaMessage::InstrumentName(data),
-            0x05 => MetaMessage::Lyric(data),
-            0x06 => MetaMessage::Marker(data),
-            0x07 => MetaMessage::CuePoint(data),
-            0x08 => MetaMessage::ProgramName(data),
-            0x09 => MetaMessage::DeviceName(data),
-            0x20 if data.len() >= 1 => MetaMessage::MidiChannel(Channel::new(u4::read(&mut data)?)),
-            0x21 if data.len() >= 1 => MetaMessage::MidiPort(u7::read(&mut data)?),
-            0x2F => MetaMessage::EndOfTrack,
-            0x51 if data.len() >= 3 => MetaMessage::Tempo(u24::read(&mut data)?),
-            0x54 if data.len() >= 5 => MetaMessage::SmpteOffset(
-                SmpteTime::read(&mut data).context(err_invalid!("failed to read smpte time"))?,
-            ),
-            0x58 if data.len() >= 4 => MetaMessage::TimeSignature(
-                u8::read(&mut data)?,
-                u8::read(&mut data)?,
-                u8::read(&mut data)?,
-                u8::read(&mut data)?,
-            ),
-            0x59 => {
-                MetaMessage::KeySignature(u8::read(&mut data)? as i8, u8::read(&mut data)? != 0)
-            }
-            0x7F => MetaMessage::SequencerSpecific(data),
-            _ => MetaMessage::Unknown(type_byte, data),
-        })
-    }
-    fn write<W: Write>(&self, out: &mut W) -> WriteResult<W> {
-        let mut write_msg = |type_byte: u8, data: &[u8]| {
-            out.write(&[type_byte])?;
-            write_varlen_slice(data, out)?;
-            Ok(())
-        };
-        match self {
-            MetaMessage::TrackNumber(track_num) => match track_num {
-                None => write_msg(0x00, &[]),
-                Some(track_num) => write_msg(0x00, &track_num.to_be_bytes()[..]),
-            },
-            MetaMessage::Text(data) => write_msg(0x01, data),
-            MetaMessage::Copyright(data) => write_msg(0x02, data),
-            MetaMessage::TrackName(data) => write_msg(0x03, data),
-            MetaMessage::InstrumentName(data) => write_msg(0x04, data),
-            MetaMessage::Lyric(data) => write_msg(0x05, data),
-            MetaMessage::Marker(data) => write_msg(0x06, data),
-            MetaMessage::CuePoint(data) => write_msg(0x07, data),
-            MetaMessage::ProgramName(data) => write_msg(0x08, data),
-            MetaMessage::DeviceName(data) => write_msg(0x09, data),
-            MetaMessage::MidiChannel(chan) => write_msg(0x20, &[chan.as_int()]),
-            MetaMessage::MidiPort(port) => write_msg(0x21, &[port.as_int()]),
-            MetaMessage::EndOfTrack => write_msg(0x2F, &[]),
-            MetaMessage::Tempo(microsperbeat) => {
-                write_msg(0x51, &microsperbeat.as_int().to_be_bytes()[1..])
-            }
-            MetaMessage::SmpteOffset(smpte) => write_msg(0x54, &smpte.encode()[..]),
-            MetaMessage::TimeSignature(num, den, ticksperclick, thirtysecondsperquarter) => {
-                write_msg(
-                    0x58,
-                    &[*num, *den, *ticksperclick, *thirtysecondsperquarter],
-                )
-            }
-            MetaMessage::KeySignature(sharps, minor) => {
-                write_msg(0x59, &[*sharps as u8, *minor as u8])
-            }
-            MetaMessage::SequencerSpecific(data) => write_msg(0x7F, data),
-            MetaMessage::Unknown(type_byte, data) => write_msg(*type_byte, data),
         }
     }
 }

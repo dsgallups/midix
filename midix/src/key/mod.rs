@@ -1,22 +1,20 @@
 use core::fmt;
 
-use crate::num::u7;
-
 /// Identifies a key press
 ///
 /// TODO docs
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Key(u7);
+pub struct Key(u8);
 
 impl Key {
     /// Create a new key
-    pub fn new(key: impl Into<u7>) -> Self {
+    pub fn new(key: impl Into<u8>) -> Self {
         Self(key.into())
     }
 
     /// Writes out as int
     pub fn as_int(self) -> u8 {
-        self.0.as_int()
+        self.0
     }
 
     /// Identifies the note of the key pressed

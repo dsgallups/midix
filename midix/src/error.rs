@@ -190,19 +190,6 @@ impl fmt::Display for ErrorKind {
     }
 }
 
-macro_rules! err_invalid {
-    ($msg:expr) => {{
-        const ERR_KIND: &'static ErrorKind = &ErrorKind::Invalid($msg);
-        ERR_KIND
-    }};
-}
-macro_rules! err_malformed {
-    ($msg:expr) => {{
-        const ERR_KIND: &'static ErrorKind = &ErrorKind::Malformed($msg);
-        ERR_KIND
-    }};
-}
-
 pub(crate) trait ResultExt<T> {
     fn context(self, ctx: &'static ErrorKind) -> StdResult<T, Error>;
 }
