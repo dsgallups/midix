@@ -41,11 +41,6 @@ pub trait FromMidiMessage {
     where
         Self: Sized;
 }
-pub trait FromMidiBytesOwned {
-    fn from_bytes(bytes: Vec<u8>) -> Result<Self, std::io::Error>
-    where
-        Self: Sized;
-}
 
 pub trait AsMidiBytes {
     fn as_bytes(&self) -> Vec<u8>;

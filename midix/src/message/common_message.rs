@@ -1,6 +1,6 @@
 use std::io::ErrorKind;
 
-use crate::bytes::{FromMidiMessage, MidiBits};
+use crate::bytes::{AsMidiBytes, FromMidiMessage, MidiBits};
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemCommonMessage {
@@ -14,7 +14,7 @@ pub enum SystemCommonMessage {
         message: MtcQuarterFrameMessage,
         tag: u8,
     },*/
-    /// An undefined System Common message, with arbitrary data bytes.
+    /// An undefined System Common message
     Undefined(u8),
     /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
     /// sequence.
@@ -23,6 +23,39 @@ pub enum SystemCommonMessage {
     SongSelect(u8),
     /// Request the device to tune itself.
     TuneRequest,
+}
+impl SystemCommonMessage {
+    pub fn status(&self) -> u8 {
+        use SystemCommonMessage::*;
+        match self {
+            SystemExclusive(_) => 0xF0,
+            SongPositionPointer { .. } => 0xF2,
+            SongSelect(_) => 0xF3,
+            TuneRequest => 0xF6,
+            Undefined(v) => *v,
+        }
+    }
+}
+
+impl AsMidiBytes for SystemCommonMessage {
+    fn as_bytes(&self) -> Vec<u8> {
+        use SystemCommonMessage::*;
+        match self {
+            SystemExclusive(b) => {
+                let mut bytes = Vec::with_capacity(b.len() + 2);
+                bytes.push(0xF0);
+                bytes.extend(b);
+                bytes.push(0xF7);
+                bytes
+            }
+            SongPositionPointer { lsb, msb } => {
+                vec![self.status(), *lsb, *msb]
+            }
+            SongSelect(v) => vec![self.status(), *v],
+            TuneRequest => vec![self.status()],
+            Undefined(_) => vec![self.status()],
+        }
+    }
 }
 
 impl FromMidiMessage for SystemCommonMessage {

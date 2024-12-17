@@ -1,6 +1,6 @@
 use std::io::ErrorKind;
 
-use crate::bytes::{FromMidiMessage, MidiBits};
+use crate::bytes::{AsMidiBytes, FromMidiMessage, MidiBits};
 
 /// System Realtime messages are one-byte messages that only occur within live MIDI streams.
 /// They are usually time-sensitive, get top priority and can even be transmitted in between other
@@ -23,6 +23,12 @@ pub enum SystemRealTimeMessage {
     Reset,
     /// An unknown system realtime message, with the given id byte.
     Undefined(u8),
+}
+
+impl AsMidiBytes for SystemRealTimeMessage {
+    fn as_bytes(&self) -> Vec<u8> {
+        vec![self.as_bits()]
+    }
 }
 
 impl FromMidiMessage for SystemRealTimeMessage {

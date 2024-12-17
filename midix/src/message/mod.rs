@@ -11,14 +11,40 @@ mod common_message;
 pub use common_message::*;
 mod realtime_message;
 pub use realtime_message::*;
+mod mtcquarterframe;
 
-use crate::bytes::FromMidiMessage;
+use crate::bytes::{AsMidiBytes, FromMidiMessage};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MidiMessage {
     ChannelVoice(ChannelVoiceMessage),
     SystemCommon(SystemCommonMessage),
     SystemRealTime(SystemRealTimeMessage),
+}
+
+impl From<ChannelVoiceMessage> for MidiMessage {
+    fn from(value: ChannelVoiceMessage) -> Self {
+        Self::ChannelVoice(value)
+    }
+}
+impl From<SystemCommonMessage> for MidiMessage {
+    fn from(value: SystemCommonMessage) -> Self {
+        Self::SystemCommon(value)
+    }
+}
+impl From<SystemRealTimeMessage> for MidiMessage {
+    fn from(value: SystemRealTimeMessage) -> Self {
+        Self::SystemRealTime(value)
+    }
+}
+
+impl MidiMessage {
+    pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
+        match self {
+            MidiMessage::ChannelVoice(c) => Some(c),
+            _ => None,
+        }
+    }
 }
 
 impl FromMidiMessage for MidiMessage {
@@ -42,6 +68,17 @@ impl FromMidiMessage for MidiMessage {
                 ErrorKind::InvalidData,
                 "Received a status that is not a midi message"
             )),
+        }
+    }
+}
+
+impl AsMidiBytes for MidiMessage {
+    fn as_bytes(&self) -> Vec<u8> {
+        use MidiMessage::*;
+        match self {
+            ChannelVoice(c) => c.as_bytes(),
+            SystemCommon(s) => s.as_bytes(),
+            SystemRealTime(r) => r.as_bytes(),
         }
     }
 }

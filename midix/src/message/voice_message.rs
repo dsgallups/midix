@@ -1,5 +1,5 @@
 use crate::{
-    bytes::{FromMidiMessage, MidiBits, ReadDataBytes},
+    bytes::{AsMidiBytes, FromMidiMessage, MidiBits, ReadDataBytes},
     utils::check_u7,
     Channel,
 };
@@ -35,15 +35,35 @@ impl ChannelVoiceMessage {
         self.message.is_note_off()
     }
 
+    /// Returns the key if the event has a key
+    pub fn key(&self) -> Option<Key> {
+        match self.message {
+            ChannelVoiceEvent::NoteOn { key, .. }
+            | ChannelVoiceEvent::NoteOff { key, .. }
+            | ChannelVoiceEvent::Aftertouch { key, .. } => Some(key),
+            _ => None,
+        }
+    }
+    pub fn velocity(&self) -> Option<Velocity> {
+        match self.message {
+            ChannelVoiceEvent::NoteOn { vel, .. }
+            | ChannelVoiceEvent::NoteOff { vel, .. }
+            | ChannelVoiceEvent::Aftertouch { vel, .. }
+            | ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => Some(vel),
+            _ => None,
+        }
+    }
+
     pub fn status(&self) -> u8 {
         self.message.status_nibble() << 4 | self.channel.bits()
     }
     pub fn message(&self) -> &ChannelVoiceEvent {
         &self.message
     }
-
+}
+impl AsMidiBytes for ChannelVoiceMessage {
     /// Get the raw midi packet for this message
-    pub fn to_raw(&self) -> Vec<u8> {
+    fn as_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
         packet.push(self.status());
         let data = self.message.to_raw();
