@@ -4,6 +4,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_midix::prelude::*;
+use midix::{bytes::AsMidiBytes, message::MidiMessage};
 
 fn main() {
     App::new()
@@ -134,7 +135,7 @@ fn handle_midi_input(
     query: Query<(Entity, &Key)>,
 ) {
     for data in midi_events.read() {
-        let raw = data.message.to_raw();
+        let raw = data.message.as_bytes();
         let [_, index, _value] = raw.as_slice() else {
             continue;
         };
@@ -143,16 +144,18 @@ fn handle_midi_input(
         #[allow(clippy::iter_nth)]
         let key_str = KEY_RANGE.iter().nth(off.into()).unwrap();
 
-        if data.message.is_note_on() {
-            for (entity, key) in query.iter() {
-                if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
-                    commands.entity(entity).insert(PressedKey);
+        if let MidiMessage::ChannelVoice(message) = data.message {
+            if message.is_note_on() {
+                for (entity, key) in query.iter() {
+                    if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
+                        commands.entity(entity).insert(PressedKey);
+                    }
                 }
-            }
-        } else if data.message.is_note_off() {
-            for (entity, key) in query.iter() {
-                if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
-                    commands.entity(entity).remove::<PressedKey>();
+            } else if message.is_note_off() {
+                for (entity, key) in query.iter() {
+                    if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
+                        commands.entity(entity).remove::<PressedKey>();
+                    }
                 }
             }
         }

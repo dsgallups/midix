@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_midix::prelude::*;
-use midix::MidiEvent;
+use midix::{bytes::FromMidiMessage, ChannelVoiceMessage};
 
 const KEY_PORT_MAP: [(KeyCode, usize); 10] = [
     (KeyCode::Digit0, 0),
@@ -75,12 +75,12 @@ fn disconnect(input: Res<ButtonInput<KeyCode>>, output: Res<MidiOutput>) {
 fn play_notes(input: Res<ButtonInput<KeyCode>>, output: Res<MidiOutput>) {
     for (keycode, note) in &KEY_NOTE_MAP {
         if input.just_pressed(*keycode) {
-            let message = MidiEvent::read_packet(&[0b1001_0000, *note, 127]).unwrap();
+            let message = ChannelVoiceMessage::from_bytes(&[0b1001_0000, *note, 127]).unwrap();
 
             output.send(message); // Note on, channel 1, max velocity
         }
         if input.just_released(*keycode) {
-            let message = MidiEvent::read_packet(&[0b1000_0000, *note, 127]).unwrap();
+            let message = ChannelVoiceMessage::from_bytes(&[0b1000_0000, *note, 127]).unwrap();
             output.send(message); // Note on, channel 1, max velocity
         }
     }

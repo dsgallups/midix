@@ -4,14 +4,16 @@
 
 use core::fmt;
 
+use crate::utils::check_u4;
+
 /// Identifies a channel for MIDI, it's u4
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Channel(u8);
 
 impl Channel {
     ///Identify a channel
-    pub fn new(channel: impl Into<u8>) -> Self {
-        Self(channel.into())
+    pub fn new(channel: u8) -> Result<Self, std::io::Error> {
+        Ok(Self(check_u4(channel)?))
     }
 
     /// Returns the 4-bit channel number

@@ -1,10 +1,25 @@
 use core::fmt;
 
+use crate::{bytes::MidiBits, utils::check_u7};
+
 /// Identifies a key press
 ///
 /// TODO docs
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Key(u8);
+
+impl MidiBits for Key {
+    type BitRepresentation = u8;
+    fn as_bits(&self) -> Self::BitRepresentation {
+        self.0
+    }
+    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        Ok(Self(check_u7(rep)?))
+    }
+}
 
 impl Key {
     /// Create a new key
@@ -12,19 +27,14 @@ impl Key {
         Self(key.into())
     }
 
-    /// Writes out as int
-    pub fn as_int(self) -> u8 {
-        self.0
-    }
-
     /// Identifies the note of the key pressed
     pub fn note(self) -> Note {
-        Note::from_midi_datum(self.as_int())
+        Note::from_midi_datum(self.as_bits())
     }
 
     /// Identifies the octave of the key pressed
     pub fn octave(&self) -> Octave {
-        Octave::from_midi_datum(self.as_int())
+        Octave::from_midi_datum(self.as_bits())
     }
 }
 
