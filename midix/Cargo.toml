@@ -3,43 +3,15 @@ name = "midix"
 version = "0.0.1"
 edition = "2021"
 authors = ["negamartin", "dsgallups <dsgallups@protonmail.com>"]
-description = "Fast MIDI decoder and encoder both for .mid files and real-time MIDI events"
+description = "Human-readable MIDI decoder and encoder for real-time MIDI events"
 repository = "https://github.com/dsgallups/midix"
 documentation = "https://docs.rs/midix"
 readme = "README.md"
-keywords = ["midi", "no_std", "audio", "parser"]
+keywords = ["midi", "audio", "parser"]
 categories = ["multimedia::audio", "multimedia::encoding", "multimedia"]
 license = "MIT OR Apache-2.0"
 
-[features]
-default = ["alloc", "std", "parallel"]
-
-# Reject corrupted or uncompliant files, even if they could be read anyway.
-#
-# `ErrorKind::Malformed` errors will only be raised when this feature is enabled.
-strict = []
-
-# Enable the `alloc` dependency.
-#
-# Disabling this feature leaves pretty much only the raw `parse` and `write` functions, but makes
-# the crate fully `no_std`.
-# If this feature is enabled, but the `std` feature is not, the crate becomes `no_std + alloc`.
-alloc = []
-
-# Integrate with the `std` library.
-# Depends on the `alloc` feature.
-std = ["alloc"]
-
-# Enable multithreaded parsing.
-# Depends on the `std` feature.
-#
-# Multithreaded parsing is automatically disabled for tiny MIDI files.
-# Currently, multithreading brings in the `rayon` dependency.
-parallel = ["std", "rayon"]
-
 [dependencies]
-midly = "0.5.3"
-rayon = { version = "1", optional = true }
 
 [dev-dependencies]
 pretty_assertions = { default-features = false, features = [
