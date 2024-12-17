@@ -1,8 +1,3 @@
-#![cfg_attr(not(any(test, feature = "std")), no_std)]
-
-#[cfg(feature = "alloc")]
-extern crate alloc;
-
 /// All of the errors this crate produces.
 #[macro_use]
 mod error;
@@ -16,3 +11,8 @@ pub use crate::{
     channel::Channel,
     message::{ChannelVoiceEvent, ChannelVoiceMessage},
 };
+
+pub mod prelude {
+    pub use crate::bytes::*;
+    pub use crate::message::*;
+}
