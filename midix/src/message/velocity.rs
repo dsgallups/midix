@@ -26,10 +26,6 @@ impl Velocity {
     pub fn new(velocity: impl Into<u8>) -> Self {
         Self(velocity.into())
     }
-    /// As an int
-    pub fn as_int(self) -> u8 {
-        self.0
-    }
 }
 
 impl fmt::Display for Velocity {

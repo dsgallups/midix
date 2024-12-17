@@ -5,3 +5,9 @@ pub fn check_u7(byte: u8) -> Result<u8, std::io::Error> {
         .then(|| byte)
         .ok_or(io_error!(ErrorKind::InvalidData, "Leading bit found"))
 }
+
+pub fn check_u4(byte: u8) -> Result<u8, std::io::Error> {
+    (byte & 0b11110000 == 0)
+        .then(|| byte)
+        .ok_or(io_error!(ErrorKind::InvalidData, "Leading bit found"))
+}

@@ -27,19 +27,14 @@ impl Key {
         Self(key.into())
     }
 
-    /// Writes out as int
-    pub fn as_int(self) -> u8 {
-        self.0
-    }
-
     /// Identifies the note of the key pressed
     pub fn note(self) -> Note {
-        Note::from_midi_datum(self.as_int())
+        Note::from_midi_datum(self.as_bits())
     }
 
     /// Identifies the octave of the key pressed
     pub fn octave(&self) -> Octave {
-        Octave::from_midi_datum(self.as_int())
+        Octave::from_midi_datum(self.as_bits())
     }
 }
 

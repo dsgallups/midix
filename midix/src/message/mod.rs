@@ -61,15 +61,17 @@ impl FromMidiMessage for ChannelVoiceMessage {
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
-                let lsb = data[0].as_int() as u16;
-                let msb = data[1].as_int() as u16;
-                ChannelVoiceEvent::PitchBend {
-                    bend: PitchBend(u14::from(msb << 7 | lsb)),
-                }
+                let lsb = *data.get_byte(0)?;
+                let msb = *data.get_byte(1)?;
+                ChannelVoiceEvent::PitchBend(PitchBend::from_byte_pair(lsb, msb)?)
             }
             _ => panic!("parsed midi message before checking that status is in range"),
         };
-        todo!()
+        let channel = status & 0b0000_1111;
+        Ok(ChannelVoiceMessage {
+            channel: Channel::new(channel)?,
+            message: msg,
+        })
     }
 }
 
@@ -93,29 +95,12 @@ impl ChannelVoiceMessage {
 
     /// Get the raw midi packet for this message
     pub fn to_raw(&self) -> Vec<u8> {
-        let raw_status = self.status_nibble();
+        let mut packet = Vec::with_capacity(3);
+        packet.push(self.status());
+        let data = self.message.to_raw();
+        packet.extend(data.into_iter());
 
-        match self.message {
-            ChannelVoiceEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            ChannelVoiceEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            ChannelVoiceEvent::Aftertouch { key, vel } => {
-                vec![raw_status, key.as_int(), vel.as_int()]
-            }
-            ChannelVoiceEvent::Controller { controller, value } => {
-                vec![raw_status, controller, value]
-            }
-            ChannelVoiceEvent::ProgramChange { program } => vec![raw_status, program],
-            ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => vec![raw_status, vel],
-            ChannelVoiceEvent::PitchBend(bend) => {
-                let raw = bend.as_u16();
-                vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
-            }
-        }
-    }
-
-    /// Get the raw status nibble for this MIDI message type.
-    pub(crate) fn status_nibble(&self) -> u8 {
-        self.message.status_nibble()
+        packet
     }
 }
 
@@ -178,47 +163,12 @@ pub(crate) fn msg_length(status: u8) -> usize {
     LENGTH_BY_STATUS[(status >> 4) as usize] as usize
 }
 
-/// Receives status byte and midi args separately.
-///
-/// Panics if the `status` is not a MIDI message status (0x80..=0xEF).
-pub(crate) fn read(status: u8, data: [u8; 2]) -> (u8, ChannelVoiceEvent) {
-    let msg = match status >> 4 {
-        0x8 => ChannelVoiceEvent::NoteOff {
-            key: Key::new(data[0]),
-            vel: Velocity::new(data[1]),
-        },
-        0x9 => ChannelVoiceEvent::NoteOn {
-            key: Key::new(data[0]),
-            vel: Velocity::new(data[1]),
-        },
-        0xA => ChannelVoiceEvent::Aftertouch {
-            key: Key::new(data[0]),
-            vel: Velocity::new(data[1]),
-        },
-        0xB => ChannelVoiceEvent::Controller {
-            controller: data[0],
-            value: data[1],
-        },
-        0xC => ChannelVoiceEvent::ProgramChange { program: data[0] },
-        0xD => ChannelVoiceEvent::ChannelPressureAfterTouch { vel: data[0] },
-        0xE => {
-            //Note the little-endian order, contrasting with the default big-endian order of
-            //Standard Midi Files
-            let lsb = data[0] as u16;
-            let msb = data[1] as u16;
-            ChannelVoiceEvent::PitchBend(PitchBend::new(msb << 7 | lsb))
-        }
-        _ => panic!("parsed midi message before checking that status is in range"),
-    };
-    (status, msg)
-}
-
 impl ChannelVoiceEvent {
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
         use ChannelVoiceEvent::*;
         match self {
-            NoteOn { vel, .. } => vel.as_int() != 0,
+            NoteOn { vel, .. } => vel.as_bits() != 0,
             _ => false,
         }
     }
@@ -228,34 +178,34 @@ impl ChannelVoiceEvent {
         use ChannelVoiceEvent::*;
         match self {
             NoteOff { .. } => true,
-            NoteOn { vel, .. } => vel.as_int() == 0,
+            NoteOn { vel, .. } => vel.as_bits() == 0,
             _ => false,
         }
     }
 
-    /// Get the raw midi packet for this message
+    /// Get the raw data bytes for this message
     pub fn to_raw(&self) -> Vec<u8> {
-        let raw_status = self.status_nibble();
-
         match self {
-            ChannelVoiceEvent::NoteOff { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
-            ChannelVoiceEvent::NoteOn { key, vel } => vec![raw_status, key.as_int(), vel.as_int()],
+            ChannelVoiceEvent::NoteOff { key, vel } => vec![key.as_bits(), vel.as_bits()],
+            ChannelVoiceEvent::NoteOn { key, vel } => vec![key.as_bits(), vel.as_bits()],
             ChannelVoiceEvent::Aftertouch { key, vel } => {
-                vec![raw_status, key.as_int(), vel.as_int()]
+                vec![key.as_bits(), vel.as_bits()]
             }
             ChannelVoiceEvent::Controller { controller, value } => {
-                vec![raw_status, *controller, *value]
+                vec![controller.as_bits(), *value]
             }
-            ChannelVoiceEvent::ProgramChange { program } => vec![raw_status, *program],
-            ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => vec![raw_status, *vel],
+            ChannelVoiceEvent::ProgramChange { program } => vec![program.as_bits()],
+            ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => vec![vel.as_bits()],
             ChannelVoiceEvent::PitchBend(bend) => {
-                let raw = bend.as_u16();
-                vec![raw_status, (raw & 0x7F) as u8, (raw >> 7) as u8]
+                vec![bend.lsb(), bend.msb()]
             }
         }
     }
 
-    /// Get the raw status nibble for this MIDI message type.
+    /// Returns the upper four bits for the status. This should be combined with the channel to make the status byte.
+    /// i.e. this will return 00001000.
+    /// a channel of 00001001
+    /// should make 10001001
     pub(crate) fn status_nibble(&self) -> u8 {
         match self {
             ChannelVoiceEvent::NoteOff { .. } => 0x8,
