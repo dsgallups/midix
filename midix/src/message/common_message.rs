@@ -33,8 +33,8 @@ impl FromMidiMessage for SystemCommonMessage {
             0xF0 => {
                 //SysEx
                 let data = data
-                    .into_iter()
-                    .map(|b| *b)
+                    .iter()
+                    .copied()
                     .take_while(|byte| byte != &0xF7)
                     .collect::<Vec<_>>();
                 SystemCommonMessage::SystemExclusive(data)
@@ -53,7 +53,7 @@ impl FromMidiMessage for SystemCommonMessage {
                     msb: data[1],
                 }
             }
-            0xF3 if data.len() >= 1 => {
+            0xF3 if data.len() == 1 => {
                 //Song Select
                 SystemCommonMessage::SongSelect(data[0])
             }
@@ -61,7 +61,7 @@ impl FromMidiMessage for SystemCommonMessage {
                 //Tune Request
                 SystemCommonMessage::TuneRequest
             }
-            0xF1..=0xF5 if data.len() == 0 => {
+            0xF1..=0xF5 if data.is_empty() => {
                 //Unknown system common event
                 SystemCommonMessage::Undefined(status)
             }

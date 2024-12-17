@@ -38,7 +38,7 @@ impl MidiBits for PitchBend {
         Self: Sized,
     {
         let lsb = (rep >> 8) as u8;
-        let msb = (rep >> 0x00FF) as u8;
+        let msb = (rep & 0x00FF) as u8;
         Self::from_byte_pair(lsb, msb)
     }
 }

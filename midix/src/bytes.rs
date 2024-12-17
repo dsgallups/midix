@@ -1,7 +1,8 @@
+//! Contains traits that can represent structs
+//!
 use std::io::{self, ErrorKind};
 
-/// Contains traits that can represent structs
-
+/// A representation of some type as a part of a longer midi message
 pub trait MidiBits {
     type BitRepresentation;
     fn as_bits(&self) -> Self::BitRepresentation;
@@ -10,6 +11,7 @@ pub trait MidiBits {
         Self: Sized;
 }
 
+/// Some data that is parsable from a midi message
 pub trait FromMidiMessage {
     const MIN_STATUS_BYTE: u8;
     const MAX_STATUS_BYTE: u8;

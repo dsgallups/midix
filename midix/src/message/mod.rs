@@ -14,10 +14,11 @@ pub use realtime_message::*;
 
 use crate::bytes::FromMidiMessage;
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MidiMessage {
-    ChannelVoiceMessage(ChannelVoiceMessage),
-    SystemCommonMessage(SystemCommonMessage),
-    SystemRealTimeMessage(SystemRealTimeMessage),
+    ChannelVoice(ChannelVoiceMessage),
+    SystemCommon(SystemCommonMessage),
+    SystemRealTime(SystemRealTimeMessage),
 }
 
 impl FromMidiMessage for MidiMessage {
@@ -28,13 +29,13 @@ impl FromMidiMessage for MidiMessage {
         Self: Sized,
     {
         match status {
-            0x80..=0xEF => Ok(Self::ChannelVoiceMessage(
+            0x80..=0xEF => Ok(Self::ChannelVoice(
                 ChannelVoiceMessage::from_status_and_data(status, data)?,
             )),
-            0xF0..=0xF7 => Ok(Self::SystemCommonMessage(
+            0xF0..=0xF7 => Ok(Self::SystemCommon(
                 SystemCommonMessage::from_status_and_data(status, data)?,
             )),
-            0xF8..=0xFF => Ok(Self::SystemRealTimeMessage(
+            0xF8..=0xFF => Ok(Self::SystemRealTime(
                 SystemRealTimeMessage::from_status_and_data(status, data)?,
             )),
             _ => Err(io_error!(

@@ -10,17 +10,12 @@ mod error;
 pub mod bytes;
 mod channel;
 pub mod event;
-mod message;
+pub mod message;
 mod primitive;
 pub(crate) mod utils;
 
-pub mod midly {
-    pub use midly::*;
-}
-
 pub use crate::{
     channel::Channel,
-    error::{Error, ErrorKind, Result},
     event::{MetaMessage, TrackEvent, TrackEventKind},
     message::{ChannelVoiceEvent, ChannelVoiceMessage},
     primitive::{Format, Fps, SmpteTime, Timing},

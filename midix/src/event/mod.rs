@@ -1,7 +1,4 @@
 //! All sort of events and their parsers.
-mod live;
-pub use live::*;
-
 mod system;
 pub use system::*;
 
@@ -99,34 +96,4 @@ pub enum MetaMessage<'a> {
     /// The first `u8` is the raw meta-message identifier byte.
     /// The slice is the actual payload of the meta-message.
     Unknown(u8, &'a [u8]),
-}
-impl<'a> MetaMessage<'a> {
-    /// Remove any lifetimed data from this event to create a `MidiMessage` with `'static` lifetime
-    /// that can be stored and moved everywhere, solving borrow checker issues.
-    ///
-    /// WARNING: Any bytestrings in the input will be replaced by empty bytestrings.
-    pub fn to_static(&self) -> MetaMessage<'static> {
-        use self::MetaMessage::*;
-        match *self {
-            TrackNumber(v) => TrackNumber(v),
-            Text(_) => Text(b""),
-            Copyright(_) => Copyright(b""),
-            TrackName(_) => TrackName(b""),
-            InstrumentName(_) => InstrumentName(b""),
-            Lyric(_) => Lyric(b""),
-            Marker(_) => Marker(b""),
-            CuePoint(_) => CuePoint(b""),
-            ProgramName(_) => ProgramName(b""),
-            DeviceName(_) => DeviceName(b""),
-            MidiChannel(v) => MidiChannel(v),
-            MidiPort(v) => MidiPort(v),
-            EndOfTrack => EndOfTrack,
-            Tempo(v) => Tempo(v),
-            SmpteOffset(v) => SmpteOffset(v),
-            TimeSignature(v0, v1, v2, v3) => TimeSignature(v0, v1, v2, v3),
-            KeySignature(v0, v1) => KeySignature(v0, v1),
-            SequencerSpecific(_) => SequencerSpecific(b""),
-            Unknown(v, _) => Unknown(v, b""),
-        }
-    }
 }

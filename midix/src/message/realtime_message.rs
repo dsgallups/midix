@@ -31,7 +31,7 @@ impl FromMidiMessage for SystemRealTimeMessage {
 
     /// Create a system realtime event from its id byte.
     fn from_status_and_data(status: u8, bytes: &[u8]) -> Result<Self, std::io::Error> {
-        if bytes.len() != 0 {
+        if bytes.is_empty() {
             return Err(io_error!(
                 ErrorKind::InvalidData,
                 "System real time messages do not have data bytes"

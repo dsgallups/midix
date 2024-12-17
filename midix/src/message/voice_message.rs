@@ -21,6 +21,38 @@ pub struct ChannelVoiceMessage {
     message: ChannelVoiceEvent,
 }
 
+impl ChannelVoiceMessage {
+    pub const MIN_STATUS_BYTE: u8 = 0x80;
+    pub const MAX_STATUS_BYTE: u8 = 0xEF;
+
+    /// Returns true if the note is on. This excludes note on where the velocity is zero.
+    pub fn is_note_on(&self) -> bool {
+        self.message.is_note_on()
+    }
+
+    /// Returns true if the note is off. This includes note on where the velocity is zero.
+    pub fn is_note_off(&self) -> bool {
+        self.message.is_note_off()
+    }
+
+    pub fn status(&self) -> u8 {
+        self.message.status_nibble() << 4 | self.channel.bits()
+    }
+    pub fn message(&self) -> &ChannelVoiceEvent {
+        &self.message
+    }
+
+    /// Get the raw midi packet for this message
+    pub fn to_raw(&self) -> Vec<u8> {
+        let mut packet = Vec::with_capacity(3);
+        packet.push(self.status());
+        let data = self.message.to_raw();
+        packet.extend(data);
+
+        packet
+    }
+}
+
 impl FromMidiMessage for ChannelVoiceMessage {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xEF;
@@ -65,35 +97,6 @@ impl FromMidiMessage for ChannelVoiceMessage {
             channel: Channel::new(channel)?,
             message: msg,
         })
-    }
-}
-
-impl ChannelVoiceMessage {
-    const MIN_STATUS_BYTE: u8 = 0x80;
-    const MAX_STATUS_BYTE: u8 = 0xEF;
-
-    /// Returns true if the note is on. This excludes note on where the velocity is zero.
-    pub fn is_note_on(&self) -> bool {
-        self.message.is_note_on()
-    }
-
-    /// Returns true if the note is off. This includes note on where the velocity is zero.
-    pub fn is_note_off(&self) -> bool {
-        self.message.is_note_off()
-    }
-
-    pub fn status(&self) -> u8 {
-        self.message.status_nibble() << 4 | self.channel.bits()
-    }
-
-    /// Get the raw midi packet for this message
-    pub fn to_raw(&self) -> Vec<u8> {
-        let mut packet = Vec::with_capacity(3);
-        packet.push(self.status());
-        let data = self.message.to_raw();
-        packet.extend(data.into_iter());
-
-        packet
     }
 }
 
@@ -149,11 +152,6 @@ pub enum ChannelVoiceEvent {
     },
     /// Set the pitch bend value for the entire channel.
     PitchBend(PitchBend),
-}
-/// Midi messages have a known length.
-pub(crate) fn msg_length(status: u8) -> usize {
-    const LENGTH_BY_STATUS: [u8; 16] = [0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 1, 1, 2, 0];
-    LENGTH_BY_STATUS[(status >> 4) as usize] as usize
 }
 
 impl ChannelVoiceEvent {
