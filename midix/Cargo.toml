@@ -7,7 +7,7 @@ description = "Human-readable MIDI decoder and encoder for real-time MIDI events
 repository = "https://github.com/dsgallups/midix"
 documentation = "https://docs.rs/midix"
 readme = "README.md"
-keywords = ["midi", "no_std", "audio", "parser"]
+keywords = ["midi", "audio", "parser"]
 categories = ["multimedia::audio", "multimedia::encoding", "multimedia"]
 license = "MIT OR Apache-2.0"
 
