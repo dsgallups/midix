@@ -25,7 +25,7 @@ pub trait FromMidiMessage {
         }
         let (status, data) = bytes.split_at(1);
         let status = status[0];
-        if (Self::MIN_STATUS_BYTE..=Self::MAX_STATUS_BYTE).contains(&status) {
+        if !(Self::MIN_STATUS_BYTE..=Self::MAX_STATUS_BYTE).contains(&status) {
             return Err(io_error!(
                 ErrorKind::InvalidData,
                 "Invalid status message for type!)"

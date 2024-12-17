@@ -10,7 +10,6 @@ mod error;
 pub mod bytes;
 mod channel;
 pub mod event;
-pub mod live;
 mod message;
 mod primitive;
 pub(crate) mod utils;

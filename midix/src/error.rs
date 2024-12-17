@@ -1,6 +1,5 @@
 use core::fmt;
 
-#[macro_use]
 macro_rules! io_error {
     ($kind:expr, $msg:expr) => {
         std::io::Error::new($kind, $msg)
