@@ -4,7 +4,6 @@ use bevy::{
     prelude::*,
 };
 use bevy_midix::prelude::*;
-use midix::{bytes::AsMidiBytes, message::MidiMessage};
 
 fn main() {
     App::new()

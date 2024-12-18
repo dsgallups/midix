@@ -3,16 +3,15 @@
 mod error;
 
 pub mod bytes;
-mod channel;
+pub mod channel;
 pub mod message;
 pub(crate) mod utils;
 
-pub use crate::{
-    channel::Channel,
-    message::{ChannelVoiceEvent, ChannelVoiceMessage},
-};
-
 pub mod prelude {
     pub use crate::bytes::*;
-    pub use crate::message::*;
+    pub use crate::channel::Channel;
+    pub use crate::message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *};
+    pub use core::fmt::Display;
+
+    pub(crate) use crate::utils::*;
 }

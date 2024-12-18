@@ -3,6 +3,7 @@ pub mod output;
 
 pub mod prelude {
     pub use crate::{input::*, output::*, *};
+    pub use midix::prelude::*;
 }
 
 pub const KEY_RANGE: [&str; 12] = [

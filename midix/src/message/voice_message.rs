@@ -1,12 +1,4 @@
-use crate::{
-    bytes::{AsMidiBytes, FromMidiMessage, MidiBits, ReadDataBytes},
-    utils::check_u7,
-    Channel,
-};
-
-use super::{
-    controller::Controller, key::Key, pitch_bend::PitchBend, program::Program, velocity::Velocity,
-};
+use crate::prelude::*;
 
 /// Represents a MIDI voice message,.
 ///
@@ -24,6 +16,10 @@ pub struct ChannelVoiceMessage {
 impl ChannelVoiceMessage {
     pub const MIN_STATUS_BYTE: u8 = 0x80;
     pub const MAX_STATUS_BYTE: u8 = 0xEF;
+
+    pub fn new(channel: Channel, message: ChannelVoiceEvent) -> Self {
+        Self { channel, message }
+    }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {

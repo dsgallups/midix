@@ -11,9 +11,8 @@ mod common_message;
 pub use common_message::*;
 mod realtime_message;
 pub use realtime_message::*;
-mod mtcquarterframe;
 
-use crate::bytes::{AsMidiBytes, FromMidiMessage};
+use crate::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MidiMessage {
@@ -81,4 +80,22 @@ impl AsMidiBytes for MidiMessage {
             SystemRealTime(r) => r.as_bytes(),
         }
     }
+}
+
+#[test]
+fn parse_note_on() {
+    let message = [0b1001_0001, 0b01001000, 0b00100001];
+    let parsed = MidiMessage::from_bytes(&message).unwrap();
+    //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
+
+    assert_eq!(
+        parsed,
+        MidiMessage::ChannelVoice(ChannelVoiceMessage::new(
+            Channel::new(1).unwrap(),
+            ChannelVoiceEvent::NoteOn {
+                key: Key::new(72),
+                vel: Velocity::new(33)
+            }
+        ))
+    );
 }
