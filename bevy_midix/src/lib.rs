@@ -1,3 +1,13 @@
+#![doc = r#"
+# bevy_MIDIx
+
+Docs still need to be written. For now, follow the reference of our fork (`bevy_midi`).
+
+A few differences:
+This crate uses `midix` types.
+
+"#]
+
 pub mod input;
 pub mod output;
 
