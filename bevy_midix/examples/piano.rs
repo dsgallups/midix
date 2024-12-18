@@ -140,8 +140,7 @@ fn handle_midi_input(
         };
         let off = index % 12;
         let oct = index.overflowing_div(12).0;
-        #[allow(clippy::iter_nth)]
-        let key_str = KEY_RANGE.iter().nth(off.into()).unwrap();
+        let key_str = KEY_RANGE[off as usize];
 
         if let MidiMessage::ChannelVoice(message) = data.message {
             if message.is_note_on() {
