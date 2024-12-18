@@ -887,7 +887,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_midix"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "bevy",
  "bevy_egui",
@@ -2982,7 +2982,7 @@ dependencies = [
 
 [[package]]
 name = "midix"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "pretty_assertions",
 ]

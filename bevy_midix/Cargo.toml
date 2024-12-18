@@ -1,6 +1,6 @@
 [package]
 name = "bevy_midix"
-version = "0.0.1"
+version = "1.0.0"
 authors = [
     "Black Phlox <bphlox@gmail.com>",
     "dsgallups <dsgallups@protonmail.com>",
@@ -18,7 +18,7 @@ exclude = ["assets/*"]
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.8"
-midix = { version = "0.0.1", path = "../midix" }
+midix = { version = "1.0.0", path = "../midix" }
 
 [dev-dependencies]
 bevy_egui = { version = "0.31.1", features = ["immutable_ctx"] }
