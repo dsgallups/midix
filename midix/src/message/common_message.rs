@@ -1,6 +1,5 @@
+use crate::prelude::*;
 use std::io::ErrorKind;
-
-use crate::bytes::{AsMidiBytes, FromMidiMessage, MidiBits};
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemCommonMessage {
@@ -131,6 +130,7 @@ pub enum MtcQuarterFrameMessage {
     /// The high nibble of the hour count.
     HoursHigh,
 }
+
 impl MidiBits for MtcQuarterFrameMessage {
     type BitRepresentation = u8;
     fn as_bits(&self) -> u8 {
@@ -146,8 +146,7 @@ impl MidiBits for MtcQuarterFrameMessage {
             HoursHigh => 7,
         }
     }
-
-    fn from_bits(code: u8) -> Result<Self, std::io::Error> {
+    fn from_bits(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
         use MtcQuarterFrameMessage::*;
         Ok(match code {
             0 => FramesLow,
@@ -161,7 +160,7 @@ impl MidiBits for MtcQuarterFrameMessage {
             _ => {
                 return Err(io_error!(
                     ErrorKind::InvalidData,
-                    "Invalid byte for MTC Quater Frame Message"
+                    "Invalid MtcQuarterFrameMessage"
                 ))
             }
         })

@@ -1,6 +1,5 @@
+use crate::prelude::*;
 use core::fmt;
-
-use crate::{bytes::MidiBits, utils::check_u7};
 
 /// Identifies the velocity of a key press, or a key unpress, or an aftertouch.
 ///
