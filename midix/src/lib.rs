@@ -17,6 +17,7 @@ mod error;
 pub mod bytes;
 pub mod channel;
 pub mod message;
+pub mod reader;
 pub(crate) mod utils;
 
 pub mod prelude {
