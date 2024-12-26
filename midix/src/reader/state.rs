@@ -4,6 +4,7 @@ pub struct ReaderState {
     last_error_offset: usize,
 }
 
+#[allow(dead_code)]
 impl ReaderState {
     pub const fn default() -> Self {
         Self {

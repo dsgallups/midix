@@ -37,6 +37,10 @@ impl<R> Reader<R> {
         self.state.offset()
     }
 
+    pub const fn increment_buffer_position(&mut self, amt: usize) {
+        self.state.increment_offset(amt);
+    }
+
     /// Gets a reference to the underlying reader
     pub fn get_ref(&self) -> &R {
         &self.reader
@@ -97,9 +101,15 @@ impl<'slc> Reader<&'slc [u8]> {
     {
         let start = self.buffer_position();
         let end = start + SIZE;
-        self.state.increment_offset(end);
+        self.state.increment_offset(SIZE);
 
         if end > self.reader.len() {
+            println!(
+                "Error: start: {}, end: {}, len: {}",
+                start,
+                end,
+                self.reader.len()
+            );
             self.state.increment_last_error_offset(self.reader.len());
             return Err(ReaderError::end());
         }
@@ -110,4 +120,22 @@ impl<'slc> Reader<&'slc [u8]> {
             .try_into()
             .map_err(|_| ReaderError::invalid_input("Invalid length"))
     }
+}
+
+#[test]
+fn test_read_bytes() {
+    let bytes = [
+        0x00, 0x00, 0x00, 0x06, //length
+        0x00, 0x01, //format
+        0x00, 0x03, //num_tracks
+        0x00, 0x78, //timing
+    ];
+    let mut reader = Reader::from_byte_slice(&bytes);
+
+    reader.read_exact(4).unwrap();
+    reader.read_exact(2).unwrap();
+    reader.read_exact(2).unwrap();
+    reader.read_exact(2).unwrap();
+
+    assert_eq!(reader.buffer_position(), 10);
 }
