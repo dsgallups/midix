@@ -8,9 +8,11 @@ Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 - [ ] Config
 "#]
 
+use error::{ReadResult, ReaderError};
 use state::ReaderState;
 
-pub mod state;
+pub mod error;
+pub(crate) mod state;
 
 #[derive(Clone)]
 pub struct Reader<R> {
@@ -31,7 +33,7 @@ impl<R> Reader<R> {
         self.reader
     }
 
-    pub const fn buffer_position(&self) -> u64 {
+    pub const fn buffer_position(&self) -> usize {
         self.state.offset()
     }
 
@@ -46,8 +48,8 @@ impl<R> Reader<R> {
     }
 }
 
-impl<'a> Reader<&'a [u8]> {
-    pub const fn from_byte_slice(slice: &'a [u8]) -> Self {
+impl<'slc> Reader<&'slc [u8]> {
+    pub const fn from_byte_slice(slice: &'slc [u8]) -> Self {
         Self {
             reader: slice,
             state: ReaderState::default(),
@@ -56,5 +58,43 @@ impl<'a> Reader<&'a [u8]> {
 
     pub fn read_event(&self) -> u8 {
         todo!();
+    }
+
+    pub fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    where
+        'slc: 'slf,
+    {
+        let start = self.buffer_position();
+        let end = start + bytes;
+        self.state.increment_offset(bytes);
+
+        if end > self.reader.len() {
+            self.state.increment_last_error_offset(self.reader.len());
+            return Err(ReaderError::end());
+        }
+
+        let slice = &self.reader[start..end];
+
+        Ok(slice)
+    }
+    /// Returns a statically sized array
+    pub fn read_exact_size<'slf, const SIZE: usize>(&'slf mut self) -> ReadResult<&'slc [u8; SIZE]>
+    where
+        'slc: 'slf,
+    {
+        let start = self.buffer_position();
+        let end = start + SIZE;
+        self.state.increment_offset(end);
+
+        if end > self.reader.len() {
+            self.state.increment_last_error_offset(self.reader.len());
+            return Err(ReaderError::end());
+        }
+
+        let slice = &self.reader[start..end];
+
+        slice
+            .try_into()
+            .map_err(|_| ReaderError::invalid_input("Invalid length"))
     }
 }

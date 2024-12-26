@@ -12,6 +12,10 @@ categories = ["multimedia::audio", "multimedia::encoding", "multimedia"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+thiserror = "2.0.9"
+
+[features]
+nightly = []
 
 [dev-dependencies]
 pretty_assertions = { default-features = false, features = [
