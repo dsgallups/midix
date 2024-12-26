@@ -46,7 +46,7 @@ pub trait AsMidiBytes {
     fn as_bytes(&self) -> Vec<u8>;
 }
 
-pub trait AsBorrowedBytes {
+pub trait AsMidiBytesBorrowed {
     fn borrowed_bytes(&self) -> &[u8];
 }
 

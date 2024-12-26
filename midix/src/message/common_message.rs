@@ -1,8 +1,12 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
+pub trait SystemCommonMessage {
+    fn status(&self) -> u8;
+}
+
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SystemCommonMessage {
+pub enum OwnedSystemCommonMessage {
     /// A system-exclusive event.
     ///
     /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
@@ -23,9 +27,9 @@ pub enum SystemCommonMessage {
     /// Request the device to tune itself.
     TuneRequest,
 }
-impl SystemCommonMessage {
-    pub fn status(&self) -> u8 {
-        use SystemCommonMessage::*;
+impl SystemCommonMessage for OwnedSystemCommonMessage {
+    fn status(&self) -> u8 {
+        use OwnedSystemCommonMessage::*;
         match self {
             SystemExclusive(_) => 0xF0,
             SongPositionPointer { .. } => 0xF2,
@@ -36,9 +40,9 @@ impl SystemCommonMessage {
     }
 }
 
-impl AsMidiBytes for SystemCommonMessage {
+impl AsMidiBytes for OwnedSystemCommonMessage {
     fn as_bytes(&self) -> Vec<u8> {
-        use SystemCommonMessage::*;
+        use OwnedSystemCommonMessage::*;
         match self {
             SystemExclusive(b) => {
                 let mut bytes = Vec::with_capacity(b.len() + 2);
@@ -57,7 +61,7 @@ impl AsMidiBytes for SystemCommonMessage {
     }
 }
 
-impl FromMidiMessage for SystemCommonMessage {
+impl FromMidiMessage for OwnedSystemCommonMessage {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {
@@ -69,7 +73,7 @@ impl FromMidiMessage for SystemCommonMessage {
                     .copied()
                     .take_while(|byte| byte != &0xF7)
                     .collect::<Vec<_>>();
-                SystemCommonMessage::SystemExclusive(data)
+                OwnedSystemCommonMessage::SystemExclusive(data)
             }
             /*0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame
@@ -80,22 +84,22 @@ impl FromMidiMessage for SystemCommonMessage {
             }*/
             0xF2 if data.len() == 2 => {
                 //Song Position
-                SystemCommonMessage::SongPositionPointer {
+                OwnedSystemCommonMessage::SongPositionPointer {
                     lsb: data[0],
                     msb: data[1],
                 }
             }
             0xF3 if data.len() == 1 => {
                 //Song Select
-                SystemCommonMessage::SongSelect(data[0])
+                OwnedSystemCommonMessage::SongSelect(data[0])
             }
             0xF6 => {
                 //Tune Request
-                SystemCommonMessage::TuneRequest
+                OwnedSystemCommonMessage::TuneRequest
             }
             0xF1..=0xF5 if data.is_empty() => {
                 //Unknown system common event
-                SystemCommonMessage::Undefined(status)
+                OwnedSystemCommonMessage::Undefined(status)
             }
             _ => {
                 //Invalid/Unknown/Unreachable event
@@ -164,5 +168,42 @@ impl MidiBits for MtcQuarterFrameMessage {
                 ))
             }
         })
+    }
+}
+
+/// Borrowed bytes from some reader. EXPECT THIS TO BREAK IN A FUTURE RELEASE!
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub enum BorrowedSystemCommonMessage<'a> {
+    /// A system-exclusive event.
+    ///
+    /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
+    /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
+    SystemExclusive(&'a [u8]),
+    /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
+    MidiTimeCodeQuarterFrame {
+        message: MtcQuarterFrameMessage,
+        tag: u8,
+    },*/
+    /// An undefined System Common message
+    Undefined(u8),
+    /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
+    /// sequence.
+    SongPositionPointer { lsb: u8, msb: u8 },
+    /// Select a given song index.
+    SongSelect(u8),
+    /// Request the device to tune itself.
+    TuneRequest,
+}
+
+impl SystemCommonMessage for BorrowedSystemCommonMessage<'_> {
+    fn status(&self) -> u8 {
+        use BorrowedSystemCommonMessage::*;
+        match &self {
+            SystemExclusive(_) => 0xF0,
+            SongPositionPointer { .. } => 0xF2,
+            SongSelect(_) => 0xF3,
+            TuneRequest => 0xF6,
+            Undefined(v) => *v,
+        }
     }
 }

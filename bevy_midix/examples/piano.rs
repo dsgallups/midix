@@ -142,7 +142,7 @@ fn handle_midi_input(
         let oct = index.overflowing_div(12).0;
         let key_str = KEY_RANGE[off as usize];
 
-        if let MidiMessage::ChannelVoice(message) = data.message {
+        if let OwnedMidiMessage::ChannelVoice(message) = data.message {
             if message.is_note_on() {
                 for (entity, key) in query.iter() {
                     if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {

@@ -14,39 +14,43 @@ pub use realtime_message::*;
 
 use crate::prelude::*;
 
+pub trait MidiMessage {
+    fn channel_voice(&self) -> Option<&ChannelVoiceMessage>;
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum MidiMessage {
+pub enum OwnedMidiMessage {
     ChannelVoice(ChannelVoiceMessage),
-    SystemCommon(SystemCommonMessage),
+    SystemCommon(OwnedSystemCommonMessage),
     SystemRealTime(SystemRealTimeMessage),
 }
 
-impl From<ChannelVoiceMessage> for MidiMessage {
+impl From<ChannelVoiceMessage> for OwnedMidiMessage {
     fn from(value: ChannelVoiceMessage) -> Self {
         Self::ChannelVoice(value)
     }
 }
-impl From<SystemCommonMessage> for MidiMessage {
-    fn from(value: SystemCommonMessage) -> Self {
+impl From<OwnedSystemCommonMessage> for OwnedMidiMessage {
+    fn from(value: OwnedSystemCommonMessage) -> Self {
         Self::SystemCommon(value)
     }
 }
-impl From<SystemRealTimeMessage> for MidiMessage {
+impl From<SystemRealTimeMessage> for OwnedMidiMessage {
     fn from(value: SystemRealTimeMessage) -> Self {
         Self::SystemRealTime(value)
     }
 }
 
-impl MidiMessage {
-    pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
+impl MidiMessage for OwnedMidiMessage {
+    fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
         match self {
-            MidiMessage::ChannelVoice(c) => Some(c),
+            OwnedMidiMessage::ChannelVoice(c) => Some(c),
             _ => None,
         }
     }
 }
 
-impl FromMidiMessage for MidiMessage {
+impl FromMidiMessage for OwnedMidiMessage {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xFF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -58,7 +62,7 @@ impl FromMidiMessage for MidiMessage {
                 ChannelVoiceMessage::from_status_and_data(status, data)?,
             )),
             0xF0..=0xF7 => Ok(Self::SystemCommon(
-                SystemCommonMessage::from_status_and_data(status, data)?,
+                OwnedSystemCommonMessage::from_status_and_data(status, data)?,
             )),
             0xF8..=0xFF => Ok(Self::SystemRealTime(
                 SystemRealTimeMessage::from_status_and_data(status, data)?,
@@ -71,9 +75,9 @@ impl FromMidiMessage for MidiMessage {
     }
 }
 
-impl AsMidiBytes for MidiMessage {
+impl AsMidiBytes for OwnedMidiMessage {
     fn as_bytes(&self) -> Vec<u8> {
-        use MidiMessage::*;
+        use OwnedMidiMessage::*;
         match self {
             ChannelVoice(c) => c.as_bytes(),
             SystemCommon(s) => s.as_bytes(),
@@ -85,12 +89,12 @@ impl AsMidiBytes for MidiMessage {
 #[test]
 fn parse_note_on() {
     let message = [0b1001_0001, 0b01001000, 0b00100001];
-    let parsed = MidiMessage::from_bytes(&message).unwrap();
+    let parsed = OwnedMidiMessage::from_bytes(&message).unwrap();
     //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
 
     assert_eq!(
         parsed,
-        MidiMessage::ChannelVoice(ChannelVoiceMessage::new(
+        OwnedMidiMessage::ChannelVoice(ChannelVoiceMessage::new(
             Channel::new(1).unwrap(),
             ChannelVoiceEvent::NoteOn {
                 key: Key::new(72),
@@ -98,4 +102,21 @@ fn parse_note_on() {
             }
         ))
     );
+}
+
+/// Borrowed bytes from a reader. EXPECT THIS TO CHANGE IN A FUTURE RELEASE!
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum BorrowedMidiMessage<'a> {
+    ChannelVoice(ChannelVoiceMessage),
+    SystemCommon(BorrowedSystemCommonMessage<'a>),
+    SystemRealTime(SystemRealTimeMessage),
+}
+
+impl MidiMessage for BorrowedMidiMessage<'_> {
+    fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
+        match self {
+            BorrowedMidiMessage::ChannelVoice(c) => Some(c),
+            _ => None,
+        }
+    }
 }
