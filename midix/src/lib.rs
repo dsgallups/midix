@@ -32,6 +32,7 @@ mod error;
 
 pub mod bytes;
 pub mod channel;
+pub mod chunk;
 pub mod file;
 pub mod message;
 pub mod reader;

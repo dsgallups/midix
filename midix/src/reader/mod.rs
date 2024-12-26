@@ -60,18 +60,31 @@ impl<'slc> Reader<&'slc [u8]> {
         todo!();
     }
 
+    pub fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slf u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get(self.buffer_position())
+            .ok_or(ReaderError::end())?;
+        self.state.increment_offset(1);
+
+        Ok(res)
+    }
+
     pub fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {
         let start = self.buffer_position();
         let end = start + bytes;
-        self.state.increment_offset(bytes);
 
         if end > self.reader.len() {
             self.state.increment_last_error_offset(self.reader.len());
             return Err(ReaderError::end());
         }
+        self.state.increment_offset(bytes);
 
         let slice = &self.reader[start..end];
 

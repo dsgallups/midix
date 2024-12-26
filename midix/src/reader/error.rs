@@ -8,6 +8,8 @@ pub enum ReaderError {
     Io(#[from] std::io::Error),
     #[error("End of Reader")]
     EndOfReader,
+    #[error("This MIDI file is unsupported: {0}")]
+    Unimplemented(String),
 }
 impl ReaderError {
     pub const fn end() -> Self {
@@ -19,6 +21,11 @@ impl ReaderError {
     {
         Self::Io(io_error!(ErrorKind::InvalidInput, msg))
     }
+
+    pub fn unimplemented(msg: impl Into<String>) -> Self {
+        Self::Unimplemented(msg.into())
+    }
+
     pub fn invalid_data() -> Self {
         Self::Io(io_error!(ErrorKind::InvalidInput, "Invalid Data"))
     }
