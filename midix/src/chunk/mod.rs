@@ -1,7 +1,7 @@
 pub mod header;
 pub mod track;
 
-use crate::{prelude::*, utils};
+use crate::prelude::*;
 use header::MidiHeader;
 #[cfg(test)]
 use pretty_assertions::assert_eq;
@@ -14,38 +14,42 @@ use track::MidiTrack;
 /// which is the number of bytes in the chunk. This structure allows
 /// future chunk types to be designed which may be easily be ignored
 /// if encountered by a program written before the chunk type is introduced.
-#[derive(Debug, Clone, PartialEq)]
-pub enum MidiChunkHeader {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum MidiChunk<'a> {
     /// Represents the byte length of the midi header
     ///
     /// Begins with "MThd"
-    Header(MidiHeader),
+    Header(MidiHeader<'a>),
     /// Represents the byte length of a midi track
     ///
     /// Begins with "MTrk"
     Track(MidiTrack),
     /// A chunk type that is not known by this crate
-    Unknown { length: u32 },
+    Unknown { length: &'a [u8; 4] },
 }
 
-impl MidiChunkHeader {
-    pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
+impl<'a> MidiChunk<'a> {
+    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    where
+        'slc: 'a,
+    {
         let chunk_type = reader.read_exact(4)?;
         Ok(match chunk_type {
             b"MThd" => Self::Header(MidiHeader::read(reader)?),
             b"MTrk" => Self::Track(MidiTrack::read(reader)?),
             _ => {
-                let chunk_size = utils::read_u32(reader)?;
+                let length: &[u8; 4] = reader.read_exact_size()?;
+                let chunk_size = u32::from_be_bytes(*length);
                 //increment the reader offset by the size
                 reader.increment_buffer_position(chunk_size as usize);
 
-                Self::Unknown { length: chunk_size }
+                Self::Unknown { length }
             }
         })
     }
 
     pub fn chunk_type(&self) -> MidiChunkType {
-        use MidiChunkHeader::*;
+        use MidiChunk::*;
         match self {
             Header { .. } => MidiChunkType::Header,
             Track { .. } => MidiChunkType::Track,
@@ -53,12 +57,12 @@ impl MidiChunkHeader {
         }
     }
 
-    pub fn length(&self) -> u32 {
-        use MidiChunkHeader::*;
+    pub fn length(self) -> u32 {
+        use MidiChunk::*;
         match self {
             Header(h) => h.length(),
             Track(t) => t.length(),
-            Unknown { length } => *length,
+            Unknown { length } => u32::from_be_bytes(*length),
         }
     }
 }
@@ -94,7 +98,7 @@ fn test_reader_header_chunk() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let result = MidiChunkHeader::read(&mut reader).unwrap();
+    let result = MidiChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.chunk_type(), MidiChunkType::Header);
     assert_eq!(result.length(), 6);
@@ -111,7 +115,7 @@ fn test_reader_track_chunk() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let result = MidiChunkHeader::read(&mut reader).unwrap();
+    let result = MidiChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.chunk_type(), MidiChunkType::Track);
     assert_eq!(result.length(), 1321);
@@ -131,12 +135,12 @@ fn test_unknown_chunk() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let result = MidiChunkHeader::read(&mut reader).unwrap();
+    let result = MidiChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.chunk_type(), MidiChunkType::Unknown);
     assert_eq!(result.length(), 8);
 
-    let header = MidiChunkHeader::read(&mut reader).unwrap();
+    let header = MidiChunk::read(&mut reader).unwrap();
     assert_eq!(header.chunk_type(), MidiChunkType::Header);
     assert_eq!(header.length(), 6);
 }

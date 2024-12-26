@@ -6,6 +6,7 @@ pub struct MidiTrack {
 }
 
 impl MidiTrack {
+    /// Assumes that the chunk type bytes ("MTrk") have ALREADY been read
     pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
         let length = super::read_u32(reader)?;
         Ok(Self { length })

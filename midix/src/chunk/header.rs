@@ -31,22 +31,25 @@ If bit 15 of <division> is zero, the bits 14 thru 0 represent the number of delt
 If bit 15 of <division> is a one, delta times in a file correspond to subdivisions of a second, in a way consistent with SMPTE and MIDI Time Code. Bits 14 thru 8 contain one of the four values -24, -25, -29, or -30, corresponding to the four standard SMPTE and MIDI Time Code formats (-29 corresponds to 30 drop frame), and represents the number of frames per second. These negative numbers are stored in two's compliment form. The second byte (stored positive) is the resolution within a frame: typical values may be 4 (MIDI Time Code resolution), 8, 10, 80 (bit resolution), or 100. This stream allows exact specifications of time-code-based tracks, but also allows millisecond-based tracks by specifying 25 frames/sec and a resolution of 40 units per frame. If the events in a file are stored with a bit resolution of thirty-frame time code, the division word would be E250 hex.
 "#]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MidiHeader {
-    length: u32,
-    format: MidiFormat,
-    timing: MidiTiming,
+pub struct MidiHeader<'a> {
+    length: &'a [u8; 4],
+    format: MidiFormat<'a>,
+    timing: MidiTiming<'a>,
 }
 
-impl MidiHeader {
+impl<'a> MidiHeader<'a> {
     /// Assumes that the chunk type bytes ("MThd") have ALREADY been read
-    pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
-        let length = super::read_u32(reader)?;
-        let format_b = super::read_u16(reader)?;
-        let num_tracks = super::read_u16(reader)?;
+    pub fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    where
+        'slc: 'a,
+    {
+        let length: &[u8; 4] = reader.read_exact_size()?;
+        let format_bytes: &[u8; 2] = reader.read_exact_size()?;
+        let num_tracks: &[u8; 2] = reader.read_exact_size()?;
 
-        let format = match format_b {
+        let format = match format_bytes[1] {
             0 => {
-                if num_tracks != 1 {
+                if num_tracks[1] != 1 {
                     return Err(ReaderError::invalid_data());
                 }
                 MidiFormat::SingleMultiChannel
@@ -65,7 +68,7 @@ impl MidiHeader {
         })
     }
     pub fn length(&self) -> u32 {
-        self.length
+        u32::from_be_bytes(*self.length)
     }
     pub fn format(&self) -> u8 {
         todo!()
@@ -91,36 +94,38 @@ pub enum MidiFormatType {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MidiFormat {
+pub enum MidiFormat<'a> {
     SingleMultiChannel,
-    Simultaneous(u16),
-    SequentiallyIndependent(u16),
+    Simultaneous(&'a [u8; 2]),
+    SequentiallyIndependent(&'a [u8; 2]),
 }
 
-impl MidiFormat {
-    pub fn num_tracks(&self) -> u16 {
+impl MidiFormat<'_> {
+    pub fn num_tracks(self) -> u16 {
         use MidiFormat::*;
         match self {
             SingleMultiChannel => 1,
-            Simultaneous(num) | SequentiallyIndependent(num) => *num,
+            Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(*num),
         }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MidiTiming {
-    TicksPerQuarterNote(u16),
+pub enum MidiTiming<'a> {
+    TicksPerQuarterNote(&'a [u8; 2]),
 }
 
-impl MidiTiming {
+impl<'a> MidiTiming<'a> {
     /// Assumes the next two bytes are for a midi division.
-    pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
-        let byte = super::read_u16(reader)?;
-        match byte >> 15 {
+    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    where
+        'slc: 'a,
+    {
+        let bytes: &[u8; 2] = reader.read_exact_size()?;
+        match bytes[0] >> 7 {
             0 => {
                 //this is ticks per quarter_note
-                let tpq = byte & 0x0FFF;
-                Ok(MidiTiming::TicksPerQuarterNote(tpq))
+                Ok(MidiTiming::TicksPerQuarterNote(bytes))
             }
             1 => {
                 //negative smtpe
@@ -129,6 +134,15 @@ impl MidiTiming {
                 ))
             }
             _ => Err(ReaderError::invalid_data()),
+        }
+    }
+    /// Returns Some if the midi timing is a tick per quarter note
+    pub fn ticks_per_quarter_note(self) -> Option<u16> {
+        match self {
+            Self::TicksPerQuarterNote(t) => {
+                let v = u16::from_be_bytes(*t);
+                Some(v & 0x7FFF)
+            }
         }
     }
 }
