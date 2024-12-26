@@ -1,6 +1,4 @@
-use crate::chunk::ReaderError;
-
-use super::{convert_u32, ReadResult, Reader};
+use crate::prelude::*;
 
 #[doc = r#"
 The header chunk at the beginning of the file specifies some basic information about the data in the file. Here's the syntax of the complete chunk:

@@ -1,4 +1,4 @@
-use super::{convert_u32, ReadResult, Reader};
+use crate::prelude::*;
 
 // I would like to return some type of reader...
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,4 +32,18 @@ pub struct MidiTrackEvent<'a> {
     /// as specified in the header chunk.
     delta_time: &'a [u8],
     event: &'a [u8],
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum TrackMidiMessage<'a> {
+    ChannelVoice(ChannelVoiceMessage),
+    SystemExclusive(SystemExclusiveBorrowed<'a>),
+    /// A meta-message, giving extra information for correct playback, like tempo, song name,
+    /// lyrics, etc...
+    Meta(MetaMessage<'a>),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct MetaMessage<'a> {
+    foo: &'a u8,
 }

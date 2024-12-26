@@ -36,6 +36,12 @@ impl AsMidiBytes for SystemExclusiveOwned {
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct SystemExclusiveBorrowed<'a>(&'a [u8]);
 
+impl<'a> SystemExclusiveBorrowed<'a> {
+    pub fn new(data: &'a [u8]) -> Self {
+        Self(data)
+    }
+}
+
 impl SystemExclusive for SystemExclusiveBorrowed<'_> {
     fn len(&self) -> usize {
         self.0.len()

@@ -1,11 +1,6 @@
-pub mod header;
-pub mod track;
-
 use crate::prelude::*;
-use header::MidiHeader;
 #[cfg(test)]
 use pretty_assertions::assert_eq;
-use track::MidiTrack;
 
 /// Represents a sequence of bytes that identify the length of a chunk
 /// and its type.
