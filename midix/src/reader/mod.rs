@@ -60,10 +60,6 @@ impl<'slc> Reader<&'slc [u8]> {
         }
     }
 
-    pub fn read_event(&self) -> u8 {
-        todo!();
-    }
-
     pub fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slf u8>
     where
         'slc: 'slf,
@@ -75,6 +71,27 @@ impl<'slc> Reader<&'slc [u8]> {
         self.state.increment_offset(1);
 
         Ok(res)
+    }
+
+    /// Peak the next set of bytes without incrementing the buffer position.
+    ///
+    /// Errors if the peak goes out of bounds from the slice.
+    ///
+    /// Will not increment the last error offset.
+    pub fn peek_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    where
+        'slc: 'slf,
+    {
+        let start = self.buffer_position();
+        let end = start + bytes;
+
+        if end > self.reader.len() {
+            return Err(ReaderError::end());
+        }
+
+        let slice = &self.reader[start..end];
+
+        Ok(slice)
     }
 
     pub fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>

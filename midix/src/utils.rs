@@ -23,6 +23,12 @@ pub fn read_u16(reader: &mut Reader<&[u8]>) -> ReadResult<u16> {
     // this takes some time but like, it's pretty fast
     Ok(u16::from_be_bytes(*chunk_size))
 }
+#[allow(dead_code)]
+pub fn peak_u16(reader: &mut Reader<&[u8]>) -> ReadResult<u16> {
+    let chunk_size: [u8; 2] = reader.peek_exact(2)?.try_into().unwrap();
+    // this takes some time but like, it's pretty fast
+    Ok(u16::from_be_bytes(chunk_size))
+}
 
 #[test]
 fn test_read_exact() {
