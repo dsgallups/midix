@@ -4,7 +4,7 @@ use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind;
 pub use midir::MidiOutputPort;
 use midix::bytes::AsMidiBytes;
-use midix::message::OwnedMidiMessage;
+use midix::message::LiveMidiMessage;
 use std::fmt::Display;
 use std::{error::Error, future::Future};
 use MidiOutputError::{ConnectionError, PortRefreshError, SendDisconnectedError, SendError};
@@ -70,7 +70,7 @@ impl MidiOutput {
     }
 
     /// Send a midi message.
-    pub fn send(&self, msg: impl Into<OwnedMidiMessage>) {
+    pub fn send(&self, msg: impl Into<LiveMidiMessage>) {
         self.sender
             .send(Message::Midi(msg.into()))
             .expect("Couldn't send MIDI message");
@@ -104,7 +104,7 @@ impl MidiOutputConnection {
 pub enum MidiOutputError {
     ConnectionError(ConnectErrorKind),
     SendError(midir::SendError),
-    SendDisconnectedError(OwnedMidiMessage),
+    SendDisconnectedError(LiveMidiMessage),
     PortRefreshError,
 }
 
@@ -182,7 +182,7 @@ enum Message {
     RefreshPorts,
     ConnectToPort(MidiOutputPort),
     DisconnectFromPort,
-    Midi(OwnedMidiMessage),
+    Midi(LiveMidiMessage),
 }
 
 enum Reply {

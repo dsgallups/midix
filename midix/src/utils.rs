@@ -30,6 +30,10 @@ pub fn peak_u16(reader: &mut Reader<&[u8]>) -> ReadResult<u16> {
     Ok(u16::from_be_bytes(chunk_size))
 }
 
+pub fn convert_u32(bytes: &[u8; 4]) -> u32 {
+    u32::from_be_bytes(*bytes)
+}
+
 #[test]
 fn test_read_exact() {
     use crate::utils;

@@ -1,17 +1,17 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
-pub trait SystemCommonMessage {
+pub trait SystemCommonMessageTrait {
     fn status(&self) -> u8;
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum OwnedSystemCommonMessage {
+pub enum SystemCommonMessage {
     /// A system-exclusive event.
     ///
     /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
     /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
-    SystemExclusive(Vec<u8>),
+    SystemExclusive(SystemExclusiveOwned),
     /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
     MidiTimeCodeQuarterFrame {
         message: MtcQuarterFrameMessage,
@@ -27,9 +27,9 @@ pub enum OwnedSystemCommonMessage {
     /// Request the device to tune itself.
     TuneRequest,
 }
-impl SystemCommonMessage for OwnedSystemCommonMessage {
+impl SystemCommonMessageTrait for SystemCommonMessage {
     fn status(&self) -> u8 {
-        use OwnedSystemCommonMessage::*;
+        use SystemCommonMessage::*;
         match self {
             SystemExclusive(_) => 0xF0,
             SongPositionPointer { .. } => 0xF2,
@@ -40,17 +40,11 @@ impl SystemCommonMessage for OwnedSystemCommonMessage {
     }
 }
 
-impl AsMidiBytes for OwnedSystemCommonMessage {
+impl AsMidiBytes for SystemCommonMessage {
     fn as_bytes(&self) -> Vec<u8> {
-        use OwnedSystemCommonMessage::*;
+        use SystemCommonMessage::*;
         match self {
-            SystemExclusive(b) => {
-                let mut bytes = Vec::with_capacity(b.len() + 2);
-                bytes.push(0xF0);
-                bytes.extend(b);
-                bytes.push(0xF7);
-                bytes
-            }
+            SystemExclusive(b) => b.as_bytes(),
             SongPositionPointer { lsb, msb } => {
                 vec![self.status(), *lsb, *msb]
             }
@@ -61,7 +55,7 @@ impl AsMidiBytes for OwnedSystemCommonMessage {
     }
 }
 
-impl FromMidiMessage for OwnedSystemCommonMessage {
+impl FromMidiMessage for SystemCommonMessage {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {
@@ -73,7 +67,7 @@ impl FromMidiMessage for OwnedSystemCommonMessage {
                     .copied()
                     .take_while(|byte| byte != &0xF7)
                     .collect::<Vec<_>>();
-                OwnedSystemCommonMessage::SystemExclusive(data)
+                SystemCommonMessage::SystemExclusive(SystemExclusiveOwned::new(data))
             }
             /*0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame
@@ -84,22 +78,22 @@ impl FromMidiMessage for OwnedSystemCommonMessage {
             }*/
             0xF2 if data.len() == 2 => {
                 //Song Position
-                OwnedSystemCommonMessage::SongPositionPointer {
+                SystemCommonMessage::SongPositionPointer {
                     lsb: data[0],
                     msb: data[1],
                 }
             }
             0xF3 if data.len() == 1 => {
                 //Song Select
-                OwnedSystemCommonMessage::SongSelect(data[0])
+                SystemCommonMessage::SongSelect(data[0])
             }
             0xF6 => {
                 //Tune Request
-                OwnedSystemCommonMessage::TuneRequest
+                SystemCommonMessage::TuneRequest
             }
             0xF1..=0xF5 if data.is_empty() => {
                 //Unknown system common event
-                OwnedSystemCommonMessage::Undefined(status)
+                SystemCommonMessage::Undefined(status)
             }
             _ => {
                 //Invalid/Unknown/Unreachable event
@@ -195,7 +189,7 @@ pub enum BorrowedSystemCommonMessage<'a> {
     TuneRequest,
 }
 
-impl SystemCommonMessage for BorrowedSystemCommonMessage<'_> {
+impl SystemCommonMessageTrait for BorrowedSystemCommonMessage<'_> {
     fn status(&self) -> u8 {
         use BorrowedSystemCommonMessage::*;
         match &self {

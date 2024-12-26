@@ -1,6 +1,6 @@
 use crate::chunk::ReaderError;
 
-use super::{ReadResult, Reader};
+use super::{convert_u32, ReadResult, Reader};
 
 #[doc = r#"
 The header chunk at the beginning of the file specifies some basic information about the data in the file. Here's the syntax of the complete chunk:
@@ -67,8 +67,8 @@ impl<'a> MidiHeader<'a> {
             timing,
         })
     }
-    pub fn length(&self) -> u32 {
-        u32::from_be_bytes(*self.length)
+    pub fn length(self) -> u32 {
+        convert_u32(self.length)
     }
     pub fn format(&self) -> u8 {
         todo!()

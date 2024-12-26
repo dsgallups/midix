@@ -23,7 +23,7 @@ pub enum MidiChunk<'a> {
     /// Represents the byte length of a midi track
     ///
     /// Begins with "MTrk"
-    Track(MidiTrack),
+    Track(MidiTrack<'a>),
     /// A chunk type that is not known by this crate
     Unknown { length: &'a [u8; 4] },
 }
@@ -57,12 +57,12 @@ impl<'a> MidiChunk<'a> {
         }
     }
 
-    pub fn length(self) -> u32 {
+    pub fn length(&self) -> u32 {
         use MidiChunk::*;
         match self {
             Header(h) => h.length(),
             Track(t) => t.length(),
-            Unknown { length } => u32::from_be_bytes(*length),
+            Unknown { length } => convert_u32(length),
         }
     }
 }
