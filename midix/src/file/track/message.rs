@@ -3,7 +3,7 @@ use crate::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MidiTrackMessage {
     ChannelVoice(ChannelVoice),
-    SystemExclusive(SystemExclusive),
+    SystemExclusive(SysEx),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
     Meta(Meta),

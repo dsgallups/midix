@@ -1,12 +1,12 @@
-mod sysex;
-pub use sysex::*;
-
-use crate::{message::ChannelVoiceRef, prelude::MetaRef};
+use crate::{
+    message::{ChannelVoiceRef, SysExRef},
+    prelude::MetaRef,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TrackMessage<'a> {
     ChannelVoice(ChannelVoiceRef<'a>),
-    SystemExclusive(SysEx<'a>),
+    SystemExclusive(SysExRef<'a>),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
     Meta(MetaRef<'a>),
