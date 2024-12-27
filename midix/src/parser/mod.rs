@@ -14,6 +14,15 @@ and then we can have owned types accordingly. So really reader should have our t
 
 We should probably have a parser that can yield an enum
 "#]
+mod header_chunk;
+pub use header_chunk::*;
+mod track_chunk;
+pub use track_chunk::*;
+mod track_event;
+pub use track_event::*;
+mod track_message;
+pub use track_message::*;
+mod event;
+pub use event::*;
 
 pub mod reader;
-pub mod types;
