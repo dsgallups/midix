@@ -4,8 +4,8 @@ pub mod pitch_bend;
 pub mod program;
 pub mod velocity;
 
-mod voice_message;
-pub use voice_message::*;
+mod channel_voice;
+pub use channel_voice::*;
 
 mod common_message;
 pub use common_message::*;
