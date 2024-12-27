@@ -1,7 +1,5 @@
 mod sysex;
 pub use sysex::*;
-mod meta;
-pub use meta::*;
 
 use crate::{message::ChannelVoiceRef, prelude::MetaRef};
 
