@@ -35,7 +35,7 @@ pub mod channel;
 pub mod file;
 pub mod live;
 pub mod message;
-pub mod reader;
+pub mod parser;
 pub(crate) mod utils;
 
 pub mod prelude {
@@ -44,7 +44,11 @@ pub mod prelude {
     pub use crate::file::{builder::*, chunk::*, format::*, header::*, meta::*, track::*};
     pub use crate::live::*;
     pub use crate::message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *};
-    pub use crate::reader::{error::*, *};
+    pub use crate::parser::{
+        reader::*,
+        types::{chunk::*, header::*, track::*, *},
+        *,
+    };
 
     pub use core::fmt::Display;
 

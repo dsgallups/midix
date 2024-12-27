@@ -1,23 +1,11 @@
-#![doc = r#"
-# Reader for parsing midi
-
-Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
-
-
-## TODO
-- [ ] Config
-"#]
+mod state;
+pub use state::*;
+mod error;
+pub use error::*;
 
 use std::io::{BufRead, BufReader, Read};
 
-use error::{ReadResult, ReaderError};
-use state::ReaderState;
-
-use crate::prelude::*;
-use crate::utils::decode_varlen;
-
-pub mod error;
-pub(crate) mod state;
+use crate::{prelude::MidiChunk, utils::decode_varlen};
 
 #[derive(Clone)]
 pub struct Reader<R> {
