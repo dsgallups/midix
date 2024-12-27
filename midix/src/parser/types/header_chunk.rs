@@ -1,8 +1,5 @@
 use crate::prelude::*;
 
-mod timing;
-pub use timing::*;
-
 #[doc = r#"
 The header chunk at the beginning of the file specifies some basic information about the data in the file. Here's the syntax of the complete chunk:
 
