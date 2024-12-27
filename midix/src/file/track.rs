@@ -4,6 +4,7 @@ use crate::prelude::*;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MidiTrack<'a> {
     length: &'a [u8; 4],
+    data: &'a [u8],
 }
 
 impl<'a> MidiTrack<'a> {
@@ -18,10 +19,30 @@ impl<'a> MidiTrack<'a> {
 
         let track_event_bytes = reader.read_exact(read as usize)?;
 
-        Ok(Self { length })
+        Ok(Self {
+            length,
+            data: track_event_bytes,
+        })
     }
     pub fn length(&self) -> u32 {
         convert_u32(self.length)
+    }
+    /// Slow, can be improved by implementing iterator on reader
+    pub fn events(&self) -> ReadResult<Vec<MidiTrackEvent<'a>>> {
+        let mut reader = Reader::from_byte_slice(self.data);
+
+        let mut events: Vec<MidiTrackEvent<'a>> = Vec::new();
+        loop {
+            match MidiTrackEvent::read(&mut reader) {
+                Ok(e) => events.push(e),
+                Err(err) => match err {
+                    ReaderError::EndOfReader => break,
+                    e => return Err(e),
+                },
+            }
+        }
+
+        Ok(events)
     }
 }
 
@@ -31,14 +52,33 @@ pub struct MidiTrackEvent<'a> {
     /// (or a second, for recording a track with SMPTE times),
     /// as specified in the header chunk.
     delta_time: &'a [u8],
-    event: &'a [u8],
+    event: MidiTrackMessage<'a>,
+}
+
+impl<'a> MidiTrackEvent<'a> {
+    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    where
+        'slc: 'a,
+    {
+        let delta_time = reader.read_next();
+        todo!();
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum TrackMidiMessage<'a> {
+pub enum MidiTrackMessage<'a> {
     ChannelVoice(ChannelVoiceMessage),
     SystemExclusive(SystemExclusiveBorrowed<'a>),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
     Meta(MetaMessage<'a>),
+}
+
+impl<'a> MidiTrackMessage<'a> {
+    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    where
+        'slc: 'a,
+    {
+        todo!();
+    }
 }

@@ -2,38 +2,38 @@ use crate::prelude::*;
 use std::io::ErrorKind;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum LiveMidiMessage {
+pub enum MidiLiveMessage {
     ChannelVoice(ChannelVoiceMessage),
     SystemCommon(SystemCommonMessage),
     SystemRealTime(SystemRealTimeMessage),
 }
 
-impl LiveMidiMessage {
+impl MidiLiveMessage {
     pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
         match self {
-            LiveMidiMessage::ChannelVoice(c) => Some(c),
+            MidiLiveMessage::ChannelVoice(c) => Some(c),
             _ => None,
         }
     }
 }
 
-impl From<ChannelVoiceMessage> for LiveMidiMessage {
+impl From<ChannelVoiceMessage> for MidiLiveMessage {
     fn from(value: ChannelVoiceMessage) -> Self {
         Self::ChannelVoice(value)
     }
 }
-impl From<SystemCommonMessage> for LiveMidiMessage {
+impl From<SystemCommonMessage> for MidiLiveMessage {
     fn from(value: SystemCommonMessage) -> Self {
         Self::SystemCommon(value)
     }
 }
-impl From<SystemRealTimeMessage> for LiveMidiMessage {
+impl From<SystemRealTimeMessage> for MidiLiveMessage {
     fn from(value: SystemRealTimeMessage) -> Self {
         Self::SystemRealTime(value)
     }
 }
 
-impl FromMidiMessage for LiveMidiMessage {
+impl FromMidiMessage for MidiLiveMessage {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xFF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -58,9 +58,9 @@ impl FromMidiMessage for LiveMidiMessage {
     }
 }
 
-impl AsMidiBytes for LiveMidiMessage {
+impl AsMidiBytes for MidiLiveMessage {
     fn as_bytes(&self) -> Vec<u8> {
-        use LiveMidiMessage::*;
+        use MidiLiveMessage::*;
         match self {
             ChannelVoice(c) => c.as_bytes(),
             SystemCommon(s) => s.as_bytes(),
@@ -73,12 +73,12 @@ impl AsMidiBytes for LiveMidiMessage {
 fn parse_note_on() {
     use crate::prelude::*;
     let message = [0b10010001, 0b01001000, 0b00100001];
-    let parsed = LiveMidiMessage::from_bytes(&message).unwrap();
+    let parsed = MidiLiveMessage::from_bytes(&message).unwrap();
     //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
 
     assert_eq!(
         parsed,
-        LiveMidiMessage::ChannelVoice(ChannelVoiceMessage::new(
+        MidiLiveMessage::ChannelVoice(ChannelVoiceMessage::new(
             Channel::new(1).unwrap(),
             ChannelVoiceEvent::NoteOn {
                 key: Key::new(72),

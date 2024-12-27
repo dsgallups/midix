@@ -34,6 +34,56 @@ pub fn convert_u32(bytes: &[u8; 4]) -> u32 {
     u32::from_be_bytes(*bytes)
 }
 
+pub fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
+    let mut dec: u32 = 0;
+
+    for _ in 0..4 {
+        let next = reader.read_next()?;
+        dec <<= 7;
+        let add = (next & 0x7F) as u32;
+        dec |= add;
+
+        //need to continue
+        if next & 0x80 != 0x80 {
+            break;
+        }
+    }
+
+    Ok(dec)
+}
+
+#[test]
+fn test_varlen_decode_simple() {
+    let val = [0x03];
+    let mut reader = Reader::from_byte_slice(&val);
+    let res = decode_varlen(&mut reader).unwrap();
+    assert_eq!(res, 3);
+}
+
+#[test]
+fn test_varlen_decode_combined() {
+    //10010000 00001000
+    let val = [0x90, 0x08];
+    let mut reader = Reader::from_byte_slice(&val);
+
+    //should be 00100000001000
+    //which is 2056
+    let res = decode_varlen(&mut reader).unwrap();
+    assert_eq!(res, 2056);
+}
+
+#[test]
+fn test_long_varlen() {
+    //11111111 10010001 10010000 00001000
+    let val = [0xFF, 0x91, 0x90, 0x08];
+    let mut reader = Reader::from_byte_slice(&val);
+
+    //should be 1111111001000100100000001000
+    //which is 266618888
+    let res = decode_varlen(&mut reader).unwrap();
+    assert_eq!(res, 266618888);
+}
+
 #[test]
 fn test_read_exact() {
     use crate::utils;

@@ -11,6 +11,8 @@ Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 use error::{ReadResult, ReaderError};
 use state::ReaderState;
 
+use crate::utils::decode_varlen;
+
 pub mod error;
 pub(crate) mod state;
 
@@ -79,7 +81,7 @@ impl<'slc> Reader<&'slc [u8]> {
     where
         'slc: 'slf,
     {
-        let size = *self.read_next()?;
+        let size = decode_varlen(self)?;
         self.read_exact(size as usize)
     }
 

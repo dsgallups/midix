@@ -4,7 +4,7 @@ use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind; // XXX: do we expose this?
 pub use midir::{Ignore, MidiInputPort};
 use midix::bytes::FromMidiMessage;
-use midix::live::LiveMidiMessage;
+use midix::live::MidiLiveMessage;
 use std::error::Error;
 use std::fmt::Display;
 use std::future::Future;
@@ -111,7 +111,7 @@ impl MidiInputConnection {
 #[derive(Resource, Event, Debug)]
 pub struct MidiData {
     pub stamp: u64,
-    pub message: LiveMidiMessage,
+    pub message: MidiLiveMessage,
 }
 
 /// The [`Error`] type for midi input operations, accessible as an [`Event`](bevy::ecs::event::Event).
@@ -242,7 +242,7 @@ impl Future for MidiInputTask {
                         &port,
                         self.settings.port_name,
                         move |stamp, message, _| {
-                            let Ok(message) = LiveMidiMessage::from_bytes(message) else {
+                            let Ok(message) = MidiLiveMessage::from_bytes(message) else {
                                 return;
                             };
                             let data = MidiData { stamp, message };
@@ -290,7 +290,7 @@ impl Future for MidiInputTask {
                             &port,
                             self.settings.port_name,
                             move |stamp, message, _| {
-                                let Ok(message) = LiveMidiMessage::from_bytes(message) else {
+                                let Ok(message) = MidiLiveMessage::from_bytes(message) else {
                                     return;
                                 };
                                 let data = MidiData { stamp, message };
