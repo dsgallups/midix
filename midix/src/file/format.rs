@@ -59,6 +59,14 @@ impl MidiFormatRef<'_> {
             Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(*num),
         }
     }
+    pub fn format_type(&self) -> MidiFormatType {
+        use MidiFormatRef::*;
+        match self {
+            SingleMultiChannel => MidiFormatType::SingleMultiChannel,
+            Simultaneous(_) => MidiFormatType::Simultaneous,
+            SequentiallyIndependent(_) => MidiFormatType::SequentiallyIndependent,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

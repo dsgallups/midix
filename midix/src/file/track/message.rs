@@ -46,4 +46,13 @@ impl<'a> MidiTrackMessageRef<'a> {
 
         Ok(res)
     }
+
+    pub fn to_owned(self) -> MidiTrackMessage {
+        use MidiTrackMessageRef::*;
+        match self {
+            ChannelVoice(c) => MidiTrackMessage::ChannelVoice(c),
+            SystemExclusive(s) => MidiTrackMessage::SystemExclusive(s.to_owned()),
+            Meta(m) => MidiTrackMessage::Meta(m.to_owned()),
+        }
+    }
 }

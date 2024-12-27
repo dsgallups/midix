@@ -8,7 +8,7 @@ use super::{KeySignatureRef, TempoRef, TimeSignatureRef};
 pub enum MetaMessage {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
-    TrackNumber(u16),
+    TrackNumber(Option<u16>),
     /// Arbitrary text associated to an instant.
     Text(String),
     /// A copyright notice.
@@ -177,6 +177,64 @@ impl<'a> MetaMessageRef<'a> {
             0x7F => MetaMessageRef::SequencerSpecific(data),
             _ => MetaMessageRef::Unknown(type_byte, data),
         })
+    }
+
+    pub fn to_owned(self) -> MetaMessage {
+        use MetaMessageRef::*;
+        match self {
+            TrackNumber(n) => match n.len() {
+                2 => {
+                    let n: [u8; 2] = n.try_into().unwrap();
+                    MetaMessage::TrackNumber(Some(u16::from_be_bytes(n)))
+                }
+                _ => MetaMessage::TrackNumber(None),
+            },
+            Text(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::Text(v)
+            }
+            Copyright(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::Copyright(v)
+            }
+            TrackName(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::TrackName(v)
+            }
+            InstrumentName(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::InstrumentName(v)
+            }
+            Lyric(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::Lyric(v)
+            }
+            Marker(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::Marker(v)
+            }
+            CuePoint(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::CuePoint(v)
+            }
+            ProgramName(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::ProgramName(v)
+            }
+            DeviceName(t) => {
+                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
+                MetaMessage::DeviceName(v)
+            }
+            MidiChannel(c) => MetaMessage::MidiChannel(c),
+            MidiPort(p) => MetaMessage::MidiPort(p),
+            EndOfTrack => MetaMessage::EndOfTrack,
+            Tempo(_) => todo!(),
+            SmpteOffset(_) => todo!(),
+            TimeSignature(_) => todo!(),
+            KeySignature(_) => todo!(),
+            SequencerSpecific(s) => MetaMessage::SequencerSpecific(s.to_vec()),
+            Unknown(r, d) => MetaMessage::Unknown(*r, d.to_vec()),
+        }
     }
 }
 

@@ -14,6 +14,11 @@ use crate::{prelude::*, utils};
 /// Defines a track of a midi file
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiTrack(Vec<MidiTrackEvent>);
+impl MidiTrack {
+    pub fn new(events: Vec<MidiTrackEvent>) -> Self {
+        Self(events)
+    }
+}
 
 // I would like to return some type of reader...
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

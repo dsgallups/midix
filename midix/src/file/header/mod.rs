@@ -6,6 +6,11 @@ pub use timing::*;
 pub struct MidiHeader {
     timing: MidiTiming,
 }
+impl MidiHeader {
+    pub fn new(timing: MidiTiming) -> Self {
+        Self { timing }
+    }
+}
 
 #[doc = r#"
 The header chunk at the beginning of the file specifies some basic information about the data in the file. Here's the syntax of the complete chunk:
@@ -78,12 +83,7 @@ impl<'a> MidiHeaderRef<'a> {
         self.format
     }
     pub fn format_type(&self) -> MidiFormatType {
-        use MidiFormatRef::*;
-        match self.format {
-            SingleMultiChannel => MidiFormatType::SingleMultiChannel,
-            Simultaneous(_) => MidiFormatType::Simultaneous,
-            SequentiallyIndependent(_) => MidiFormatType::SequentiallyIndependent,
-        }
+        self.format.format_type()
     }
     pub fn num_tracks(&self) -> u16 {
         self.format.num_tracks()

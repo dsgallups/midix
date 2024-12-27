@@ -33,4 +33,11 @@ impl<'a> MidiTrackEventRef<'a> {
     pub fn event(&self) -> &MidiTrackMessageRef {
         &self.event
     }
+
+    pub fn to_owned(self) -> MidiTrackEvent {
+        MidiTrackEvent {
+            delta_time: self.delta_time,
+            event: self.event.to_owned(),
+        }
+    }
 }

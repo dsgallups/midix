@@ -40,6 +40,9 @@ impl<'a> SystemExclusiveRef<'a> {
     pub fn new(data: &'a [u8]) -> Self {
         Self(data)
     }
+    pub fn to_owned(self) -> SystemExclusive {
+        SystemExclusive::new(self.0.to_vec())
+    }
 }
 
 impl SystemExclusiveTrait for SystemExclusiveRef<'_> {

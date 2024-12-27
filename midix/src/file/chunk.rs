@@ -20,7 +20,7 @@ pub enum MidiChunk<'a> {
     /// Begins with "MTrk"
     Track(MidiTrackRef<'a>),
     /// A chunk type that is not known by this crate
-    Unknown { length: &'a [u8; 4] },
+    Unknown { length: &'a [u8; 4], data: &'a [u8] },
 }
 
 impl<'a> MidiChunk<'a> {
@@ -36,9 +36,9 @@ impl<'a> MidiChunk<'a> {
                 let length: &[u8; 4] = reader.read_exact_size()?;
                 let chunk_size = u32::from_be_bytes(*length);
                 //increment the reader offset by the size
-                reader.increment_buffer_position(chunk_size as usize);
+                let data = reader.read_exact(chunk_size as usize).unwrap_or_default();
 
-                Self::Unknown { length }
+                Self::Unknown { length, data }
             }
         })
     }
@@ -57,7 +57,7 @@ impl<'a> MidiChunk<'a> {
         match self {
             Header(h) => h.length(),
             Track(t) => t.length(),
-            Unknown { length } => convert_u32(length),
+            Unknown { length, .. } => convert_u32(length),
         }
     }
 }

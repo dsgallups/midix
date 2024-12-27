@@ -1,6 +1,8 @@
 use crate::file::{ReadResult, ReaderError};
 use crate::prelude::*;
 
+use super::MidiFile;
+
 #[derive(Default)]
 pub enum FormatStage<'a> {
     #[default]
@@ -20,6 +22,7 @@ impl FormatStage<'_> {
 pub struct MidiFileBuilder<'a> {
     format: FormatStage<'a>,
     timing: Option<MidiTiming>,
+    unknown_chunks: Vec<Vec<u8>>,
 }
 
 impl<'a> MidiFileBuilder<'a> {
@@ -64,13 +67,57 @@ impl<'a> MidiFileBuilder<'a> {
                 Ok(())
             }
             Track(t) => {
-                let events = t.events()?;
+                let events = t.events()?.into_iter().map(|e| e.to_owned()).collect();
 
-                for event in events {}
-                todo!();
+                let track = MidiTrack::new(events);
+                match self.format {
+                    FormatStage::Unknown => {
+                        self.format = FormatStage::KnownTracks(vec![track]);
+                    }
+                    FormatStage::KnownType(t) => match t.format_type() {
+                        MidiFormatType::Simultaneous => {
+                            self.format =
+                                FormatStage::Formatted(MidiFormat::Simultaneous(vec![track]))
+                        }
+                        MidiFormatType::SingleMultiChannel => {
+                            self.format =
+                                FormatStage::Formatted(MidiFormat::SingleMultiChannel(track))
+                        }
+                        MidiFormatType::SequentiallyIndependent => {
+                            self.format =
+                                FormatStage::Formatted(MidiFormat::SequentiallyIndependent(vec![
+                                    track,
+                                ]))
+                        }
+                    },
+                    FormatStage::KnownTracks(ref mut tracks) => tracks.push(track),
+                    FormatStage::Formatted(ref mut format) => match format {
+                        MidiFormat::SequentiallyIndependent(tracks) => tracks.push(track),
+                        MidiFormat::SingleMultiChannel(_) => {
+                            return Err(ReaderError::invalid_data());
+                        }
+                        MidiFormat::Simultaneous(tracks) => tracks.push(track),
+                    },
+                }
+                Ok(())
             }
-
-            _ => todo!(),
+            Unknown { data, .. } => {
+                self.unknown_chunks.push(data.to_vec());
+                Ok(())
+            }
         }
+    }
+    pub fn build(self) -> ReadResult<MidiFile> {
+        let FormatStage::Formatted(f) = self.format else {
+            return Err(ReaderError::invalid_data());
+        };
+        let Some(timing) = self.timing else {
+            return Err(ReaderError::invalid_data());
+        };
+
+        Ok(MidiFile {
+            tracks: f,
+            header: MidiHeader::new(timing),
+        })
     }
 }
