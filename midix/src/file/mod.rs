@@ -18,7 +18,7 @@ impl MidiFile {
         let mut builder = MidiFileBuilder::default();
         loop {
             match reader.read_chunk() {
-                Ok(c) => todo!(),
+                Ok(c) => builder.handle_chunk(c)?,
                 Err(e) => match e {
                     ReaderError::EndOfReader => {
                         break;
@@ -27,10 +27,17 @@ impl MidiFile {
                 },
             }
         }
-        todo!();
+        builder.build()
     }
     pub fn header(&self) -> &MidiHeader {
         &self.header
+    }
+    pub fn tracks(&self) -> Vec<&MidiTrack> {
+        match self.tracks {
+            MidiFormat::SequentiallyIndependent(ref t) => t.iter().collect(),
+            MidiFormat::Simultaneous(ref s) => s.iter().collect(),
+            MidiFormat::SingleMultiChannel(ref c) => vec![c],
+        }
     }
 }
 

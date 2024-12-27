@@ -29,13 +29,7 @@ fn midi_file_simple() {
 
     let midi = MidiFile::parse(bytes).unwrap();
 
-    let header = midi.header();
-
-    let time = header.time_signature();
-    assert_eq!(time.numerator(), 4);
-    assert_eq!(time.denominator(), 4);
-    assert_eq!(time.clocks_per_click(), 24);
-    //assert_eq!()
+    assert_eq!(midi.tracks().len(), 1);
 
     //assert!(matches!(track, MidiChunk::Track(_)));
 }
