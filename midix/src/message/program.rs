@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use core::fmt;
 
-/// Identifies a controller
+/// Identifies an instrument
 ///
 /// TODO docs
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
@@ -23,5 +23,17 @@ impl MidiBits for Program {
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+/// Identifies an instrument
+///
+/// TODO docs
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ProgramRef<'a>(&'a u8);
+
+impl<'a> ProgramRef<'a> {
+    /// Create a new program command. Does not check for u7.
+    pub(crate) const fn new(program: &'a u8) -> Self {
+        Self(program)
     }
 }

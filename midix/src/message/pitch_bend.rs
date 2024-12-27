@@ -97,3 +97,26 @@ impl PitchBend {
         self.as_int() as f64 * (1.0 / 0x2000 as f64)
     }
 }
+
+/// The value of a pitch bend, represented as 14 bits.
+///
+/// A value of `0x0000` indicates full bend downwards.
+/// A value of `0x2000` indicates no bend.
+/// A value of `0x3FFF` indicates full bend upwards.
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct PitchBendRef<'a> {
+    lsb: &'a u8,
+    msb: &'a u8,
+}
+
+impl<'a> PitchBendRef<'a> {
+    pub(crate) const fn new(lsb: &'a u8, msb: &'a u8) -> Self {
+        Self { lsb, msb }
+    }
+    pub fn lsb(&self) -> &u8 {
+        self.lsb
+    }
+    pub fn msb(&self) -> &u8 {
+        self.msb
+    }
+}

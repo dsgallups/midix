@@ -36,14 +36,14 @@ pub enum VoiceEvent<'a> {
         /// The controller to modify.
         ///
         /// See the MIDI spec for the meaning of each index.
-        controller: &'a u8,
+        controller: ControllerRef<'a>,
         /// The value to set it to.
         value: &'a u8,
     },
     /// Change the program (also known as instrument) for a channel.
     ProgramChange {
         /// The new program (instrument) to use for the channel.
-        program: &'a u8,
+        program: ProgramRef<'a>,
     },
     /// Change the note velocity of a whole channel at once, without starting new notes.
     ChannelPressureAfterTouch {
@@ -51,7 +51,7 @@ pub enum VoiceEvent<'a> {
         velocity: VelocityRef<'a>,
     },
     /// Set the pitch bend value for the entire channel.
-    PitchBend { lsb: &'a u8, msb: &'a u8 },
+    PitchBend(PitchBendRef<'a>),
 }
 
 impl VoiceEvent<'_> {

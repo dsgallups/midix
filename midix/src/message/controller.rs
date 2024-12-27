@@ -25,3 +25,15 @@ impl fmt::Display for Controller {
         self.0.fmt(f)
     }
 }
+
+/// Identifies a controller
+///
+/// TODO docs
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ControllerRef<'a>(&'a u8);
+
+impl<'a> ControllerRef<'a> {
+    pub(crate) const fn new(byte: &'a u8) -> Self {
+        Self(byte)
+    }
+}

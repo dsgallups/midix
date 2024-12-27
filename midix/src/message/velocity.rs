@@ -8,7 +8,7 @@ use core::fmt;
 pub struct Velocity(u8);
 
 impl Velocity {
-    /// Create a new velocity
+    /// Create a new velocity. Does not check for u7 correctness
     pub fn new(velocity: u8) -> Self {
         Self(velocity)
     }
@@ -41,10 +41,10 @@ pub struct VelocityRef<'a>(&'a u8);
 
 impl<'a> VelocityRef<'a> {
     /// Create a new velocity
-    pub fn new(velocity: &'a u8) -> Self {
+    pub(crate) const fn new(velocity: &'a u8) -> Self {
         Self(velocity)
     }
-    pub fn byte(&self) -> &u8 {
+    pub const fn byte(&self) -> &u8 {
         self.0
     }
 }

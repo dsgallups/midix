@@ -1,7 +1,7 @@
 use crate::{
     channel::Channel,
     parser::reader::{check_u7, inv_data, ReadResult, Reader},
-    prelude::{KeyRef, VelocityRef},
+    prelude::{ControllerRef, KeyRef, PitchBendRef, ProgramRef, VelocityRef},
 };
 
 use super::voice_event::VoiceEvent;
@@ -39,11 +39,11 @@ impl<'a> ChannelVoice<'a> {
                 velocity: VelocityRef::new(check_u7(reader)?),
             },
             0xB => VoiceEvent::ControlChange {
-                controller: check_u7(reader)?,
+                controller: ControllerRef::new(check_u7(reader)?),
                 value: check_u7(reader)?,
             },
             0xC => VoiceEvent::ProgramChange {
-                program: check_u7(reader)?,
+                program: ProgramRef::new(check_u7(reader)?),
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
                 velocity: VelocityRef::new(check_u7(reader)?),
@@ -52,7 +52,7 @@ impl<'a> ChannelVoice<'a> {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
                 let [lsb, msb] = reader.read_exact_size()?;
-                VoiceEvent::PitchBend { lsb, msb }
+                VoiceEvent::PitchBend(PitchBendRef::new(lsb, msb))
             }
             b => {
                 return Err(inv_data(

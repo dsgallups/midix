@@ -22,19 +22,19 @@ impl MidiBits for Key {
 }
 
 impl Key {
-    /// Create a new key
-    pub fn new(key: u8) -> Self {
+    /// Create a new key. Does not check for correctness.
+    pub const fn new(key: u8) -> Self {
         Self(key)
     }
 
     /// Identifies the note of the key pressed
-    pub fn note(self) -> Note {
-        Note::from_midi_datum(self.as_bits())
+    pub const fn note(self) -> Note {
+        Note::from_midi_datum(self.0)
     }
 
     /// Identifies the octave of the key pressed
-    pub fn octave(&self) -> Octave {
-        Octave::from_midi_datum(self.as_bits())
+    pub const fn octave(&self) -> Octave {
+        Octave::from_midi_datum(self.0)
     }
 }
 
@@ -64,18 +64,18 @@ impl<'a> MidiBits for KeyRef<'a> {
 }
 
 impl<'a> KeyRef<'a> {
-    /// Create a new key
-    pub fn new(key: &'a u8) -> Self {
+    /// Create a new key. Does not check for u7.
+    pub(crate) const fn new(key: &'a u8) -> Self {
         Self(key)
     }
 
     /// Identifies the note of the key pressed
-    pub fn note(self) -> Note {
+    pub const fn note(self) -> Note {
         Note::from_midi_datum(*self.0)
     }
 
     /// Identifies the octave of the key pressed
-    pub fn octave(&self) -> Octave {
+    pub const fn octave(&self) -> Octave {
         Octave::from_midi_datum(*self.0)
     }
 }
@@ -123,7 +123,7 @@ pub enum Note {
     B,
 }
 impl Note {
-    pub fn from_midi_datum(key: u8) -> Self {
+    pub const fn from_midi_datum(key: u8) -> Self {
         use Note::*;
         let note = key % 12;
 
@@ -167,12 +167,12 @@ impl fmt::Display for Note {
 pub struct Octave(i8);
 
 impl Octave {
-    pub fn from_midi_datum(key: u8) -> Self {
+    pub const fn from_midi_datum(key: u8) -> Self {
         let octave = key / 12;
 
         Self(octave as i8 - 1)
     }
-    pub fn as_number(&self) -> i8 {
+    pub const fn as_number(&self) -> i8 {
         self.0
     }
 }
