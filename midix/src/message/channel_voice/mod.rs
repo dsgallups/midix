@@ -8,14 +8,14 @@ pub use event::*;
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct ChannelVoiceMessage {
+pub struct ChannelVoice {
     /// The MIDI channel that this event is associated with.
     channel: Channel,
     /// The MIDI message type and associated data.
     message: VoiceEvent,
 }
 
-impl ChannelVoiceMessage {
+impl ChannelVoice {
     /*/// TODO: read functions should take in an iterator that yields u8s
         pub fn read(reader: &mut OldReader<&[u8]>) -> OldReadResult<Self> {
             let status = reader.read_next()?;
@@ -99,7 +99,7 @@ impl ChannelVoiceMessage {
         &self.message
     }
 }
-impl AsMidiBytes for ChannelVoiceMessage {
+impl AsMidiBytes for ChannelVoice {
     /// Get the raw midi packet for this message
     fn as_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
@@ -111,7 +111,7 @@ impl AsMidiBytes for ChannelVoiceMessage {
     }
 }
 
-impl FromMidiMessage for ChannelVoiceMessage {
+impl FromMidiMessage for ChannelVoice {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xEF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -151,7 +151,7 @@ impl FromMidiMessage for ChannelVoiceMessage {
             _ => panic!("parsed midi message before checking that status is in range"),
         };
         let channel = status & 0b0000_1111;
-        Ok(ChannelVoiceMessage {
+        Ok(ChannelVoice {
             channel: Channel::new(channel)?,
             message: msg,
         })
@@ -164,15 +164,15 @@ impl FromMidiMessage for ChannelVoiceMessage {
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct ChannelVoice<'a> {
+pub struct ChannelVoiceRef<'a> {
     /// The MIDI channel that this event is associated with.
-    /// Used for getting the channel
+    /// Used for getting the channel as the status' lsb contains the channel
     status: u8,
     /// The MIDI message type and associated data.
     message: VoiceEventRef<'a>,
 }
 
-impl<'a> ChannelVoice<'a> {
+impl<'a> ChannelVoiceRef<'a> {
     /// TODO: read functions should take in an iterator that yields u8s
     pub(crate) fn read(status: u8, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
         use crate::parser::reader::check_u7;
@@ -214,7 +214,7 @@ impl<'a> ChannelVoice<'a> {
                 ))
             }
         };
-        Ok(ChannelVoice {
+        Ok(ChannelVoiceRef {
             status,
             message: msg,
         })

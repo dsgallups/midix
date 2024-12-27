@@ -163,7 +163,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             };
 
                             //todo
-                            TrackMessage::ChannelVoice(ChannelVoice::read(status, self)?)
+                            TrackMessage::ChannelVoice(ChannelVoiceRef::read(status, self)?)
                         }
                     };
 

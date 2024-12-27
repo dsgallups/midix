@@ -3,13 +3,13 @@ use std::io::ErrorKind;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MidiLiveMessage {
-    ChannelVoice(ChannelVoiceMessage),
+    ChannelVoice(ChannelVoice),
     SystemCommon(SystemCommonMessage),
     SystemRealTime(SystemRealTimeMessage),
 }
 
 impl MidiLiveMessage {
-    pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
+    pub fn channel_voice(&self) -> Option<&ChannelVoice> {
         match self {
             MidiLiveMessage::ChannelVoice(c) => Some(c),
             _ => None,
@@ -17,8 +17,8 @@ impl MidiLiveMessage {
     }
 }
 
-impl From<ChannelVoiceMessage> for MidiLiveMessage {
-    fn from(value: ChannelVoiceMessage) -> Self {
+impl From<ChannelVoice> for MidiLiveMessage {
+    fn from(value: ChannelVoice) -> Self {
         Self::ChannelVoice(value)
     }
 }
@@ -41,9 +41,9 @@ impl FromMidiMessage for MidiLiveMessage {
         Self: Sized,
     {
         match status {
-            0x80..=0xEF => Ok(Self::ChannelVoice(
-                ChannelVoiceMessage::from_status_and_data(status, data)?,
-            )),
+            0x80..=0xEF => Ok(Self::ChannelVoice(ChannelVoice::from_status_and_data(
+                status, data,
+            )?)),
             0xF0..=0xF7 => Ok(Self::SystemCommon(
                 SystemCommonMessage::from_status_and_data(status, data)?,
             )),
@@ -78,7 +78,7 @@ fn parse_note_on() {
 
     assert_eq!(
         parsed,
-        MidiLiveMessage::ChannelVoice(ChannelVoiceMessage::new(
+        MidiLiveMessage::ChannelVoice(ChannelVoice::new(
             Channel::new(1).unwrap(),
             VoiceEvent::NoteOn {
                 key: Key::new(72),
