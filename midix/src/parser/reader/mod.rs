@@ -5,6 +5,8 @@ pub use error::*;
 
 use std::io::{BufRead, BufReader, Read};
 
+use crate::prelude::*;
+
 #[derive(Clone)]
 pub struct Reader<R> {
     reader: R,
@@ -77,7 +79,7 @@ impl<'slc> Reader<&'slc [u8]> {
     where
         'slc: 'a,
     {
-        let event = loop {
+        let _event = loop {
             match self.state.parse_state() {
                 ParseState::Init => {
                     self.state.set_parse_state(ParseState::InsideMidi);
@@ -118,7 +120,7 @@ impl<'slc> Reader<&'slc [u8]> {
                         self.state.set_parse_state(ParseState::InsideMidi);
                         continue;
                     }
-                    let track_event = TrackEvent::read(self)?;
+                    let _track_event = TrackEvent::read(self)?;
 
                     //todo
                     todo!()
@@ -128,8 +130,6 @@ impl<'slc> Reader<&'slc [u8]> {
             }
         };
         todo!();
-
-        todo!()
     }
 }
 
@@ -166,9 +166,9 @@ impl<'slc> Reader<&'slc [u8]> {
     {
         let slice = self.read_exact(SIZE)?;
 
-        Ok(slice
+        slice
             .try_into()
-            .map_err(|e| inv_data(self, format!("{:?}", e)))?)
+            .map_err(|e| inv_data(self, format!("{:?}", e)))
     }
 
     /// Get the next byte without incrementing
@@ -218,7 +218,7 @@ pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
 }
 
 /// grabs the next byte from the reader and checks it's a u7
-pub(super) fn check_u7<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+pub(super) fn check_u7<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
     (byte & 0b10000000 == 0)
         .then_some(byte)
@@ -226,7 +226,8 @@ pub(super) fn check_u7<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<
 }
 
 /// grabs the next byte from the reader and checks it's a u4
-pub(super) fn check_u4<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+#[allow(dead_code)]
+pub(super) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
     (byte & 0b11110000 == 0)
         .then_some(byte)

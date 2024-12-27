@@ -121,7 +121,8 @@ impl<'a> Meta<'a> {
             }
             0x54 => {
                 //TODO
-                return Err(inv_data(reader, format!("SMTPE is not yet implemented",)));
+                todo!("implement SMTPE")
+                //return Err(inv_data(reader, "SMTPE is not yet implemented"));
             }
             0x58 if data.len() >= 4 => {
                 //FF 58 04 nn dd cc bb

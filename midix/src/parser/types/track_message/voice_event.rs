@@ -4,7 +4,7 @@
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub enum ChannelVoiceEvent<'a> {
+pub enum VoiceEvent<'a> {
     /// Stop playing a note.
     NoteOff {
         /// The MIDI key to stop playing.
@@ -52,10 +52,10 @@ pub enum ChannelVoiceEvent<'a> {
     PitchBend { lsb: &'a u8, msb: &'a u8 },
 }
 
-impl<'a> ChannelVoiceEvent<'a> {
+impl VoiceEvent<'_> {
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
-        use ChannelVoiceEvent::*;
+        use VoiceEvent::*;
         match self {
             NoteOn { vel, .. } => **vel != 0,
             _ => false,
@@ -64,7 +64,7 @@ impl<'a> ChannelVoiceEvent<'a> {
 
     /// Returns true if the note is off. This includes note on where the velocity is zero.
     pub fn is_note_off(&self) -> bool {
-        use ChannelVoiceEvent::*;
+        use VoiceEvent::*;
         match self {
             NoteOff { .. } => true,
             NoteOn { vel, .. } => **vel == 0,
@@ -95,15 +95,18 @@ impl<'a> ChannelVoiceEvent<'a> {
     /// i.e. this will return 00001000.
     /// a channel of 00001001
     /// should make 10001001
+    ///
+    /// TODO
+    #[allow(dead_code)]
     pub(crate) fn status_nibble(&self) -> u8 {
         match self {
-            ChannelVoiceEvent::NoteOff { .. } => 0x8,
-            ChannelVoiceEvent::NoteOn { .. } => 0x9,
-            ChannelVoiceEvent::Aftertouch { .. } => 0xA,
-            ChannelVoiceEvent::ControlChange { .. } => 0xB,
-            ChannelVoiceEvent::ProgramChange { .. } => 0xC,
-            ChannelVoiceEvent::ChannelPressureAfterTouch { .. } => 0xD,
-            ChannelVoiceEvent::PitchBend { .. } => 0xE,
+            VoiceEvent::NoteOff { .. } => 0x8,
+            VoiceEvent::NoteOn { .. } => 0x9,
+            VoiceEvent::Aftertouch { .. } => 0xA,
+            VoiceEvent::ControlChange { .. } => 0xB,
+            VoiceEvent::ProgramChange { .. } => 0xC,
+            VoiceEvent::ChannelPressureAfterTouch { .. } => 0xD,
+            VoiceEvent::PitchBend { .. } => 0xE,
         }
     }
 }

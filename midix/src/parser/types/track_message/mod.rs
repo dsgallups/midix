@@ -7,9 +7,11 @@ pub use voice::*;
 mod voice_event;
 pub use voice_event::*;
 
+use crate::prelude::*;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TrackMessage<'a> {
-    ChannelVoice(ChannelVoiceMessage<'a>),
+    ChannelVoice(ChannelVoice<'a>),
     SystemExclusive(SysEx<'a>),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
@@ -40,7 +42,7 @@ impl<'a> TrackMessage<'a> {
                 reader.increment_buffer_position(1);
                 Self::Meta(Meta::read(reader)?)
             }
-            _ => Self::ChannelVoice(ChannelVoiceMessage::read(reader)?),
+            _ => Self::ChannelVoice(ChannelVoice::read(reader)?),
         };
 
         Ok(res)

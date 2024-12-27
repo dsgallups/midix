@@ -1,4 +1,3 @@
-use crate::file::{OldReadResult, OldReaderError};
 use crate::prelude::*;
 
 use super::MidiFile;

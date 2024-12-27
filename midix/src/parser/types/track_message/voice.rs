@@ -4,7 +4,7 @@ use crate::{
     prelude::{Key, Velocity},
 };
 
-use super::voice_event::ChannelVoiceEvent;
+use super::voice_event::VoiceEvent;
 
 /// Represents a MIDI voice message,.
 ///
@@ -12,48 +12,48 @@ use super::voice_event::ChannelVoiceEvent;
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct ChannelVoiceMessage<'a> {
+pub struct ChannelVoice<'a> {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel
     status: &'a u8,
     /// The MIDI message type and associated data.
-    message: ChannelVoiceEvent<'a>,
+    message: VoiceEvent<'a>,
 }
 
-impl<'a> ChannelVoiceMessage<'a> {
+impl<'a> ChannelVoice<'a> {
     /// TODO: read functions should take in an iterator that yields u8s
     pub fn read(reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
         //bugged
         let status = reader.read_next()?;
 
         let msg = match status >> 4 {
-            0x8 => ChannelVoiceEvent::NoteOff {
+            0x8 => VoiceEvent::NoteOff {
                 key: check_u7(reader)?,
                 vel: check_u7(reader)?,
             },
-            0x9 => ChannelVoiceEvent::NoteOn {
+            0x9 => VoiceEvent::NoteOn {
                 key: check_u7(reader)?,
                 vel: check_u7(reader)?,
             },
-            0xA => ChannelVoiceEvent::Aftertouch {
+            0xA => VoiceEvent::Aftertouch {
                 key: check_u7(reader)?,
                 vel: check_u7(reader)?,
             },
-            0xB => ChannelVoiceEvent::ControlChange {
+            0xB => VoiceEvent::ControlChange {
                 controller: check_u7(reader)?,
                 value: check_u7(reader)?,
             },
-            0xC => ChannelVoiceEvent::ProgramChange {
+            0xC => VoiceEvent::ProgramChange {
                 program: check_u7(reader)?,
             },
-            0xD => ChannelVoiceEvent::ChannelPressureAfterTouch {
+            0xD => VoiceEvent::ChannelPressureAfterTouch {
                 vel: check_u7(reader)?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
                 let [lsb, msb] = reader.read_exact_size()?;
-                ChannelVoiceEvent::PitchBend { lsb, msb }
+                VoiceEvent::PitchBend { lsb, msb }
             }
             b => {
                 return Err(inv_data(
@@ -62,7 +62,7 @@ impl<'a> ChannelVoiceMessage<'a> {
                 ))
             }
         };
-        Ok(ChannelVoiceMessage {
+        Ok(ChannelVoice {
             status,
             message: msg,
         })
@@ -84,18 +84,18 @@ impl<'a> ChannelVoiceMessage<'a> {
     /// Returns the key if the event has a key
     pub fn key(&self) -> Option<Key> {
         match self.message {
-            ChannelVoiceEvent::NoteOn { key, .. }
-            | ChannelVoiceEvent::NoteOff { key, .. }
-            | ChannelVoiceEvent::Aftertouch { key, .. } => Some(Key::new(*key)),
+            VoiceEvent::NoteOn { key, .. }
+            | VoiceEvent::NoteOff { key, .. }
+            | VoiceEvent::Aftertouch { key, .. } => Some(Key::new(*key)),
             _ => None,
         }
     }
     pub fn velocity(&self) -> Option<Velocity> {
         match self.message {
-            ChannelVoiceEvent::NoteOn { vel, .. }
-            | ChannelVoiceEvent::NoteOff { vel, .. }
-            | ChannelVoiceEvent::Aftertouch { vel, .. }
-            | ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => Some(Velocity::new(*vel)),
+            VoiceEvent::NoteOn { vel, .. }
+            | VoiceEvent::NoteOff { vel, .. }
+            | VoiceEvent::Aftertouch { vel, .. }
+            | VoiceEvent::ChannelPressureAfterTouch { vel } => Some(Velocity::new(*vel)),
             _ => None,
         }
     }
@@ -104,7 +104,7 @@ impl<'a> ChannelVoiceMessage<'a> {
         //self.message.status_nibble() << 4 | self.channel.bits()
         self.status
     }
-    pub fn message(&self) -> &ChannelVoiceEvent {
+    pub fn message(&self) -> &VoiceEvent {
         &self.message
     }
 

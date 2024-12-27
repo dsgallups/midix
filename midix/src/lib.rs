@@ -41,14 +41,10 @@ pub(crate) mod utils;
 pub mod prelude {
     pub use crate::bytes::*;
     pub use crate::channel::Channel;
-    pub use crate::file::{builder::*, chunk::*, format::*, header::*, meta::*, track::*};
+    pub use crate::file::{chunk::*, format::*, header::*, meta::*, track::*};
     pub use crate::live::*;
     pub use crate::message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *};
-    pub use crate::parser::{
-        old_reader::*,
-        types::{chunk::*, header::*, track::*, *},
-        *,
-    };
+    pub use crate::parser::{reader::*, types::*};
 
     pub use core::fmt::Display;
 

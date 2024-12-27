@@ -1,5 +1,3 @@
-use reader::{ReadResult, Reader};
-
 use crate::prelude::*;
 
 // I would like to return some type of reader...
@@ -10,7 +8,7 @@ pub struct TrackChunk {
 
 impl TrackChunk {
     /// Assumes that the chunk type bytes ("MTrk") have ALREADY been read
-    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self> {
+    pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
         let length: &[u8; 4] = reader.read_exact_size()?;
 
         let length = u32::from_be_bytes(*length);
@@ -42,11 +40,12 @@ impl TrackChunk {
 #[test]
 fn test_simple_sysex() {
     let bytes = [0xF0, 0x05, 0x43, 0x12, 0x00, 0x07, 0xF7];
-    let mut reader = OldReader::from_byte_slice(&bytes);
-    let msg = MidiTrackMessageRef::read(&mut reader).unwrap();
+    let mut _reader = Reader::from_byte_slice(&bytes);
+    todo!()
+    /*let msg = MidiTrackMessageRef::read(&mut reader).unwrap();
 
     assert_eq!(
         msg,
         MidiTrackMessageRef::SystemExclusive(SystemExclusiveRef::new(&[0x43, 0x12, 0x00, 0x07]))
-    );
+    );*/
 }

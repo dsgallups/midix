@@ -2,19 +2,11 @@
 //!
 use std::io::{self, ErrorKind};
 
-use crate::prelude::*;
-
 /// A representation of some type as a part of a longer midi message
 pub trait MidiBits {
     type BitRepresentation;
     fn as_bits(&self) -> Self::BitRepresentation;
     fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
-    where
-        Self: Sized;
-}
-
-pub trait FromReader<'r, 'slc> {
-    fn read(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
     where
         Self: Sized;
 }

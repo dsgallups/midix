@@ -6,14 +6,14 @@ impl<'a> SysEx<'a> {
         Self(data)
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.0.len()
     }
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.len() + 2);
         bytes.push(0xF0);
         bytes.extend(self.0);

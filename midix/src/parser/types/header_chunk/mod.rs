@@ -3,7 +3,6 @@ use crate::prelude::*;
 mod format;
 pub use format::*;
 mod timing;
-use reader::{inv_data, ReadResult, Reader};
 pub use timing::*;
 
 #[doc = r#"
@@ -134,6 +133,6 @@ fn read_midi_header_single_multichannel_invalid() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let err = HeaderChunk::read(&mut reader).expect_err("Invalid");
+    let _err = HeaderChunk::read(&mut reader).expect_err("Invalid");
     //assert!(matches!(err, ReaderError::Io(_)))
 }

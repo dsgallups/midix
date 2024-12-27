@@ -1,6 +1,4 @@
-use reader::{ReadResult, Reader};
-
-use crate::prelude::*;
+use crate::{parser::reader::decode_varlen, prelude::*};
 
 pub struct TrackEvent<'a> {
     /// Variable length quantity
@@ -16,7 +14,7 @@ impl<'a> TrackEvent<'a> {
     where
         'slc: 'a,
     {
-        let delta_time = super::decode_varlen(reader)?;
+        let delta_time = decode_varlen(reader)?;
 
         let event = TrackMessage::read(reader)?;
         Ok(Self { delta_time, event })

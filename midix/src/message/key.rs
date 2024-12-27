@@ -24,7 +24,7 @@ impl MidiBits for Key {
 impl Key {
     /// Create a new key
     pub fn new(key: u8) -> Self {
-        Self(key.into())
+        Self(key)
     }
 
     /// Identifies the note of the key pressed
