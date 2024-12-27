@@ -1,3 +1,10 @@
-pub mod chunk;
-pub mod header;
-pub mod track;
+mod header_chunk;
+pub use header_chunk::*;
+mod track_chunk;
+pub use track_chunk::*;
+mod track_event;
+pub use track_event::*;
+mod track_message;
+pub use track_message::*;
+mod event;
+pub use event::*;

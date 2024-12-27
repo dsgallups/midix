@@ -2,16 +2,6 @@ mod state;
 pub use state::*;
 mod error;
 pub use error::*;
-mod event;
-pub use event::*;
-mod header_chunk;
-pub use header_chunk::*;
-mod track_chunk;
-pub use track_chunk::*;
-mod track_event;
-pub use track_event::*;
-mod track_message;
-pub use track_message::*;
 
 use std::io::{BufRead, BufReader, Read};
 
@@ -146,7 +136,7 @@ impl<'slc> Reader<&'slc [u8]> {
 //internal implementations
 impl<'slc> Reader<&'slc [u8]> {
     // Returns None if there's no bytes left to read
-    fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {
@@ -168,7 +158,9 @@ impl<'slc> Reader<&'slc [u8]> {
         Ok(slice)
     }
     /// Returns a statically sized array
-    pub fn read_exact_size<'slf, const SIZE: usize>(&'slf mut self) -> ReadResult<&'slc [u8; SIZE]>
+    pub(super) fn read_exact_size<'slf, const SIZE: usize>(
+        &'slf mut self,
+    ) -> ReadResult<&'slc [u8; SIZE]>
     where
         'slc: 'slf,
     {
@@ -180,14 +172,14 @@ impl<'slc> Reader<&'slc [u8]> {
     }
 
     /// Get the next byte without incrementing
-    fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
         let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
         Ok(res)
     }
-    fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(super) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
@@ -198,7 +190,7 @@ impl<'slc> Reader<&'slc [u8]> {
     }
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
-    fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    pub(super) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {
@@ -207,7 +199,7 @@ impl<'slc> Reader<&'slc [u8]> {
     }
 }
 
-fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
+pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
     let mut dec: u32 = 0;
 
     for _ in 0..4 {
@@ -226,7 +218,7 @@ fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
 }
 
 /// grabs the next byte from the reader and checks it's a u7
-fn check_u7<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+pub(super) fn check_u7<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
     (byte & 0b10000000 == 0)
         .then_some(byte)
@@ -234,7 +226,7 @@ fn check_u7<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
 }
 
 /// grabs the next byte from the reader and checks it's a u4
-fn check_u4<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+pub(super) fn check_u4<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
     (byte & 0b11110000 == 0)
         .then_some(byte)

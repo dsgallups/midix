@@ -7,8 +7,6 @@ pub use voice::*;
 mod voice_event;
 pub use voice_event::*;
 
-use super::{ReadResult, Reader};
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TrackMessage<'a> {
     ChannelVoice(ChannelVoiceMessage<'a>),
