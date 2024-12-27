@@ -2,6 +2,7 @@ use crate::prelude::*;
 
 use super::utils;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiTrackEvent {
     delta_time: u32,
     event: MidiTrackMessage,

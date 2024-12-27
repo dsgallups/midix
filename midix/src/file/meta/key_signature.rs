@@ -1,5 +1,9 @@
 use std::ops::Neg;
 
+///TODO
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct KeySignature;
+
 #[doc = r#"
 FF 59 02 sf mi Key Signature
 sf = -7: 7 flats

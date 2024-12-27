@@ -1,3 +1,7 @@
+///TODO
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct TimeSignature;
+
 #[doc = r#"
 FF 58 04 nn dd cc bb Time Signature
 

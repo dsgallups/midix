@@ -38,22 +38,22 @@ impl<'a> MidiFileBuilder<'a> {
                     FormatStage::KnownType(_) | FormatStage::Formatted(_) => {
                         return Err(ReaderError::invalid_data());
                     }
-                    FormatStage::KnownTracks(ref t) => match h.format_type() {
+                    FormatStage::KnownTracks(ref tracks) => match h.format_type() {
                         MidiFormatType::Simultaneous => {
                             self.format =
-                                FormatStage::Formatted(MidiFormat::Simultaneous(t.clone()))
+                                FormatStage::Formatted(MidiFormat::Simultaneous(tracks.clone()))
                         }
                         MidiFormatType::SingleMultiChannel => {
-                            if t.len() != 1 {
+                            if tracks.len() != 1 {
                                 return Err(ReaderError::invalid_data());
                             }
-                            let track = t.first().unwrap().clone();
+                            let track = tracks.first().unwrap().clone();
                             self.format =
                                 FormatStage::Formatted(MidiFormat::SingleMultiChannel(track))
                         }
                         MidiFormatType::SequentiallyIndependent => {
                             self.format = FormatStage::Formatted(
-                                MidiFormat::SequentiallyIndependent(t.clone()),
+                                MidiFormat::SequentiallyIndependent(tracks.clone()),
                             )
                         }
                     },

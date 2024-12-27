@@ -5,9 +5,15 @@ pub use message::*;
 
 use crate::{prelude::*, utils};
 
+/*
+    todo: Text, Lyrics, Markers, CuePoints, MidiChannel
+
+    Midi file should have like copyrights(),
+    etc
+*/
 /// Defines a track of a midi file
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MidiTrack {}
+pub struct MidiTrack(Vec<MidiTrackEvent>);
 
 // I would like to return some type of reader...
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
