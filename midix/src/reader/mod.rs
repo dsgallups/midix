@@ -8,6 +8,8 @@ Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 - [ ] Config
 "#]
 
+use std::io::{BufRead, BufReader, Read};
+
 use error::{ReadResult, ReaderError};
 use state::ReaderState;
 
@@ -23,7 +25,7 @@ pub struct Reader<R> {
 }
 
 impl<R> Reader<R> {
-    pub const fn from_reader(reader: R) -> Self {
+    pub const fn new(reader: R) -> Self {
         Self {
             reader,
             state: ReaderState::default(),
@@ -54,6 +56,24 @@ impl<R> Reader<R> {
     }
 }
 
+impl<R: Read> Reader<BufReader<R>> {
+    pub fn from_reader(reader: R) -> Self {
+        Self {
+            reader: BufReader::new(reader),
+            state: ReaderState::default(),
+        }
+    }
+}
+
+impl<R: BufRead> Reader<R> {
+    pub const fn from_buf_reader(reader: R) -> Self {
+        Self {
+            reader,
+            state: ReaderState::default(),
+        }
+    }
+}
+
 impl<'slc> Reader<&'slc [u8]> {
     pub const fn from_byte_slice(slice: &'slc [u8]) -> Self {
         Self {
@@ -62,7 +82,7 @@ impl<'slc> Reader<&'slc [u8]> {
         }
     }
 
-    pub fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(crate) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
@@ -73,7 +93,7 @@ impl<'slc> Reader<&'slc [u8]> {
         Ok(res)
     }
 
-    pub fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
