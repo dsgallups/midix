@@ -75,9 +75,6 @@ impl<'a> MidiHeaderRef<'a> {
     pub fn length(self) -> u32 {
         convert_u32(self.length)
     }
-    pub fn format(&self) -> u8 {
-        todo!()
-    }
     pub fn format_type(&self) -> MidiFormatType {
         use MidiFormatRef::*;
         match self.format {

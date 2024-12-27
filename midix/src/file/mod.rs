@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+pub mod builder;
 pub mod chunk;
 pub mod format;
 pub mod header;
@@ -12,7 +13,20 @@ pub struct MidiFile {
 }
 
 impl MidiFile {
-    pub fn parse(bytes: Vec<u8>) -> ReadResult<Self> {
+    pub fn parse(bytes: &[u8]) -> ReadResult<Self> {
+        let mut reader = Reader::from_byte_slice(bytes);
+        let mut builder = MidiFileBuilder::default();
+        loop {
+            match reader.read_chunk() {
+                Ok(c) => todo!(),
+                Err(e) => match e {
+                    ReaderError::EndOfReader => {
+                        break;
+                    }
+                    e => return Err(e),
+                },
+            }
+        }
         todo!();
     }
     pub fn header(&self) -> &MidiHeader {

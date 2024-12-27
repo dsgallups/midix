@@ -13,6 +13,7 @@ use std::io::{BufRead, BufReader, Read};
 use error::{ReadResult, ReaderError};
 use state::ReaderState;
 
+use crate::prelude::*;
 use crate::utils::decode_varlen;
 
 pub mod error;
@@ -104,6 +105,10 @@ impl<'slc> Reader<&'slc [u8]> {
         self.state.increment_offset(1);
 
         Ok(res)
+    }
+
+    pub fn read_chunk<'slf>(&'slf mut self) -> ReadResult<MidiChunk<'slc>> {
+        MidiChunk::read(self)
     }
 
     /// ASSUMING that the offset is pointing at the length of a varlen,
