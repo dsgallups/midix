@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ParseState {
     /// Initial state in which reader stay after creation. Transition from that
     /// state could produce a `HeaderChunk` or `TrackChunk` event. The next
@@ -9,7 +9,11 @@ pub enum ParseState {
     /// Bytes have been read in the midi file, and outside of a track's contents
     InsideMidi,
     /// The cursor is pointing to events inside the track
-    InsideTrack { start: usize, length: usize },
+    InsideTrack {
+        start: usize,
+        length: usize,
+        prev_status: Option<u8>,
+    },
     /// Reader enters this state when `Eof` event generated or an error occurred.
     /// This is the last state, the reader stay in it forever.
     Done,
@@ -35,8 +39,11 @@ impl ReaderState {
         self.offset
     }
 
-    pub fn parse_state(&self) -> &ParseState {
-        &self.state
+    pub fn parse_state(&self) -> ParseState {
+        self.state
+    }
+    pub fn parse_state_mut(&mut self) -> &mut ParseState {
+        &mut self.state
     }
     pub fn set_parse_state(&mut self, state: ParseState) {
         self.state = state;

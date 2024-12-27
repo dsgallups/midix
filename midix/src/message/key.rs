@@ -44,6 +44,48 @@ impl fmt::Display for Key {
     }
 }
 
+/// Identifies a key press
+///
+/// TODO docs
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct KeyRef<'a>(&'a u8);
+
+impl<'a> MidiBits for KeyRef<'a> {
+    type BitRepresentation = &'a u8;
+    fn as_bits(&self) -> Self::BitRepresentation {
+        self.0
+    }
+    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        Ok(Self(rep))
+    }
+}
+
+impl<'a> KeyRef<'a> {
+    /// Create a new key
+    pub fn new(key: &'a u8) -> Self {
+        Self(key)
+    }
+
+    /// Identifies the note of the key pressed
+    pub fn note(self) -> Note {
+        Note::from_midi_datum(*self.0)
+    }
+
+    /// Identifies the octave of the key pressed
+    pub fn octave(&self) -> Octave {
+        Octave::from_midi_datum(*self.0)
+    }
+}
+
+impl fmt::Display for KeyRef<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}-{}", self.note(), self.octave())
+    }
+}
+
 #[test]
 fn test_note() {
     let c = Key::new(12);

@@ -46,7 +46,9 @@ impl<'a> TimeSignatureRef<'a> {
     pub fn clocks_per_click(&self) -> u8 {
         self.0[2]
     }
-    pub fn notated_32nds_in_midi_quarter_note(&self) -> u8 {
+
+    ///(24 MIDI clocks = 1 crotchet = 1 beat). 24 midi clocks is a MIDI quarter note
+    pub fn notated_32nds_per_24_clocks(&self) -> u8 {
         self.0[3]
     }
 }

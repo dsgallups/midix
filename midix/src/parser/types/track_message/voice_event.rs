@@ -1,3 +1,4 @@
+use crate::prelude::*;
 /// Represents a MIDI message, usually associated to a MIDI channel.
 ///
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
@@ -8,26 +9,27 @@ pub enum VoiceEvent<'a> {
     /// Stop playing a note.
     NoteOff {
         /// The MIDI key to stop playing.
-        key: &'a u8,
+        key: KeyRef<'a>,
         /// The velocity with which to stop playing it.
-        vel: &'a u8,
+        velocity: VelocityRef<'a>,
     },
     /// Start playing a note.
     NoteOn {
         /// The key to start playing.
-        key: &'a u8,
+        key: KeyRef<'a>,
+
         /// The velocity (strength) with which to press it.
         ///
         /// Note that by convention a `NoteOn` message with a velocity of 0 is equivalent to a
         /// `NoteOff`.
-        vel: &'a u8,
+        velocity: VelocityRef<'a>,
     },
     /// Modify the velocity of a note after it has been played.
     Aftertouch {
         /// The key for which to modify its velocity.
-        key: &'a u8,
+        key: KeyRef<'a>,
         /// The new velocity for the key.
-        vel: &'a u8,
+        velocity: VelocityRef<'a>,
     },
     /// Modify the value of a MIDI controller.
     ControlChange {
@@ -46,7 +48,7 @@ pub enum VoiceEvent<'a> {
     /// Change the note velocity of a whole channel at once, without starting new notes.
     ChannelPressureAfterTouch {
         /// The new velocity for all notes currently playing in the channel.
-        vel: &'a u8,
+        velocity: VelocityRef<'a>,
     },
     /// Set the pitch bend value for the entire channel.
     PitchBend { lsb: &'a u8, msb: &'a u8 },
@@ -57,7 +59,7 @@ impl VoiceEvent<'_> {
     pub fn is_note_on(&self) -> bool {
         use VoiceEvent::*;
         match self {
-            NoteOn { vel, .. } => **vel != 0,
+            NoteOn { velocity, .. } => velocity.byte() != &0,
             _ => false,
         }
     }
@@ -67,7 +69,7 @@ impl VoiceEvent<'_> {
         use VoiceEvent::*;
         match self {
             NoteOff { .. } => true,
-            NoteOn { vel, .. } => **vel == 0,
+            NoteOn { velocity, .. } => velocity.byte() == &0,
             _ => false,
         }
     }

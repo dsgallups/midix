@@ -18,7 +18,8 @@ impl Channel {
 
     pub fn from_status(status: u8) -> Self {
         let channel = status & 0b0000_1111;
-        Self(channel)
+        println!("status, channel: {}, {}", status, channel);
+        Self(channel + 1)
     }
 
     /// Returns the 4-bit channel number

@@ -7,6 +7,13 @@ use core::fmt;
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Velocity(u8);
 
+impl Velocity {
+    /// Create a new velocity
+    pub fn new(velocity: u8) -> Self {
+        Self(velocity)
+    }
+}
+
 impl MidiBits for Velocity {
     type BitRepresentation = u8;
     fn as_bits(&self) -> Self::BitRepresentation {
@@ -20,15 +27,24 @@ impl MidiBits for Velocity {
     }
 }
 
-impl Velocity {
-    /// Create a new velocity
-    pub fn new(velocity: u8) -> Self {
-        Self(velocity)
-    }
-}
-
 impl fmt::Display for Velocity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+/// Identifies the velocity of a key press, or a key unpress, or an aftertouch.
+///
+/// TODO
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct VelocityRef<'a>(&'a u8);
+
+impl<'a> VelocityRef<'a> {
+    /// Create a new velocity
+    pub fn new(velocity: &'a u8) -> Self {
+        Self(velocity)
+    }
+    pub fn byte(&self) -> &u8 {
+        self.0
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
     channel::Channel,
     parser::reader::{check_u7, inv_data, ReadResult, Reader},
-    prelude::{Key, Velocity},
+    prelude::{KeyRef, VelocityRef},
 };
 
 use super::voice_event::VoiceEvent;
@@ -15,29 +15,28 @@ use super::voice_event::VoiceEvent;
 pub struct ChannelVoice<'a> {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel
-    status: &'a u8,
+    status: u8,
     /// The MIDI message type and associated data.
     message: VoiceEvent<'a>,
 }
 
 impl<'a> ChannelVoice<'a> {
     /// TODO: read functions should take in an iterator that yields u8s
-    pub fn read(reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
+    pub fn read(status: u8, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
         //bugged
-        let status = reader.read_next()?;
 
         let msg = match status >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: check_u7(reader)?,
-                vel: check_u7(reader)?,
+                key: KeyRef::new(check_u7(reader)?),
+                velocity: VelocityRef::new(check_u7(reader)?),
             },
             0x9 => VoiceEvent::NoteOn {
-                key: check_u7(reader)?,
-                vel: check_u7(reader)?,
+                key: KeyRef::new(check_u7(reader)?),
+                velocity: VelocityRef::new(check_u7(reader)?),
             },
             0xA => VoiceEvent::Aftertouch {
-                key: check_u7(reader)?,
-                vel: check_u7(reader)?,
+                key: KeyRef::new(check_u7(reader)?),
+                velocity: VelocityRef::new(check_u7(reader)?),
             },
             0xB => VoiceEvent::ControlChange {
                 controller: check_u7(reader)?,
@@ -47,7 +46,7 @@ impl<'a> ChannelVoice<'a> {
                 program: check_u7(reader)?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
-                vel: check_u7(reader)?,
+                velocity: VelocityRef::new(check_u7(reader)?),
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
@@ -68,7 +67,7 @@ impl<'a> ChannelVoice<'a> {
         })
     }
     pub fn channel(&self) -> Channel {
-        Channel::from_status(*self.status)
+        Channel::from_status(self.status)
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
@@ -82,27 +81,27 @@ impl<'a> ChannelVoice<'a> {
     }
 
     /// Returns the key if the event has a key
-    pub fn key(&self) -> Option<Key> {
+    pub fn key(&self) -> Option<KeyRef<'a>> {
         match self.message {
             VoiceEvent::NoteOn { key, .. }
             | VoiceEvent::NoteOff { key, .. }
-            | VoiceEvent::Aftertouch { key, .. } => Some(Key::new(*key)),
+            | VoiceEvent::Aftertouch { key, .. } => Some(key),
             _ => None,
         }
     }
-    pub fn velocity(&self) -> Option<Velocity> {
+    pub fn velocity(&self) -> Option<VelocityRef<'a>> {
         match self.message {
-            VoiceEvent::NoteOn { vel, .. }
-            | VoiceEvent::NoteOff { vel, .. }
-            | VoiceEvent::Aftertouch { vel, .. }
-            | VoiceEvent::ChannelPressureAfterTouch { vel } => Some(Velocity::new(*vel)),
+            VoiceEvent::NoteOn { velocity, .. }
+            | VoiceEvent::NoteOff { velocity, .. }
+            | VoiceEvent::Aftertouch { velocity, .. }
+            | VoiceEvent::ChannelPressureAfterTouch { velocity } => Some(velocity),
             _ => None,
         }
     }
 
     pub fn status(&self) -> &u8 {
         //self.message.status_nibble() << 4 | self.channel.bits()
-        self.status
+        &self.status
     }
     pub fn message(&self) -> &VoiceEvent {
         &self.message

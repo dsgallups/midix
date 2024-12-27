@@ -36,16 +36,3 @@ impl TrackChunk {
         Ok(events)
     }*/
 }
-
-#[test]
-fn test_simple_sysex() {
-    let bytes = [0xF0, 0x05, 0x43, 0x12, 0x00, 0x07, 0xF7];
-    let mut _reader = Reader::from_byte_slice(&bytes);
-    todo!()
-    /*let msg = MidiTrackMessageRef::read(&mut reader).unwrap();
-
-    assert_eq!(
-        msg,
-        MidiTrackMessageRef::SystemExclusive(SystemExclusiveRef::new(&[0x43, 0x12, 0x00, 0x07]))
-    );*/
-}

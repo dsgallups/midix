@@ -1,5 +1,6 @@
-use crate::{parser::reader::decode_varlen, prelude::*};
+use crate::prelude::*;
 
+#[derive(Debug, PartialEq)]
 pub struct TrackEvent<'a> {
     /// Variable length quantity
     /// Delta-time is in some fraction of a beat
@@ -10,15 +11,10 @@ pub struct TrackEvent<'a> {
 }
 
 impl<'a> TrackEvent<'a> {
-    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
-    where
-        'slc: 'a,
-    {
-        let delta_time = decode_varlen(reader)?;
-
-        let event = TrackMessage::read(reader)?;
-        Ok(Self { delta_time, event })
+    pub(crate) fn new(delta_time: u32, event: TrackMessage<'a>) -> Self {
+        Self { delta_time, event }
     }
+
     pub fn delta_time(&self) -> u32 {
         self.delta_time
     }

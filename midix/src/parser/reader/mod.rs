@@ -79,7 +79,8 @@ impl<'slc> Reader<&'slc [u8]> {
     where
         'slc: 'a,
     {
-        let _event = loop {
+        let event = loop {
+            println!("state: {:?}", self.state.parse_state());
             match self.state.parse_state() {
                 ParseState::Init => {
                     self.state.set_parse_state(ParseState::InsideMidi);
@@ -99,6 +100,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             self.state.set_parse_state(ParseState::InsideTrack {
                                 start: self.buffer_position(),
                                 length: chunk.length() as usize,
+                                prev_status: None,
                             });
                             break Event::Track(chunk);
                         }
@@ -114,22 +116,63 @@ impl<'slc> Reader<&'slc [u8]> {
                         }
                     }
                 }
-                ParseState::InsideTrack { start, length } => {
-                    if start + length >= self.buffer_position() {
+                ParseState::InsideTrack {
+                    start,
+                    length,
+                    prev_status,
+                } => {
+                    if start + length <= self.buffer_position() {
                         //end of track events
                         self.state.set_parse_state(ParseState::InsideMidi);
                         continue;
                     }
-                    let _track_event = TrackEvent::read(self)?;
+                    //need to do this procedurally due to running statuses on midi events
+                    let delta_time = decode_varlen(self)?;
 
-                    //todo
-                    todo!()
-                    //todo
+                    let next_event = self.read_next()?;
+
+                    let message = match next_event {
+                        0xF0 => {
+                            let mut data = self.read_varlen_slice()?;
+                            if !data.is_empty() {
+                                //discard the last 0xF7
+                                data = &data[..data.len() - 1];
+                            }
+                            TrackMessage::SystemExclusive(SysEx::new(data))
+                        }
+                        0xFF => TrackMessage::Meta(Meta::read(self)?),
+                        byte => {
+                            //status if the byte has a leading 1, otherwise it's
+                            //a running status
+                            let status = if byte >> 7 == 1 {
+                                let ParseState::InsideTrack { prev_status, .. } =
+                                    self.state.parse_state_mut()
+                                else {
+                                    return Err(inv_data(
+                                        self,
+                                        "Encountered midi event outside of track",
+                                    ));
+                                };
+                                *prev_status = Some(*byte);
+
+                                *byte
+                            } else if let Some(prev_status) = prev_status {
+                                prev_status
+                            } else {
+                                return Err(inv_data(self, "Invalid MIDI event triggered"));
+                            };
+
+                            //todo
+                            TrackMessage::ChannelVoice(ChannelVoice::read(status, self)?)
+                        }
+                    };
+
+                    break Event::TrackEvent(TrackEvent::new(delta_time, message));
                 }
-                _ => todo!(),
+                ParseState::Done => break Event::EOF,
             }
         };
-        todo!();
+        Ok(event)
     }
 }
 
@@ -172,6 +215,7 @@ impl<'slc> Reader<&'slc [u8]> {
     }
 
     /// Get the next byte without incrementing
+    #[allow(dead_code)]
     pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,

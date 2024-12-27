@@ -9,6 +9,9 @@ pub enum Timing<'a> {
 }
 
 impl<'a> Timing<'a> {
+    pub fn ticks(arr: &'a [u8; 2]) -> Self {
+        Self::TicksPerQuarterNote(arr)
+    }
     /// Assumes the next two bytes are for a midi division.
     pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
