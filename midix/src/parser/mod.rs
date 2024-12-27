@@ -15,5 +15,5 @@ and then we can have owned types accordingly. So really reader should have our t
 We should probably have a parser that can yield an enum
 "#]
 
-pub mod reader;
+pub mod old_reader;
 pub mod types;
