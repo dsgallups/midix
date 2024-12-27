@@ -1,4 +1,4 @@
-use super::HeaderChunk;
+use super::{HeaderChunk, TrackChunk, TrackEvent};
 
 pub enum Event<'a> {
     Header(HeaderChunk<'a>),

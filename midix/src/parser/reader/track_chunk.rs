@@ -1,18 +1,13 @@
-mod event;
-pub use event::*;
-mod message;
-pub use message::*;
-
 use crate::prelude::*;
 
 // I would like to return some type of reader...
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MidiTrackRef<'a> {
+pub struct TrackChunk<'a> {
     length: u32,
     data: &'a [u8],
 }
 
-impl<'a> MidiTrackRef<'a> {
+impl<'a> TrackChunk<'a> {
     /// Assumes that the chunk type bytes ("MTrk") have ALREADY been read
     pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where

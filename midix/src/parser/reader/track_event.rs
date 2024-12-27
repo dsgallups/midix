@@ -1,15 +1,17 @@
+use reader::TrackMessage;
+
 use crate::{prelude::*, utils};
 
-pub struct MidiTrackEventRef<'a> {
+pub struct TrackEvent<'a> {
     /// Variable length quantity
     /// Delta-time is in some fraction of a beat
     /// (or a second, for recording a track with SMPTE times),
     /// as specified in the header chunk.
     delta_time: u32,
-    event: MidiTrackMessageRef<'a>,
+    event: TrackMessage<'a>,
 }
 
-impl<'a> MidiTrackEventRef<'a> {
+impl<'a> TrackEvent<'a> {
     pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,

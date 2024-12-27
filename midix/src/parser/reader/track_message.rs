@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum MidiTrackMessageRef<'a> {
+pub enum TrackMessage<'a> {
     ChannelVoice(ChannelVoiceMessage),
     SystemExclusive(SystemExclusiveRef<'a>),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
@@ -9,7 +9,7 @@ pub enum MidiTrackMessageRef<'a> {
     Meta(MetaMessageRef<'a>),
 }
 
-impl<'a> MidiTrackMessageRef<'a> {
+impl<'a> TrackMessage<'a> {
     pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
@@ -39,7 +39,7 @@ impl<'a> MidiTrackMessageRef<'a> {
     }
 
     pub fn to_owned(self) -> MidiTrackMessage {
-        use MidiTrackMessageRef::*;
+        use TrackMessage::*;
         match self {
             ChannelVoice(c) => MidiTrackMessage::ChannelVoice(c),
             SystemExclusive(s) => MidiTrackMessage::SystemExclusive(s.to_owned()),
