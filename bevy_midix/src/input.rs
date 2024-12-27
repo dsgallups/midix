@@ -4,7 +4,7 @@ use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind; // XXX: do we expose this?
 pub use midir::{Ignore, MidiInputPort};
 use midix::bytes::FromMidiMessage;
-use midix::message::LiveMidiMessage;
+use midix::live::LiveMidiMessage;
 use std::error::Error;
 use std::fmt::Display;
 use std::future::Future;

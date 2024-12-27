@@ -60,7 +60,7 @@ impl<'slc> Reader<&'slc [u8]> {
         }
     }
 
-    pub fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slf u8>
+    pub fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
@@ -71,6 +71,16 @@ impl<'slc> Reader<&'slc [u8]> {
         self.state.increment_offset(1);
 
         Ok(res)
+    }
+
+    /// ASSUMING that the offset is pointing at the length of a varlen,
+    /// it will read that length and return the resulting slice.
+    pub(crate) fn read_varlen<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    where
+        'slc: 'slf,
+    {
+        let size = *self.read_next()?;
+        self.read_exact(size as usize)
     }
 
     /// Peak the next set of bytes without incrementing the buffer position.

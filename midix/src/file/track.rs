@@ -42,8 +42,3 @@ pub enum TrackMidiMessage<'a> {
     /// lyrics, etc...
     Meta(MetaMessage<'a>),
 }
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct MetaMessage<'a> {
-    foo: &'a u8,
-}
