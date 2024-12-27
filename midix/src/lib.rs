@@ -44,7 +44,12 @@ pub mod prelude {
     pub use crate::file::{chunk::*, format::*, header::*, meta::*, track::*};
     pub use crate::live::*;
     pub use crate::message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *};
-    pub use crate::parser::{reader::*, types::*};
+    pub use crate::parser::{
+        reader::{ReadResult, Reader, ReaderState},
+        types::*,
+    };
+
+    pub(crate) use crate::parser::reader::{inv_data, inv_input, unexp_eof};
 
     pub use core::fmt::Display;
 

@@ -50,7 +50,7 @@ fn midi_file_ref() {
     let VoiceEventRef::ProgramChange { program } = cv.message() else {
         panic!();
     };
-    assert_eq!(**program, 5);
+    assert_eq!(*program.byte(), 5);
     /*************/
 
     //channel 2 program change to 46
@@ -65,7 +65,7 @@ fn midi_file_ref() {
     let VoiceEventRef::ProgramChange { program } = cv.message() else {
         panic!();
     };
-    assert_eq!(**program, 46);
+    assert_eq!(*program.byte(), 46);
     /*************/
 
     //channel 3 program change to 70
@@ -80,7 +80,7 @@ fn midi_file_ref() {
     let VoiceEventRef::ProgramChange { program } = cv.message() else {
         panic!();
     };
-    assert_eq!(**program, 70);
+    assert_eq!(*program.byte(), 70);
     /*************/
 
     // First key for channel 0

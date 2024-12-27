@@ -36,4 +36,8 @@ impl<'a> ProgramRef<'a> {
     pub(crate) const fn new(program: &'a u8) -> Self {
         Self(program)
     }
+
+    pub fn byte(&self) -> &u8 {
+        self.0
+    }
 }

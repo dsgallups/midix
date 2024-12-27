@@ -2,8 +2,8 @@ mod sysex;
 pub use sysex::*;
 mod meta;
 pub use meta::*;
-mod voice;
-pub use voice::*;
+
+use crate::message::ChannelVoice;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TrackMessage<'a> {

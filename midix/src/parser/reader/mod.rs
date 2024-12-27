@@ -201,7 +201,7 @@ impl<'slc> Reader<&'slc [u8]> {
         Ok(slice)
     }
     /// Returns a statically sized array
-    pub(super) fn read_exact_size<'slf, const SIZE: usize>(
+    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
         &'slf mut self,
     ) -> ReadResult<&'slc [u8; SIZE]>
     where
@@ -262,7 +262,7 @@ pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
 }
 
 /// grabs the next byte from the reader and checks it's a u7
-pub(super) fn check_u7<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+pub(crate) fn check_u7<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
     (byte & 0b10000000 == 0)
         .then_some(byte)
@@ -271,7 +271,7 @@ pub(super) fn check_u7<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'sl
 
 /// grabs the next byte from the reader and checks it's a u4
 #[allow(dead_code)]
-pub(super) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
     (byte & 0b11110000 == 0)
         .then_some(byte)
