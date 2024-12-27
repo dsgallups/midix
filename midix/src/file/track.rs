@@ -81,21 +81,25 @@ impl<'a> MidiTrackMessage<'a> {
     where
         'slc: 'a,
     {
-        let next_event = reader.read_next()?;
-        println!("here: {}", next_event);
+        let next_event = reader.peak_next()?;
 
         let res = match next_event {
             0xF0 => {
+                //since we've peaked
+                reader.increment_buffer_position(1);
                 let mut data = reader.read_varlen_slice()?;
                 if !data.is_empty() {
                     //discard the last 0xF7
                     data = &data[..data.len() - 1];
                 }
-                println!("data: {:?}", data);
                 Self::SystemExclusive(SystemExclusiveBorrowed::new(data))
             }
-            0xFF => Self::Meta(MetaMessage::read(reader)?),
-            _ => todo!(),
+            0xFF => {
+                //since we've peaked
+                reader.increment_buffer_position(1);
+                Self::Meta(MetaMessage::read(reader)?)
+            }
+            _ => Self::ChannelVoice(ChannelVoiceMessage::read(reader)?),
         };
 
         Ok(res)
