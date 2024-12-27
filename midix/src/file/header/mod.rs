@@ -37,7 +37,6 @@ If bit 15 of <division> is a one, delta times in a file correspond to subdivisio
 "#]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MidiHeaderRef<'a> {
-    length: &'a [u8; 4],
     format: MidiFormatRef<'a>,
     timing: MidiTimingRef<'a>,
 }
@@ -48,7 +47,11 @@ impl<'a> MidiHeaderRef<'a> {
     where
         'slc: 'a,
     {
-        let length: &[u8; 4] = reader.read_exact_size()?;
+        let length = u32::from_be_bytes(*reader.read_exact_size()?);
+        if length != 6 {
+            return Err(ReaderError::invalid_data());
+        }
+
         let format_bytes: &[u8; 2] = reader.read_exact_size()?;
         let num_tracks: &[u8; 2] = reader.read_exact_size()?;
 
@@ -66,14 +69,13 @@ impl<'a> MidiHeaderRef<'a> {
 
         let timing = MidiTimingRef::read(reader)?;
 
-        Ok(Self {
-            length,
-            format,
-            timing,
-        })
+        Ok(Self { format, timing })
     }
-    pub fn length(self) -> u32 {
-        convert_u32(self.length)
+    pub const fn length(self) -> u32 {
+        6
+    }
+    pub fn format(&self) -> MidiFormatRef<'a> {
+        self.format
     }
     pub fn format_type(&self) -> MidiFormatType {
         use MidiFormatRef::*;
@@ -85,6 +87,9 @@ impl<'a> MidiHeaderRef<'a> {
     }
     pub fn num_tracks(&self) -> u16 {
         self.format.num_tracks()
+    }
+    pub fn timing(&self) -> MidiTimingRef {
+        self.timing
     }
 }
 

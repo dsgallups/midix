@@ -2,14 +2,15 @@ use crate::file::{ReadResult, ReaderError};
 use crate::prelude::*;
 
 #[derive(Default)]
-pub enum FormatStage {
+pub enum FormatStage<'a> {
     #[default]
     Unknown,
-    KnownType(MidiFormatType),
+    KnownType(MidiFormatRef<'a>),
+    KnownTracks(Vec<MidiTrack>),
     Formatted(MidiFormat),
 }
 
-impl FormatStage {
+impl FormatStage<'_> {
     pub fn known(&self) -> bool {
         !(matches!(self, Self::Unknown))
     }
@@ -17,10 +18,8 @@ impl FormatStage {
 
 #[derive(Default)]
 pub struct MidiFileBuilder<'a> {
-    header: Option<MidiHeader>,
-    format: FormatStage,
-
-    store: Option<MidiHeaderRef<'a>>,
+    format: FormatStage<'a>,
+    timing: Option<MidiTiming>,
 }
 
 impl<'a> MidiFileBuilder<'a> {
@@ -28,14 +27,47 @@ impl<'a> MidiFileBuilder<'a> {
         use MidiChunk::*;
         match chunk {
             Header(h) => {
-                if self.store.is_some() || self.header.is_some() || self.format.known() {
+                if self.timing.is_some() {
                     return Err(ReaderError::invalid_data());
                 }
-                self.format = FormatStage::KnownType(h.format_type());
 
-                self.store = Some(h);
+                match self.format {
+                    FormatStage::Unknown => {
+                        self.format = FormatStage::KnownType(h.format());
+                    }
+                    FormatStage::KnownType(_) | FormatStage::Formatted(_) => {
+                        return Err(ReaderError::invalid_data());
+                    }
+                    FormatStage::KnownTracks(ref t) => match h.format_type() {
+                        MidiFormatType::Simultaneous => {
+                            self.format =
+                                FormatStage::Formatted(MidiFormat::Simultaneous(t.clone()))
+                        }
+                        MidiFormatType::SingleMultiChannel => {
+                            if t.len() != 1 {
+                                return Err(ReaderError::invalid_data());
+                            }
+                            let track = t.first().unwrap().clone();
+                            self.format =
+                                FormatStage::Formatted(MidiFormat::SingleMultiChannel(track))
+                        }
+                        MidiFormatType::SequentiallyIndependent => {
+                            self.format = FormatStage::Formatted(
+                                MidiFormat::SequentiallyIndependent(t.clone()),
+                            )
+                        }
+                    },
+                };
 
-                todo!()
+                self.timing = Some(h.timing().to_owned());
+
+                Ok(())
+            }
+            Track(t) => {
+                let events = t.events()?;
+
+                for event in events {}
+                todo!();
             }
 
             _ => todo!(),

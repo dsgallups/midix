@@ -40,4 +40,12 @@ impl<'a> MidiTimingRef<'a> {
             }
         }
     }
+    pub fn to_owned(self) -> MidiTiming {
+        match self {
+            Self::TicksPerQuarterNote(t) => {
+                let v = u16::from_be_bytes(*t);
+                MidiTiming::TicksPerQuarterNote(v & 0x7FFF)
+            }
+        }
+    }
 }

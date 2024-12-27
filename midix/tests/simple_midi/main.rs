@@ -27,7 +27,7 @@ fn midi_file_ref() {
 fn midi_file_simple() {
     let bytes = include_bytes!("./simple.mid");
 
-    let midi = MidiFile::parse(bytes.to_vec()).unwrap();
+    let midi = MidiFile::parse(bytes).unwrap();
 
     let header = midi.header();
 
