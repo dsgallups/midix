@@ -1,7 +1,5 @@
 use crate::prelude::*;
 
-mod format;
-pub use format::*;
 mod timing;
 pub use timing::*;
 
@@ -35,7 +33,7 @@ If bit 15 of <division> is a one, delta times in a file correspond to subdivisio
 "#]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct HeaderChunk<'a> {
-    format: Format<'a>,
+    format: FormatRef<'a>,
     timing: Timing<'a>,
 }
 
@@ -61,10 +59,10 @@ impl<'a> HeaderChunk<'a> {
                         "Type 0 MIDI format (SingleMultiChannel) defines multiple tracks!",
                     ));
                 };
-                Format::SingleMultiChannel
+                FormatRef::SingleMultiChannel
             } // Always 1 track
-            1 => Format::Simultaneous(num_tracks),
-            2 => Format::SequentiallyIndependent(num_tracks),
+            1 => FormatRef::Simultaneous(num_tracks),
+            2 => FormatRef::SequentiallyIndependent(num_tracks),
             t => return Err(inv_data(reader, format!("Invalid MIDI format {}", t))),
         };
 
@@ -75,10 +73,10 @@ impl<'a> HeaderChunk<'a> {
     pub const fn length(self) -> u32 {
         6
     }
-    pub fn format(&self) -> Format<'a> {
+    pub fn format(&self) -> FormatRef<'a> {
         self.format
     }
-    pub fn format_type(&self) -> MidiFormatType {
+    pub fn format_type(&self) -> FormatType {
         self.format.format_type()
     }
     pub fn num_tracks(&self) -> u16 {
@@ -102,7 +100,7 @@ fn read_midi_header_simultaneous() {
     let result = HeaderChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.length(), 6);
-    assert_eq!(result.format_type(), MidiFormatType::Simultaneous);
+    assert_eq!(result.format_type(), FormatType::Simultaneous);
     assert_eq!(result.num_tracks(), 3);
 }
 
@@ -119,7 +117,7 @@ fn read_midi_header_single_multichannel() {
     let result = HeaderChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.length(), 6);
-    assert_eq!(result.format_type(), MidiFormatType::SingleMultiChannel);
+    assert_eq!(result.format_type(), FormatType::SingleMultiChannel);
     assert_eq!(result.num_tracks(), 1);
 }
 

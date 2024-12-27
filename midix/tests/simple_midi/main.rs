@@ -7,7 +7,7 @@ fn midi_file_ref() {
     let Ok(Event::Header(header)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(header.format_type(), MidiFormatType::SingleMultiChannel);
+    assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
     assert_eq!(header.timing(), Timing::ticks(&[0, 96]));
 
     let Ok(Event::Track(track)) = reader.read_event() else {

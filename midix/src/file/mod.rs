@@ -9,7 +9,7 @@ pub mod track;
 
 pub struct MidiFile {
     header: MidiHeader,
-    tracks: MidiFormat,
+    tracks: Format,
 }
 
 impl MidiFile {
@@ -35,9 +35,9 @@ impl MidiFile {
     }
     pub fn tracks(&self) -> Vec<&MidiTrack> {
         match self.tracks {
-            MidiFormat::SequentiallyIndependent(ref t) => t.iter().collect(),
-            MidiFormat::Simultaneous(ref s) => s.iter().collect(),
-            MidiFormat::SingleMultiChannel(ref c) => vec![c],
+            Format::SequentiallyIndependent(ref t) => t.iter().collect(),
+            Format::Simultaneous(ref s) => s.iter().collect(),
+            Format::SingleMultiChannel(ref c) => vec![c],
         }
     }
 }

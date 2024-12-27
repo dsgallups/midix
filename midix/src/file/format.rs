@@ -18,7 +18,7 @@ sequence number.
 */
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum MidiFormat {
+pub enum Format {
     /// Format 0
     SingleMultiChannel(MidiTrack),
     /// Format 1
@@ -40,3 +40,35 @@ impl SequenceTrack {
         }
     }
 }*/
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FormatRef<'a> {
+    /// Format 0
+    SingleMultiChannel,
+    /// Format 1
+    Simultaneous(&'a [u8; 2]),
+    /// Format 2
+    SequentiallyIndependent(&'a [u8; 2]),
+}
+impl FormatRef<'_> {
+    pub fn num_tracks(self) -> u16 {
+        use FormatRef::*;
+        match self {
+            SingleMultiChannel => 1,
+            Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(*num),
+        }
+    }
+    pub fn format_type(&self) -> FormatType {
+        use FormatRef::*;
+        match self {
+            SingleMultiChannel => FormatType::SingleMultiChannel,
+            Simultaneous(_) => FormatType::Simultaneous,
+            SequentiallyIndependent(_) => FormatType::SequentiallyIndependent,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FormatType {
+    SingleMultiChannel,
+    Simultaneous,
+    SequentiallyIndependent,
+}
