@@ -45,7 +45,7 @@ pub mod prelude {
     pub use crate::live::*;
     pub use crate::message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *};
     pub use crate::parser::{
-        reader::*,
+        old_reader::*,
         types::{chunk::*, header::*, track::*, *},
         *,
     };

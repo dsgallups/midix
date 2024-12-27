@@ -1,6 +1,3 @@
-mod timing;
-pub use timing::*;
-
 use crate::prelude::*;
 
 #[doc = r#"
@@ -32,12 +29,12 @@ If bit 15 of <division> is zero, the bits 14 thru 0 represent the number of delt
 If bit 15 of <division> is a one, delta times in a file correspond to subdivisions of a second, in a way consistent with SMPTE and MIDI Time Code. Bits 14 thru 8 contain one of the four values -24, -25, -29, or -30, corresponding to the four standard SMPTE and MIDI Time Code formats (-29 corresponds to 30 drop frame), and represents the number of frames per second. These negative numbers are stored in two's compliment form. The second byte (stored positive) is the resolution within a frame: typical values may be 4 (MIDI Time Code resolution), 8, 10, 80 (bit resolution), or 100. This stream allows exact specifications of time-code-based tracks, but also allows millisecond-based tracks by specifying 25 frames/sec and a resolution of 40 units per frame. If the events in a file are stored with a bit resolution of thirty-frame time code, the division word would be E250 hex.
 "#]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MidiHeaderRef<'a> {
+pub struct HeaderChunk<'a> {
     format: MidiFormatRef<'a>,
     timing: MidiTimingRef<'a>,
 }
 
-impl<'a> MidiHeaderRef<'a> {
+impl<'a> HeaderChunk<'a> {
     /// Assumes that the chunk type bytes ("MThd") have ALREADY been read
     pub fn read<'slc, 'r>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
@@ -94,7 +91,7 @@ fn read_midi_header_simultaneous() {
     ];
     let mut reader = OldReader::from_byte_slice(&bytes);
 
-    let result = MidiHeaderRef::read(&mut reader).unwrap();
+    let result = HeaderChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.length(), 6);
     assert_eq!(result.format_type(), MidiFormatType::Simultaneous);
@@ -111,7 +108,7 @@ fn read_midi_header_single_multichannel() {
     ];
     let mut reader = OldReader::from_byte_slice(&bytes);
 
-    let result = MidiHeaderRef::read(&mut reader).unwrap();
+    let result = HeaderChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.length(), 6);
     assert_eq!(result.format_type(), MidiFormatType::SingleMultiChannel);
@@ -128,6 +125,6 @@ fn read_midi_header_single_multichannel_invalid() {
     ];
     let mut reader = OldReader::from_byte_slice(&bytes);
 
-    let err = MidiHeaderRef::read(&mut reader).expect_err("Invalid");
+    let err = HeaderChunk::read(&mut reader).expect_err("Invalid");
     assert!(matches!(err, ReaderError::Io(_)))
 }

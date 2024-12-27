@@ -7,7 +7,7 @@ use pretty_assertions::assert_eq;
 #[test]
 fn midi_file_ref() {
     let bytes = include_bytes!("./simple.mid");
-    let mut reader = Reader::from_byte_slice(bytes);
+    let mut reader = OldReader::from_byte_slice(bytes);
 
     let midi = MidiFileRef::read(&mut reader).unwrap();
 

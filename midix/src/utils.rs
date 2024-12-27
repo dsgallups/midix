@@ -14,13 +14,13 @@ pub fn check_u4(byte: u8) -> Result<u8, std::io::Error> {
         .ok_or(io_error!(ErrorKind::InvalidData, "Leading bit found"))
 }
 #[cfg(test)]
-pub fn read_u32(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
+pub fn read_u32(reader: &mut OldReader<&[u8]>) -> ReadResult<u32> {
     let chunk_size: &[u8; 4] = reader.read_exact_size()?;
     // this takes some time but like, it's pretty fast
     Ok(u32::from_be_bytes(*chunk_size))
 }
 #[cfg(test)]
-pub fn read_u16(reader: &mut Reader<&[u8]>) -> ReadResult<u16> {
+pub fn read_u16(reader: &mut OldReader<&[u8]>) -> ReadResult<u16> {
     let chunk_size: &[u8; 2] = reader.read_exact_size()?;
     // this takes some time but like, it's pretty fast
     Ok(u16::from_be_bytes(*chunk_size))
@@ -30,7 +30,7 @@ pub fn convert_u32(bytes: &[u8; 4]) -> u32 {
     u32::from_be_bytes(*bytes)
 }
 
-pub fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
+pub fn decode_varlen(reader: &mut OldReader<&[u8]>) -> ReadResult<u32> {
     let mut dec: u32 = 0;
 
     for _ in 0..4 {
@@ -51,7 +51,7 @@ pub fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
 #[test]
 fn test_varlen_decode_simple() {
     let val = [0x03];
-    let mut reader = Reader::from_byte_slice(&val);
+    let mut reader = OldReader::from_byte_slice(&val);
     let res = decode_varlen(&mut reader).unwrap();
     assert_eq!(res, 3);
 }
@@ -60,7 +60,7 @@ fn test_varlen_decode_simple() {
 fn test_varlen_decode_combined() {
     //10010000 00001000
     let val = [0x90, 0x08];
-    let mut reader = Reader::from_byte_slice(&val);
+    let mut reader = OldReader::from_byte_slice(&val);
 
     //should be 00100000001000
     //which is 2056
@@ -68,7 +68,7 @@ fn test_varlen_decode_combined() {
     assert_eq!(res, 2056);
 
     let val = [0x81, 0x48];
-    let mut reader = Reader::from_byte_slice(&val);
+    let mut reader = OldReader::from_byte_slice(&val);
     let res = decode_varlen(&mut reader).unwrap();
     assert_eq!(res, 200);
 }
@@ -77,7 +77,7 @@ fn test_varlen_decode_combined() {
 fn test_long_varlen() {
     //11111111 10010001 10010000 00001000
     let val = [0xFF, 0x91, 0x90, 0x08];
-    let mut reader = Reader::from_byte_slice(&val);
+    let mut reader = OldReader::from_byte_slice(&val);
 
     //should be 1111111001000100100000001000
     //which is 266618888
@@ -94,7 +94,7 @@ fn test_read_exact() {
         0x00, 0x03, //num_tracks
         0x00, 0x78, //timing
     ];
-    let mut reader = Reader::from_byte_slice(&bytes);
+    let mut reader = OldReader::from_byte_slice(&bytes);
 
     utils::read_u32(&mut reader).unwrap();
     utils::read_u16(&mut reader).unwrap();

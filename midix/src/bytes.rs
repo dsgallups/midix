@@ -14,7 +14,7 @@ pub trait MidiBits {
 }
 
 pub trait FromReader<'r, 'slc> {
-    fn read(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    fn read(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
         Self: Sized;
 }

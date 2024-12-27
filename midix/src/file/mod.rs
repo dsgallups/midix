@@ -14,7 +14,7 @@ pub struct MidiFile {
 
 impl MidiFile {
     pub fn parse(bytes: &[u8]) -> ReadResult<Self> {
-        let mut reader = Reader::from_byte_slice(bytes);
+        let mut reader = OldReader::from_byte_slice(bytes);
         let mut builder = MidiFileBuilder::default();
         loop {
             match reader.read_chunk() {
@@ -46,7 +46,7 @@ pub struct MidiFileRef<'a> {
 }
 
 impl<'a> MidiFileRef<'a> {
-    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
     {

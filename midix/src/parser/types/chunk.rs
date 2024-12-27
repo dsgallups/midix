@@ -22,7 +22,7 @@ pub enum MidiChunk<'a> {
 }
 
 impl<'a> MidiChunk<'a> {
-    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
     {
@@ -69,7 +69,7 @@ fn test_reader_header_chunk() {
         0x00, 0x03, //num_tracks
         0x00, 0x78, //timing
     ];
-    let mut reader = Reader::from_byte_slice(&bytes);
+    let mut reader = OldReader::from_byte_slice(&bytes);
 
     let result = MidiChunk::read(&mut reader).unwrap();
 
@@ -89,7 +89,7 @@ fn test_unknown_chunk() {
         0x00, 0x03, //num_tracks
         0x00, 0x78, //timing
     ];
-    let mut reader = Reader::from_byte_slice(&bytes);
+    let mut reader = OldReader::from_byte_slice(&bytes);
 
     let result = MidiChunk::read(&mut reader).unwrap();
 

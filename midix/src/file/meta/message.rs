@@ -114,7 +114,7 @@ pub enum MetaMessageRef<'a> {
     Unknown(&'a u8, &'a [u8]),
 }
 impl<'a> MetaMessageRef<'a> {
-    pub fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'slc, 'r>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
     {

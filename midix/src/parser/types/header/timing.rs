@@ -7,7 +7,7 @@ pub enum MidiTimingRef<'a> {
 
 impl<'a> MidiTimingRef<'a> {
     /// Assumes the next two bytes are for a midi division.
-    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
     {

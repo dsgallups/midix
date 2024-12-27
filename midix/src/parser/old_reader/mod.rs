@@ -8,12 +8,12 @@ use std::io::{BufRead, BufReader, Read};
 use crate::{prelude::MidiChunk, utils::decode_varlen};
 
 #[derive(Clone)]
-pub struct Reader<R> {
+pub struct OldReader<R> {
     reader: R,
     state: ReaderState,
 }
 
-impl<R> Reader<R> {
+impl<R> OldReader<R> {
     pub const fn new(reader: R) -> Self {
         Self {
             reader,
@@ -45,7 +45,7 @@ impl<R> Reader<R> {
     }
 }
 
-impl<R: Read> Reader<BufReader<R>> {
+impl<R: Read> OldReader<BufReader<R>> {
     pub fn from_reader(reader: R) -> Self {
         Self {
             reader: BufReader::new(reader),
@@ -54,7 +54,7 @@ impl<R: Read> Reader<BufReader<R>> {
     }
 }
 
-impl<R: BufRead> Reader<R> {
+impl<R: BufRead> OldReader<R> {
     pub const fn from_buf_reader(reader: R) -> Self {
         Self {
             reader,
@@ -63,7 +63,7 @@ impl<R: BufRead> Reader<R> {
     }
 }
 
-impl<'slc> Reader<&'slc [u8]> {
+impl<'slc> OldReader<&'slc [u8]> {
     pub const fn from_byte_slice(slice: &'slc [u8]) -> Self {
         Self {
             reader: slice,
@@ -183,7 +183,7 @@ fn test_read_bytes() {
         0x00, 0x03, //num_tracks
         0x00, 0x78, //timing
     ];
-    let mut reader = Reader::from_byte_slice(&bytes);
+    let mut reader = OldReader::from_byte_slice(&bytes);
 
     reader.read_exact(4).unwrap();
     reader.read_exact(2).unwrap();

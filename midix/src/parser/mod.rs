@@ -16,4 +16,5 @@ We should probably have a parser that can yield an enum
 "#]
 
 pub mod old_reader;
+pub mod reader;
 pub mod types;
