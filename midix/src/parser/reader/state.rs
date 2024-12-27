@@ -9,7 +9,7 @@ pub enum ParseState {
     /// Bytes have been read in the midi file, and outside of a track's contents
     InsideMidi,
     /// The cursor is pointing to events inside the track
-    InsideTrack,
+    InsideTrack { start: usize, length: usize },
     /// Reader enters this state when `Eof` event generated or an error occurred.
     /// This is the last state, the reader stay in it forever.
     Done,

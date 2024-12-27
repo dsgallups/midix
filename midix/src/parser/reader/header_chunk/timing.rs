@@ -2,9 +2,12 @@ use reader::{ReadResult, Reader};
 
 use crate::prelude::*;
 
+use super::inv_data;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Timing<'a> {
     TicksPerQuarterNote(&'a [u8; 2]),
+    NegativeSmpte(&'a [u8; 2]),
 }
 
 impl<'a> Timing<'a> {
@@ -19,13 +22,11 @@ impl<'a> Timing<'a> {
                 //this is ticks per quarter_note
                 Ok(Timing::TicksPerQuarterNote(bytes))
             }
-            1 => {
-                //negative smtpe
-                Err(OldReaderError::unimplemented(
-                    "Reading Negative SMPTE midi files is not yet supported",
-                ))
-            }
-            _ => Err(OldReaderError::invalid_data()),
+            1 => Ok(Timing::NegativeSmpte(bytes)),
+            t => Err(inv_data(
+                reader.buffer_position(),
+                format!("Invalid MIDI Timing type {}", t),
+            )),
         }
     }
     /// Returns Some if the midi timing is a tick per quarter note
@@ -35,6 +36,7 @@ impl<'a> Timing<'a> {
                 let v = u16::from_be_bytes(*t);
                 Some(v & 0x7FFF)
             }
+            _ => todo!(),
         }
     }
     pub fn to_owned(self) -> MidiTiming {
@@ -43,6 +45,7 @@ impl<'a> Timing<'a> {
                 let v = u16::from_be_bytes(*t);
                 MidiTiming::TicksPerQuarterNote(v & 0x7FFF)
             }
+            _ => todo!(),
         }
     }
 }

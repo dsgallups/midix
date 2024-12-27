@@ -1,33 +1,26 @@
+use reader::{ReadResult, Reader};
+
 use crate::prelude::*;
 
 // I would like to return some type of reader...
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct TrackChunk<'a> {
+pub struct TrackChunk {
     length: u32,
-    data: &'a [u8],
 }
 
-impl<'a> TrackChunk<'a> {
+impl TrackChunk {
     /// Assumes that the chunk type bytes ("MTrk") have ALREADY been read
-    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
-    where
-        'slc: 'a,
-    {
+    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self> {
         let length: &[u8; 4] = reader.read_exact_size()?;
 
         let length = u32::from_be_bytes(*length);
 
-        let track_event_bytes = reader.read_exact(length as usize)?;
-
-        Ok(Self {
-            length,
-            data: track_event_bytes,
-        })
+        Ok(Self { length })
     }
     pub fn length(&self) -> u32 {
         self.length
     }
-    /// Slow, can be improved by implementing iterator on reader
+    /*/// Slow, can be improved by implementing iterator on reader
     pub fn events(&self) -> OldReadResult<Vec<MidiTrackEventRef<'a>>> {
         let mut reader = OldReader::from_byte_slice(self.data);
 
@@ -43,7 +36,7 @@ impl<'a> TrackChunk<'a> {
         }
 
         Ok(events)
-    }
+    }*/
 }
 
 #[test]

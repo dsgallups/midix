@@ -97,17 +97,36 @@ impl<'slc> Reader<&'slc [u8]> {
                     match chunk {
                         b"MThd" => {
                             //HeaderChunk should handle us
-                            let chunk = HeaderChunk::read(self)?;
-                            todo!()
+                            break Event::Header(HeaderChunk::read(self)?);
                         }
                         b"MTrk" => {
-                            //
-                            todo!()
+                            let chunk = TrackChunk::read(self)?;
+                            //todo: set new state
+                            self.state.set_parse_state(ParseState::InsideTrack {
+                                start: self.buffer_position(),
+                                length: chunk.length() as usize,
+                            });
+                            break Event::Track(chunk);
                         }
-                        _ => todo!(),
+                        bytes => {
+                            self.state.set_parse_state(ParseState::Done);
+                            self.state.set_last_error_offset(self.buffer_position());
+                            return Err(inv_data(
+                                self.buffer_position(),
+                                format!(
+                                    "Expected a MIDI Chunk header. Found unexpected input: {:?}",
+                                    bytes
+                                ),
+                            ));
+                        }
                     }
                 }
-                _ => break,
+                ParseState::InsideTrack { start, length } => {
+                    //todo
+                    todo!()
+                    //todo
+                }
+                _ => todo!(),
             }
         };
         todo!();
