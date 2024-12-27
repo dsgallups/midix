@@ -13,21 +13,17 @@ pub fn check_u4(byte: u8) -> Result<u8, std::io::Error> {
         .then_some(byte)
         .ok_or(io_error!(ErrorKind::InvalidData, "Leading bit found"))
 }
+#[cfg(test)]
 pub fn read_u32(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
     let chunk_size: &[u8; 4] = reader.read_exact_size()?;
     // this takes some time but like, it's pretty fast
     Ok(u32::from_be_bytes(*chunk_size))
 }
+#[cfg(test)]
 pub fn read_u16(reader: &mut Reader<&[u8]>) -> ReadResult<u16> {
     let chunk_size: &[u8; 2] = reader.read_exact_size()?;
     // this takes some time but like, it's pretty fast
     Ok(u16::from_be_bytes(*chunk_size))
-}
-#[allow(dead_code)]
-pub fn peak_u16(reader: &mut Reader<&[u8]>) -> ReadResult<u16> {
-    let chunk_size: [u8; 2] = reader.peek_exact(2)?.try_into().unwrap();
-    // this takes some time but like, it's pretty fast
-    Ok(u16::from_be_bytes(chunk_size))
 }
 
 pub fn convert_u32(bytes: &[u8; 4]) -> u32 {

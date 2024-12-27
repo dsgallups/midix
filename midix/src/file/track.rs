@@ -65,6 +65,12 @@ impl<'a> MidiTrackEvent<'a> {
         let event = MidiTrackMessage::read(reader)?;
         Ok(Self { delta_time, event })
     }
+    pub fn delta_time(&self) -> u32 {
+        self.delta_time
+    }
+    pub fn event(&self) -> &MidiTrackMessage {
+        &self.event
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
