@@ -3,7 +3,7 @@ use crate::prelude::*;
 /// A "meta message", as defined by the SMF spec.
 /// These events carry metadata about the track, such as tempo, time signature, copyright, etc...
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum MetaMessage {
+pub enum Meta {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
     TrackNumber(Option<u16>),

@@ -140,7 +140,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             }
                             TrackMessage::SystemExclusive(SysEx::new(data))
                         }
-                        0xFF => TrackMessage::Meta(Meta::read(self)?),
+                        0xFF => TrackMessage::Meta(MetaRef::read(self)?),
                         byte => {
                             //status if the byte has a leading 1, otherwise it's
                             //a running status
@@ -223,7 +223,7 @@ impl<'slc> Reader<&'slc [u8]> {
         let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
         Ok(res)
     }
-    pub(super) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
@@ -234,7 +234,7 @@ impl<'slc> Reader<&'slc [u8]> {
     }
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
-    pub(super) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {

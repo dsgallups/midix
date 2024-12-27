@@ -3,7 +3,7 @@ pub use sysex::*;
 mod meta;
 pub use meta::*;
 
-use crate::message::ChannelVoiceRef;
+use crate::{message::ChannelVoiceRef, prelude::MetaRef};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TrackMessage<'a> {
@@ -11,7 +11,7 @@ pub enum TrackMessage<'a> {
     SystemExclusive(SysEx<'a>),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
-    Meta(Meta<'a>),
+    Meta(MetaRef<'a>),
 }
 /*
 impl<'a> TrackMessage<'a> {

@@ -6,5 +6,5 @@ pub enum MidiTrackMessage {
     SystemExclusive(SystemExclusive),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
-    Meta(MetaMessage),
+    Meta(Meta),
 }
