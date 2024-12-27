@@ -34,15 +34,15 @@ impl AsMidiBytes for SystemExclusiveOwned {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SystemExclusiveBorrowed<'a>(&'a [u8]);
+pub struct SystemExclusiveRef<'a>(&'a [u8]);
 
-impl<'a> SystemExclusiveBorrowed<'a> {
+impl<'a> SystemExclusiveRef<'a> {
     pub fn new(data: &'a [u8]) -> Self {
         Self(data)
     }
 }
 
-impl SystemExclusive for SystemExclusiveBorrowed<'_> {
+impl SystemExclusive for SystemExclusiveRef<'_> {
     fn len(&self) -> usize {
         self.0.len()
     }
@@ -50,7 +50,7 @@ impl SystemExclusive for SystemExclusiveBorrowed<'_> {
         self.0.is_empty()
     }
 }
-impl AsMidiBytes for SystemExclusiveBorrowed<'_> {
+impl AsMidiBytes for SystemExclusiveRef<'_> {
     fn as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.len() + 2);
         bytes.push(0xF0);

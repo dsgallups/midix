@@ -7,9 +7,9 @@ pub use message::*;
 ///
 /// FF 51 03 tttttt
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct TempoBorrowed<'a>(&'a [u8; 3]);
+pub struct TempoRef<'a>(&'a [u8; 3]);
 
-impl<'a> TempoBorrowed<'a> {
+impl<'a> TempoRef<'a> {
     pub fn new(v: &'a [u8; 3]) -> Self {
         Self(v)
     }
@@ -43,9 +43,9 @@ That is, 6/8 time (8 is 2 to the 3rd power, so this is 06 03),
 eight notated 32nd-notes per quarter-note.
 "#]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct TimeSignature<'a>(&'a [u8; 4]);
+pub struct TimeSignatureRef<'a>(&'a [u8; 4]);
 
-impl<'a> TimeSignature<'a> {
+impl<'a> TimeSignatureRef<'a> {
     pub fn new(v: &'a [u8; 4]) -> Self {
         Self(v)
     }
@@ -80,8 +80,8 @@ mi = 0: major key
 mi = 1: minor key
 "#]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct KeySignature<'a>(&'a [u8; 2]);
-impl<'a> KeySignature<'a> {
+pub struct KeySignatureRef<'a>(&'a [u8; 2]);
+impl<'a> KeySignatureRef<'a> {
     pub fn new(v: &'a [u8; 2]) -> Self {
         Self(v)
     }

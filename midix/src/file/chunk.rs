@@ -14,11 +14,11 @@ pub enum MidiChunk<'a> {
     /// Represents the byte length of the midi header
     ///
     /// Begins with "MThd"
-    Header(MidiHeader<'a>),
+    Header(MidiHeaderRef<'a>),
     /// Represents the byte length of a midi track
     ///
     /// Begins with "MTrk"
-    Track(MidiTrack<'a>),
+    Track(MidiTrackRef<'a>),
     /// A chunk type that is not known by this crate
     Unknown { length: &'a [u8; 4] },
 }
@@ -30,8 +30,8 @@ impl<'a> MidiChunk<'a> {
     {
         let chunk_type = reader.read_exact(4)?;
         Ok(match chunk_type {
-            b"MThd" => Self::Header(MidiHeader::read(reader)?),
-            b"MTrk" => Self::Track(MidiTrack::read(reader)?),
+            b"MThd" => Self::Header(MidiHeaderRef::read(reader)?),
+            b"MTrk" => Self::Track(MidiTrackRef::read(reader)?),
             _ => {
                 let length: &[u8; 4] = reader.read_exact_size()?;
                 let chunk_size = u32::from_be_bytes(*length);

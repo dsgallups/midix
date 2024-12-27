@@ -1,11 +1,11 @@
 use crate::prelude::*;
 
-use super::{KeySignature, TempoBorrowed, TimeSignature};
+use super::{KeySignatureRef, TempoRef, TimeSignatureRef};
 
 /// A "meta message", as defined by the SMF spec.
 /// These events carry metadata about the track, such as tempo, time signature, copyright, etc...
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub enum MetaMessage<'a> {
+pub enum MetaMessageRef<'a> {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
     TrackNumber(&'a [u8]),
@@ -37,7 +37,7 @@ pub enum MetaMessage<'a> {
     ///
     /// Usually appears at the beginning of a track, before any midi events are sent, but there
     /// are no guarantees.
-    Tempo(TempoBorrowed<'a>),
+    Tempo(TempoRef<'a>),
     /// The MIDI SMPTE offset meta message specifies an offset for the starting point of a MIDI
     /// track from the start of a sequence in terms of SMPTE time (hours:minutes:seconds:frames:subframes).
     ///
@@ -45,8 +45,8 @@ pub enum MetaMessage<'a> {
     SmpteOffset(&'a [u8]),
     /// In order of the MIDI specification, numerator, denominator, MIDI clocks per click, 32nd
     /// notes per quarter
-    TimeSignature(TimeSignature<'a>),
-    KeySignature(KeySignature<'a>),
+    TimeSignature(TimeSignatureRef<'a>),
+    KeySignature(KeySignatureRef<'a>),
     /// Arbitrary data intended for the sequencer.
     /// This data is never sent to a device.
     SequencerSpecific(&'a [u8]),
@@ -56,7 +56,7 @@ pub enum MetaMessage<'a> {
     /// The slice is the actual payload of the meta-message.
     Unknown(&'a u8, &'a [u8]),
 }
-impl<'a> MetaMessage<'a> {
+impl<'a> MetaMessageRef<'a> {
     pub fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
@@ -66,38 +66,38 @@ impl<'a> MetaMessage<'a> {
         let data = reader.read_varlen_slice()?;
 
         Ok(match type_byte {
-            0x00 => MetaMessage::TrackNumber(data),
-            0x01 => MetaMessage::Text(data),
-            0x02 => MetaMessage::Copyright(data),
-            0x03 => MetaMessage::TrackName(data),
-            0x04 => MetaMessage::InstrumentName(data),
-            0x05 => MetaMessage::Lyric(data),
-            0x06 => MetaMessage::Marker(data),
-            0x07 => MetaMessage::CuePoint(data),
-            0x08 => MetaMessage::ProgramName(data),
-            0x09 => MetaMessage::DeviceName(data),
+            0x00 => MetaMessageRef::TrackNumber(data),
+            0x01 => MetaMessageRef::Text(data),
+            0x02 => MetaMessageRef::Copyright(data),
+            0x03 => MetaMessageRef::TrackName(data),
+            0x04 => MetaMessageRef::InstrumentName(data),
+            0x05 => MetaMessageRef::Lyric(data),
+            0x06 => MetaMessageRef::Marker(data),
+            0x07 => MetaMessageRef::CuePoint(data),
+            0x08 => MetaMessageRef::ProgramName(data),
+            0x09 => MetaMessageRef::DeviceName(data),
             0x20 => {
                 if data.len() != 1 {
                     return Err(ReaderError::invalid_data());
                 }
                 let c = u8::from_be_bytes(data.try_into().unwrap());
                 let channel = Channel::new(c)?;
-                MetaMessage::MidiChannel(channel)
+                MetaMessageRef::MidiChannel(channel)
             }
             0x21 => {
                 if data.len() != 1 {
                     return Err(ReaderError::invalid_data());
                 }
                 let port = *reader.read_next()?;
-                MetaMessage::MidiPort(port)
+                MetaMessageRef::MidiPort(port)
             }
-            0x2F => MetaMessage::EndOfTrack,
+            0x2F => MetaMessageRef::EndOfTrack,
             0x51 => {
                 //FF 51 03 tttttt
                 if data.len() != 3 {
                     return Err(ReaderError::invalid_data());
                 }
-                MetaMessage::Tempo(TempoBorrowed::new(data.try_into().unwrap()))
+                MetaMessageRef::Tempo(TempoRef::new(data.try_into().unwrap()))
             }
             0x54 => {
                 return Err(ReaderError::unimplemented(
@@ -109,16 +109,16 @@ impl<'a> MetaMessage<'a> {
                 if data.len() != 4 {
                     return Err(ReaderError::invalid_data());
                 }
-                MetaMessage::TimeSignature(TimeSignature::new(data.try_into().unwrap()))
+                MetaMessageRef::TimeSignature(TimeSignatureRef::new(data.try_into().unwrap()))
             }
             0x59 => {
                 if data.len() != 2 {
                     return Err(ReaderError::invalid_data());
                 }
-                MetaMessage::KeySignature(KeySignature::new(data.try_into().unwrap()))
+                MetaMessageRef::KeySignature(KeySignatureRef::new(data.try_into().unwrap()))
             }
-            0x7F => MetaMessage::SequencerSpecific(data),
-            _ => MetaMessage::Unknown(type_byte, data),
+            0x7F => MetaMessageRef::SequencerSpecific(data),
+            _ => MetaMessageRef::Unknown(type_byte, data),
         })
     }
 }

@@ -1,4 +1,11 @@
 use crate::prelude::*;
+mod timing;
+pub use timing::*;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MidiHeader {
+    timing: MidiTiming,
+}
 
 #[doc = r#"
 The header chunk at the beginning of the file specifies some basic information about the data in the file. Here's the syntax of the complete chunk:
@@ -29,13 +36,13 @@ If bit 15 of <division> is zero, the bits 14 thru 0 represent the number of delt
 If bit 15 of <division> is a one, delta times in a file correspond to subdivisions of a second, in a way consistent with SMPTE and MIDI Time Code. Bits 14 thru 8 contain one of the four values -24, -25, -29, or -30, corresponding to the four standard SMPTE and MIDI Time Code formats (-29 corresponds to 30 drop frame), and represents the number of frames per second. These negative numbers are stored in two's compliment form. The second byte (stored positive) is the resolution within a frame: typical values may be 4 (MIDI Time Code resolution), 8, 10, 80 (bit resolution), or 100. This stream allows exact specifications of time-code-based tracks, but also allows millisecond-based tracks by specifying 25 frames/sec and a resolution of 40 units per frame. If the events in a file are stored with a bit resolution of thirty-frame time code, the division word would be E250 hex.
 "#]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MidiHeader<'a> {
+pub struct MidiHeaderRef<'a> {
     length: &'a [u8; 4],
-    format: MidiFormat<'a>,
-    timing: MidiTiming<'a>,
+    format: MidiFormatRef<'a>,
+    timing: MidiTimingRef<'a>,
 }
 
-impl<'a> MidiHeader<'a> {
+impl<'a> MidiHeaderRef<'a> {
     /// Assumes that the chunk type bytes ("MThd") have ALREADY been read
     pub fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
@@ -50,14 +57,14 @@ impl<'a> MidiHeader<'a> {
                 if num_tracks[1] != 1 {
                     return Err(ReaderError::invalid_data());
                 }
-                MidiFormat::SingleMultiChannel
+                MidiFormatRef::SingleMultiChannel
             } // Always 1 track
-            1 => MidiFormat::Simultaneous(num_tracks),
-            2 => MidiFormat::SequentiallyIndependent(num_tracks),
+            1 => MidiFormatRef::Simultaneous(num_tracks),
+            2 => MidiFormatRef::SequentiallyIndependent(num_tracks),
             _ => return Err(ReaderError::invalid_input("Invalid MIDI format")),
         };
 
-        let timing = MidiTiming::read(reader)?;
+        let timing = MidiTimingRef::read(reader)?;
 
         Ok(Self {
             length,
@@ -72,7 +79,7 @@ impl<'a> MidiHeader<'a> {
         todo!()
     }
     pub fn format_type(&self) -> MidiFormatType {
-        use MidiFormat::*;
+        use MidiFormatRef::*;
         match self.format {
             SingleMultiChannel => MidiFormatType::SingleMultiChannel,
             Simultaneous(_) => MidiFormatType::Simultaneous,
@@ -81,67 +88,6 @@ impl<'a> MidiHeader<'a> {
     }
     pub fn num_tracks(&self) -> u16 {
         self.format.num_tracks()
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MidiFormatType {
-    SingleMultiChannel,
-    Simultaneous,
-    SequentiallyIndependent,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MidiFormat<'a> {
-    SingleMultiChannel,
-    Simultaneous(&'a [u8; 2]),
-    SequentiallyIndependent(&'a [u8; 2]),
-}
-
-impl MidiFormat<'_> {
-    pub fn num_tracks(self) -> u16 {
-        use MidiFormat::*;
-        match self {
-            SingleMultiChannel => 1,
-            Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(*num),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MidiTiming<'a> {
-    TicksPerQuarterNote(&'a [u8; 2]),
-}
-
-impl<'a> MidiTiming<'a> {
-    /// Assumes the next two bytes are for a midi division.
-    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
-    where
-        'slc: 'a,
-    {
-        let bytes: &[u8; 2] = reader.read_exact_size()?;
-        match bytes[0] >> 7 {
-            0 => {
-                //this is ticks per quarter_note
-                Ok(MidiTiming::TicksPerQuarterNote(bytes))
-            }
-            1 => {
-                //negative smtpe
-                Err(ReaderError::unimplemented(
-                    "Reading Negative SMPTE midi files is not yet supported",
-                ))
-            }
-            _ => Err(ReaderError::invalid_data()),
-        }
-    }
-    /// Returns Some if the midi timing is a tick per quarter note
-    pub fn ticks_per_quarter_note(self) -> Option<u16> {
-        match self {
-            Self::TicksPerQuarterNote(t) => {
-                let v = u16::from_be_bytes(*t);
-                Some(v & 0x7FFF)
-            }
-        }
     }
 }
 
@@ -155,7 +101,7 @@ fn read_midi_header_simultaneous() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let result = MidiHeader::read(&mut reader).unwrap();
+    let result = MidiHeaderRef::read(&mut reader).unwrap();
 
     assert_eq!(result.length(), 6);
     assert_eq!(result.format_type(), MidiFormatType::Simultaneous);
@@ -172,7 +118,7 @@ fn read_midi_header_single_multichannel() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let result = MidiHeader::read(&mut reader).unwrap();
+    let result = MidiHeaderRef::read(&mut reader).unwrap();
 
     assert_eq!(result.length(), 6);
     assert_eq!(result.format_type(), MidiFormatType::SingleMultiChannel);
@@ -189,6 +135,6 @@ fn read_midi_header_single_multichannel_invalid() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let err = MidiHeader::read(&mut reader).expect_err("Invalid");
+    let err = MidiHeaderRef::read(&mut reader).expect_err("Invalid");
     assert!(matches!(err, ReaderError::Io(_)))
 }
