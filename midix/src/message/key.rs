@@ -23,7 +23,7 @@ impl MidiBits for Key {
 
 impl Key {
     /// Create a new key
-    pub fn new(key: impl Into<u8>) -> Self {
+    pub fn new(key: u8) -> Self {
         Self(key.into())
     }
 

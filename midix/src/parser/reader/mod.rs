@@ -15,8 +15,6 @@ pub use track_message::*;
 
 use std::io::{BufRead, BufReader, Read};
 
-use crate::{prelude::MidiChunk, utils::decode_varlen};
-
 #[derive(Clone)]
 pub struct Reader<R> {
     reader: R,
@@ -34,6 +32,10 @@ impl<R> Reader<R> {
     /// Consume self to grab the inner reader
     pub fn into_inner(self) -> R {
         self.reader
+    }
+
+    pub fn set_last_error_offset(&mut self, offset: usize) {
+        self.state.set_last_error_offset(offset);
     }
 
     pub const fn buffer_position(&self) -> usize {
@@ -92,7 +94,7 @@ impl<'slc> Reader<&'slc [u8]> {
                     continue;
                 }
                 ParseState::InsideMidi => {
-                    // expect a header or track chunk
+                    // expect only a header or track chunk
                     let chunk = self.read_exact(4)?;
                     match chunk {
                         b"MThd" => {
@@ -110,9 +112,8 @@ impl<'slc> Reader<&'slc [u8]> {
                         }
                         bytes => {
                             self.state.set_parse_state(ParseState::Done);
-                            self.state.set_last_error_offset(self.buffer_position());
                             return Err(inv_data(
-                                self.buffer_position(),
+                                self,
                                 format!(
                                     "Expected a MIDI Chunk header. Found unexpected input: {:?}",
                                     bytes
@@ -122,6 +123,13 @@ impl<'slc> Reader<&'slc [u8]> {
                     }
                 }
                 ParseState::InsideTrack { start, length } => {
+                    if start + length >= self.buffer_position() {
+                        //end of track events
+                        self.state.set_parse_state(ParseState::InsideMidi);
+                        continue;
+                    }
+                    let track_event = TrackEvent::read(self)?;
+
                     //todo
                     todo!()
                     //todo
@@ -168,6 +176,67 @@ impl<'slc> Reader<&'slc [u8]> {
 
         Ok(slice
             .try_into()
-            .map_err(|e| inv_data(self.buffer_position(), format!("{:?}", e)))?)
+            .map_err(|e| inv_data(self, format!("{:?}", e)))?)
     }
+
+    /// Get the next byte without incrementing
+    fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
+        Ok(res)
+    }
+    fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
+        self.state.increment_offset(1);
+
+        Ok(res)
+    }
+    /// ASSUMING that the offset is pointing at the length of a varlen,
+    /// it will read that length and return the resulting slice.
+    fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    where
+        'slc: 'slf,
+    {
+        let size = decode_varlen(self)?;
+        self.read_exact(size as usize)
+    }
+}
+
+fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
+    let mut dec: u32 = 0;
+
+    for _ in 0..4 {
+        let next = reader.read_next()?;
+        dec <<= 7;
+        let add = (next & 0x7F) as u32;
+        dec |= add;
+
+        //need to continue
+        if next & 0x80 != 0x80 {
+            break;
+        }
+    }
+
+    Ok(dec)
+}
+
+/// grabs the next byte from the reader and checks it's a u7
+fn check_u7<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+    let byte = reader.read_next()?;
+    (byte & 0b10000000 == 0)
+        .then_some(byte)
+        .ok_or(inv_data(reader, "Leading bit found"))
+}
+
+/// grabs the next byte from the reader and checks it's a u4
+fn check_u4<'a, 'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+    let byte = reader.read_next()?;
+    (byte & 0b11110000 == 0)
+        .then_some(byte)
+        .ok_or(inv_data(reader, "Leading bit found"))
 }

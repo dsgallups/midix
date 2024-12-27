@@ -22,8 +22,8 @@ impl MidiBits for Velocity {
 
 impl Velocity {
     /// Create a new velocity
-    pub fn new(velocity: impl Into<u8>) -> Self {
-        Self(velocity.into())
+    pub fn new(velocity: u8) -> Self {
+        Self(velocity)
     }
 }
 

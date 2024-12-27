@@ -3,7 +3,7 @@ use crate::prelude::*;
 mod format;
 pub use format::*;
 mod timing;
-use reader::{inv_data, ParseResult, ReadResult, Reader};
+use reader::{inv_data, ReadResult, Reader};
 pub use timing::*;
 
 #[doc = r#"
@@ -48,10 +48,7 @@ impl<'a> HeaderChunk<'a> {
     {
         let length = u32::from_be_bytes(*reader.read_exact_size()?);
         if length != 6 {
-            return Err(inv_data(
-                reader.buffer_position(),
-                "Length of header chunk is not 6",
-            ));
+            return Err(inv_data(reader, "Length of header chunk is not 6"));
         }
 
         let format_bytes: &[u8; 2] = reader.read_exact_size()?;
@@ -61,7 +58,7 @@ impl<'a> HeaderChunk<'a> {
             0 => {
                 if num_tracks[1] != 1 {
                     return Err(inv_data(
-                        reader.buffer_position(),
+                        reader,
                         "Type 0 MIDI format (SingleMultiChannel) defines multiple tracks!",
                     ));
                 };
@@ -69,12 +66,7 @@ impl<'a> HeaderChunk<'a> {
             } // Always 1 track
             1 => Format::Simultaneous(num_tracks),
             2 => Format::SequentiallyIndependent(num_tracks),
-            t => {
-                return Err(inv_data(
-                    reader.buffer_position(),
-                    format!("Invalid MIDI format {}", t),
-                ))
-            }
+            t => return Err(inv_data(reader, format!("Invalid MIDI format {}", t))),
         };
 
         let timing = Timing::read(reader)?;

@@ -16,6 +16,11 @@ impl Channel {
         Ok(Self(check_u4(channel)?))
     }
 
+    pub fn from_status(status: u8) -> Self {
+        let channel = status & 0b0000_1111;
+        Self(channel)
+    }
+
     /// Returns the 4-bit channel number
     pub fn bits(&self) -> u8 {
         self.0

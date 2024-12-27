@@ -23,10 +23,7 @@ impl<'a> Timing<'a> {
                 Ok(Timing::TicksPerQuarterNote(bytes))
             }
             1 => Ok(Timing::NegativeSmpte(bytes)),
-            t => Err(inv_data(
-                reader.buffer_position(),
-                format!("Invalid MIDI Timing type {}", t),
-            )),
+            t => Err(inv_data(reader, format!("Invalid MIDI Timing type {}", t))),
         }
     }
     /// Returns Some if the midi timing is a tick per quarter note
