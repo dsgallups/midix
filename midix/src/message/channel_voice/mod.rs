@@ -19,6 +19,7 @@ impl ChannelVoiceMessage {
     /// TODO: read functions should take in an iterator that yields u8s
     pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
         let status = reader.read_next()?;
+        println!("status: {:?}", status);
         let msg = match status >> 4 {
             0x8 => ChannelVoiceEvent::NoteOff {
                 key: Key::from_bits(*reader.read_next()?)?,
