@@ -1,20 +1,20 @@
 use crate::bytes::AsMidiBytes;
 
-pub trait SystemExclusive {
+pub trait SystemExclusiveTrait {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SystemExclusiveOwned(Vec<u8>);
+pub struct SystemExclusive(Vec<u8>);
 
-impl SystemExclusiveOwned {
+impl SystemExclusive {
     pub fn new(data: Vec<u8>) -> Self {
         Self(data)
     }
 }
 
-impl SystemExclusive for SystemExclusiveOwned {
+impl SystemExclusiveTrait for SystemExclusive {
     fn len(&self) -> usize {
         self.0.len()
     }
@@ -23,7 +23,7 @@ impl SystemExclusive for SystemExclusiveOwned {
     }
 }
 
-impl AsMidiBytes for SystemExclusiveOwned {
+impl AsMidiBytes for SystemExclusive {
     fn as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.len() + 2);
         bytes.push(0xF0);
@@ -42,7 +42,7 @@ impl<'a> SystemExclusiveRef<'a> {
     }
 }
 
-impl SystemExclusive for SystemExclusiveRef<'_> {
+impl SystemExclusiveTrait for SystemExclusiveRef<'_> {
     fn len(&self) -> usize {
         self.0.len()
     }

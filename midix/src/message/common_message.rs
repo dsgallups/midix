@@ -11,7 +11,7 @@ pub enum SystemCommonMessage {
     ///
     /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
     /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
-    SystemExclusive(SystemExclusiveOwned),
+    SystemExclusive(SystemExclusive),
     /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
     MidiTimeCodeQuarterFrame {
         message: MtcQuarterFrameMessage,
@@ -67,7 +67,7 @@ impl FromMidiMessage for SystemCommonMessage {
                     .copied()
                     .take_while(|byte| byte != &0xF7)
                     .collect::<Vec<_>>();
-                SystemCommonMessage::SystemExclusive(SystemExclusiveOwned::new(data))
+                SystemCommonMessage::SystemExclusive(SystemExclusive::new(data))
             }
             /*0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame

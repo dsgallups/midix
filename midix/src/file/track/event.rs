@@ -2,6 +2,11 @@ use crate::prelude::*;
 
 use super::utils;
 
+pub struct MidiTrackEvent {
+    delta_time: u32,
+    event: MidiTrackMessage,
+}
+
 pub struct MidiTrackEventRef<'a> {
     /// Variable length quantity
     /// Delta-time is in some fraction of a beat
