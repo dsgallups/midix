@@ -70,6 +70,11 @@ fn test_varlen_decode_combined() {
     //which is 2056
     let res = decode_varlen(&mut reader).unwrap();
     assert_eq!(res, 2056);
+
+    let val = [0x81, 0x48];
+    let mut reader = Reader::from_byte_slice(&val);
+    let res = decode_varlen(&mut reader).unwrap();
+    assert_eq!(res, 200);
 }
 
 #[test]

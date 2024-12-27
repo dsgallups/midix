@@ -62,6 +62,17 @@ impl<'slc> Reader<&'slc [u8]> {
         }
     }
 
+    pub fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get(self.buffer_position())
+            .ok_or(ReaderError::end())?;
+        Ok(res)
+    }
+
     pub fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
     where
         'slc: 'slf,
@@ -77,7 +88,7 @@ impl<'slc> Reader<&'slc [u8]> {
 
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
-    pub(crate) fn read_varlen<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {

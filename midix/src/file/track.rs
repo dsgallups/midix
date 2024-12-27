@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, utils};
 
 // I would like to return some type of reader...
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -51,7 +51,7 @@ pub struct MidiTrackEvent<'a> {
     /// Delta-time is in some fraction of a beat
     /// (or a second, for recording a track with SMPTE times),
     /// as specified in the header chunk.
-    delta_time: &'a [u8],
+    delta_time: u32,
     event: MidiTrackMessage<'a>,
 }
 
@@ -60,8 +60,10 @@ impl<'a> MidiTrackEvent<'a> {
     where
         'slc: 'a,
     {
-        let delta_time = reader.read_next();
-        todo!();
+        let delta_time = utils::decode_varlen(reader)?;
+
+        let event = MidiTrackMessage::read(reader)?;
+        Ok(Self { delta_time, event })
     }
 }
 
@@ -79,6 +81,34 @@ impl<'a> MidiTrackMessage<'a> {
     where
         'slc: 'a,
     {
-        todo!();
+        let next_event = reader.read_next()?;
+        println!("here: {}", next_event);
+
+        let res = match next_event {
+            0xF0 => {
+                let mut data = reader.read_varlen_slice()?;
+                if !data.is_empty() {
+                    //discard the last 0xF7
+                    data = &data[..data.len() - 1];
+                }
+                println!("data: {:?}", data);
+                Self::SystemExclusive(SystemExclusiveBorrowed::new(data))
+            }
+            0xFF => Self::Meta(MetaMessage::read(reader)?),
+            _ => todo!(),
+        };
+
+        Ok(res)
     }
+}
+#[test]
+fn test_simple_sysex() {
+    let bytes = [0xF0, 0x05, 0x43, 0x12, 0x00, 0x07, 0xF7];
+    let mut reader = Reader::from_byte_slice(&bytes);
+    let msg = MidiTrackMessage::read(&mut reader).unwrap();
+
+    assert_eq!(
+        msg,
+        MidiTrackMessage::SystemExclusive(SystemExclusiveBorrowed::new(&[0x43, 0x12, 0x00, 0x07]))
+    );
 }
