@@ -3,7 +3,7 @@ use std::io::ErrorKind;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum ReaderError {
+pub enum OldReaderError {
     #[error("{0}")]
     Io(#[from] std::io::Error),
     #[error("End of Reader")]
@@ -11,7 +11,7 @@ pub enum ReaderError {
     #[error("This MIDI file is unsupported: {0}")]
     Unimplemented(String),
 }
-impl ReaderError {
+impl OldReaderError {
     pub const fn end() -> Self {
         Self::EndOfReader
     }
@@ -31,4 +31,4 @@ impl ReaderError {
     }
 }
 
-pub type ReadResult<T> = Result<T, ReaderError>;
+pub type OldReadResult<T> = Result<T, OldReaderError>;

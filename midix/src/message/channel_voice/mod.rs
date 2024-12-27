@@ -17,7 +17,7 @@ pub struct ChannelVoiceMessage {
 
 impl ChannelVoiceMessage {
     /// TODO: read functions should take in an iterator that yields u8s
-    pub fn read(reader: &mut OldReader<&[u8]>) -> ReadResult<Self> {
+    pub fn read(reader: &mut OldReader<&[u8]>) -> OldReadResult<Self> {
         let status = reader.read_next()?;
         println!("status: {:?}", status);
         let msg = match status >> 4 {

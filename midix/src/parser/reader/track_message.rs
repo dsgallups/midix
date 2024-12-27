@@ -10,7 +10,7 @@ pub enum TrackMessage<'a> {
 }
 
 impl<'a> TrackMessage<'a> {
-    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
     where
         'slc: 'a,
     {

@@ -39,13 +39,13 @@ pub struct MidiHeaderRef<'a> {
 
 impl<'a> MidiHeaderRef<'a> {
     /// Assumes that the chunk type bytes ("MThd") have ALREADY been read
-    pub fn read<'slc, 'r>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'slc, 'r>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
     where
         'slc: 'a,
     {
         let length = u32::from_be_bytes(*reader.read_exact_size()?);
         if length != 6 {
-            return Err(ReaderError::invalid_data());
+            return Err(OldReaderError::invalid_data());
         }
 
         let format_bytes: &[u8; 2] = reader.read_exact_size()?;
@@ -54,13 +54,13 @@ impl<'a> MidiHeaderRef<'a> {
         let format = match format_bytes[1] {
             0 => {
                 if num_tracks[1] != 1 {
-                    return Err(ReaderError::invalid_data());
+                    return Err(OldReaderError::invalid_data());
                 }
                 MidiFormatRef::SingleMultiChannel
             } // Always 1 track
             1 => MidiFormatRef::Simultaneous(num_tracks),
             2 => MidiFormatRef::SequentiallyIndependent(num_tracks),
-            _ => return Err(ReaderError::invalid_input("Invalid MIDI format")),
+            _ => return Err(OldReaderError::invalid_input("Invalid MIDI format")),
         };
 
         let timing = MidiTimingRef::read(reader)?;
@@ -129,5 +129,5 @@ fn read_midi_header_single_multichannel_invalid() {
     let mut reader = OldReader::from_byte_slice(&bytes);
 
     let err = MidiHeaderRef::read(&mut reader).expect_err("Invalid");
-    assert!(matches!(err, ReaderError::Io(_)))
+    assert!(matches!(err, OldReaderError::Io(_)))
 }

@@ -71,37 +71,37 @@ impl<'slc> OldReader<&'slc [u8]> {
         }
     }
 
-    pub(crate) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(crate) fn peak_next<'slf>(&'slf mut self) -> OldReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
         let res = self
             .reader
             .get(self.buffer_position())
-            .ok_or(ReaderError::end())?;
+            .ok_or(OldReaderError::end())?;
         Ok(res)
     }
 
-    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(crate) fn read_next<'slf>(&'slf mut self) -> OldReadResult<&'slc u8>
     where
         'slc: 'slf,
     {
         let res = self
             .reader
             .get(self.buffer_position())
-            .ok_or(ReaderError::end())?;
+            .ok_or(OldReaderError::end())?;
         self.state.increment_offset(1);
 
         Ok(res)
     }
 
-    pub fn read_chunk<'slf>(&'slf mut self) -> ReadResult<MidiChunk<'slc>> {
+    pub fn read_chunk<'slf>(&'slf mut self) -> OldReadResult<MidiChunk<'slc>> {
         MidiChunk::read(self)
     }
 
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
-    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> OldReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {
@@ -114,7 +114,7 @@ impl<'slc> OldReader<&'slc [u8]> {
     /// Errors if the peak goes out of bounds from the slice.
     ///
     /// Will not increment the last error offset.
-    pub fn peek_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    pub fn peek_exact<'slf>(&'slf mut self, bytes: usize) -> OldReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {
@@ -122,7 +122,7 @@ impl<'slc> OldReader<&'slc [u8]> {
         let end = start + bytes;
 
         if end > self.reader.len() {
-            return Err(ReaderError::end());
+            return Err(OldReaderError::end());
         }
 
         let slice = &self.reader[start..end];
@@ -130,7 +130,7 @@ impl<'slc> OldReader<&'slc [u8]> {
         Ok(slice)
     }
 
-    pub fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    pub fn read_exact<'slf>(&'slf mut self, bytes: usize) -> OldReadResult<&'slc [u8]>
     where
         'slc: 'slf,
     {
@@ -139,7 +139,7 @@ impl<'slc> OldReader<&'slc [u8]> {
 
         if end > self.reader.len() {
             self.state.increment_last_error_offset(self.reader.len());
-            return Err(ReaderError::end());
+            return Err(OldReaderError::end());
         }
         self.state.increment_offset(bytes);
 
@@ -148,7 +148,9 @@ impl<'slc> OldReader<&'slc [u8]> {
         Ok(slice)
     }
     /// Returns a statically sized array
-    pub fn read_exact_size<'slf, const SIZE: usize>(&'slf mut self) -> ReadResult<&'slc [u8; SIZE]>
+    pub fn read_exact_size<'slf, const SIZE: usize>(
+        &'slf mut self,
+    ) -> OldReadResult<&'slc [u8; SIZE]>
     where
         'slc: 'slf,
     {
@@ -164,14 +166,14 @@ impl<'slc> OldReader<&'slc [u8]> {
                 self.reader.len()
             );
             self.state.increment_last_error_offset(self.reader.len());
-            return Err(ReaderError::end());
+            return Err(OldReaderError::end());
         }
 
         let slice = &self.reader[start..end];
 
         slice
             .try_into()
-            .map_err(|_| ReaderError::invalid_input("Invalid length"))
+            .map_err(|_| OldReaderError::invalid_input("Invalid length"))
     }
 }
 

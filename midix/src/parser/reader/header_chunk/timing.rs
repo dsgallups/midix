@@ -1,13 +1,15 @@
+use reader::{ReadResult, Reader};
+
 use crate::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MidiTimingRef<'a> {
+pub enum Timing<'a> {
     TicksPerQuarterNote(&'a [u8; 2]),
 }
 
-impl<'a> MidiTimingRef<'a> {
+impl<'a> Timing<'a> {
     /// Assumes the next two bytes are for a midi division.
-    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
+    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
     {
@@ -15,7 +17,7 @@ impl<'a> MidiTimingRef<'a> {
         match bytes[0] >> 7 {
             0 => {
                 //this is ticks per quarter_note
-                Ok(MidiTimingRef::TicksPerQuarterNote(bytes))
+                Ok(Timing::TicksPerQuarterNote(bytes))
             }
             1 => {
                 //negative smtpe

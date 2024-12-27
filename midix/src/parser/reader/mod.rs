@@ -80,4 +80,75 @@ impl<'slc> Reader<&'slc [u8]> {
             state: ReaderState::default(),
         }
     }
+
+    pub fn read_event<'a>(&mut self) -> ReadResult<Event<'a>>
+    where
+        'slc: 'a,
+    {
+        let event = loop {
+            match self.state.parse_state() {
+                ParseState::Init => {
+                    self.state.set_parse_state(ParseState::InsideMidi);
+                    continue;
+                }
+                ParseState::InsideMidi => {
+                    // expect a header or track chunk
+                    let chunk = self.read_exact(4)?;
+                    match chunk {
+                        b"MThd" => {
+                            //HeaderChunk should handle us
+                            let chunk = HeaderChunk::read(self)?;
+                            todo!()
+                        }
+                        b"MTrk" => {
+                            //
+                            todo!()
+                        }
+                        _ => todo!(),
+                    }
+                }
+                _ => break,
+            }
+        };
+        todo!();
+
+        todo!()
+    }
+}
+
+//internal implementations
+impl<'slc> Reader<&'slc [u8]> {
+    // Returns None if there's no bytes left to read
+    fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    where
+        'slc: 'slf,
+    {
+        if self.buffer_position() >= self.reader.len() {
+            return Err(unexp_eof());
+        }
+        let start = self.buffer_position();
+
+        let end = start + bytes;
+
+        if end > self.reader.len() {
+            return Err(unexp_eof());
+        }
+
+        self.state.increment_offset(bytes);
+
+        let slice = &self.reader[start..end];
+
+        Ok(slice)
+    }
+    /// Returns a statically sized array
+    pub fn read_exact_size<'slf, const SIZE: usize>(&'slf mut self) -> ReadResult<&'slc [u8; SIZE]>
+    where
+        'slc: 'slf,
+    {
+        let slice = self.read_exact(SIZE)?;
+
+        Ok(slice
+            .try_into()
+            .map_err(|e| inv_data(self.buffer_position(), format!("{:?}", e)))?)
+    }
 }

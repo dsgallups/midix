@@ -1,4 +1,4 @@
-use crate::file::{ReadResult, ReaderError};
+use crate::file::{OldReadResult, OldReaderError};
 use crate::prelude::*;
 
 use super::MidiFile;
@@ -26,12 +26,12 @@ pub struct MidiFileBuilder<'a> {
 }
 
 impl<'a> MidiFileBuilder<'a> {
-    pub fn handle_chunk<'b: 'a>(&mut self, chunk: MidiChunk<'b>) -> ReadResult<()> {
+    pub fn handle_chunk<'b: 'a>(&mut self, chunk: MidiChunk<'b>) -> OldReadResult<()> {
         use MidiChunk::*;
         match chunk {
             Header(h) => {
                 if self.timing.is_some() {
-                    return Err(ReaderError::invalid_data());
+                    return Err(OldReaderError::invalid_data());
                 }
 
                 match self.format {
@@ -39,7 +39,7 @@ impl<'a> MidiFileBuilder<'a> {
                         self.format = FormatStage::KnownType(h.format());
                     }
                     FormatStage::KnownType(_) | FormatStage::Formatted(_) => {
-                        return Err(ReaderError::invalid_data());
+                        return Err(OldReaderError::invalid_data());
                     }
                     FormatStage::KnownTracks(ref tracks) => match h.format_type() {
                         MidiFormatType::Simultaneous => {
@@ -48,7 +48,7 @@ impl<'a> MidiFileBuilder<'a> {
                         }
                         MidiFormatType::SingleMultiChannel => {
                             if tracks.len() != 1 {
-                                return Err(ReaderError::invalid_data());
+                                return Err(OldReaderError::invalid_data());
                             }
                             let track = tracks.first().unwrap().clone();
                             self.format =
@@ -94,7 +94,7 @@ impl<'a> MidiFileBuilder<'a> {
                     FormatStage::Formatted(ref mut format) => match format {
                         MidiFormat::SequentiallyIndependent(tracks) => tracks.push(track),
                         MidiFormat::SingleMultiChannel(_) => {
-                            return Err(ReaderError::invalid_data());
+                            return Err(OldReaderError::invalid_data());
                         }
                         MidiFormat::Simultaneous(tracks) => tracks.push(track),
                     },
@@ -107,12 +107,12 @@ impl<'a> MidiFileBuilder<'a> {
             }
         }
     }
-    pub fn build(self) -> ReadResult<MidiFile> {
+    pub fn build(self) -> OldReadResult<MidiFile> {
         let FormatStage::Formatted(f) = self.format else {
-            return Err(ReaderError::invalid_data());
+            return Err(OldReaderError::invalid_data());
         };
         let Some(timing) = self.timing else {
-            return Err(ReaderError::invalid_data());
+            return Err(OldReaderError::invalid_data());
         };
 
         Ok(MidiFile {

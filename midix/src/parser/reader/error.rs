@@ -1,9 +1,14 @@
-use std::io::ErrorKind;
+use std::{
+    fmt,
+    io::{self, ErrorKind},
+};
 
 use thiserror::Error;
 
+pub type ReadResult<T> = Result<T, io::Error>;
+
 #[derive(Error, Debug)]
-pub enum ReaderError {
+pub(crate) enum ParserError {
     #[error("{0}")]
     Io(#[from] std::io::Error),
     #[error("End of Reader")]
@@ -11,24 +16,16 @@ pub enum ReaderError {
     #[error("This MIDI file is unsupported: {0}")]
     Unimplemented(String),
 }
-impl ReaderError {
-    pub const fn end() -> Self {
-        Self::EndOfReader
-    }
-    pub fn invalid_input<E>(msg: E) -> Self
-    where
-        E: Into<Box<dyn std::error::Error + Send + Sync>>,
-    {
-        Self::Io(io_error!(ErrorKind::InvalidInput, msg))
-    }
 
-    pub fn unimplemented(msg: impl Into<String>) -> Self {
-        Self::Unimplemented(msg.into())
-    }
+pub type ParseResult<T> = Result<T, ParserError>;
 
-    pub fn invalid_data() -> Self {
-        Self::Io(io_error!(ErrorKind::InvalidInput, "Invalid Data"))
-    }
+pub(super) fn unexp_eof() -> io::Error {
+    io::Error::new(ErrorKind::UnexpectedEof, "Read past the end of the file")
 }
 
-pub type ReadResult<T> = Result<T, ReaderError>;
+pub(super) fn inv_data(pos: usize, v: impl fmt::Display) -> io::Error {
+    io::Error::new(ErrorKind::InvalidData, format!("Cursor at {}: {}", pos, v))
+}
+pub(super) fn inv_input(pos: usize, v: impl fmt::Display) -> io::Error {
+    io::Error::new(ErrorKind::InvalidInput, format!("Cursor at {}: {}", pos, v))
+}

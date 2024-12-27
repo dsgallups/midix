@@ -9,7 +9,7 @@ pub struct TrackChunk<'a> {
 
 impl<'a> TrackChunk<'a> {
     /// Assumes that the chunk type bytes ("MTrk") have ALREADY been read
-    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
     where
         'slc: 'a,
     {
@@ -28,7 +28,7 @@ impl<'a> TrackChunk<'a> {
         self.length
     }
     /// Slow, can be improved by implementing iterator on reader
-    pub fn events(&self) -> ReadResult<Vec<MidiTrackEventRef<'a>>> {
+    pub fn events(&self) -> OldReadResult<Vec<MidiTrackEventRef<'a>>> {
         let mut reader = OldReader::from_byte_slice(self.data);
 
         let mut events: Vec<MidiTrackEventRef<'a>> = Vec::new();
@@ -36,7 +36,7 @@ impl<'a> TrackChunk<'a> {
             match MidiTrackEventRef::read(&mut reader) {
                 Ok(e) => events.push(e),
                 Err(err) => match err {
-                    ReaderError::EndOfReader => break,
+                    OldReaderError::EndOfReader => break,
                     e => return Err(e),
                 },
             }

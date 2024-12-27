@@ -114,7 +114,7 @@ pub enum MetaMessageRef<'a> {
     Unknown(&'a u8, &'a [u8]),
 }
 impl<'a> MetaMessageRef<'a> {
-    pub fn read<'slc, 'r>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'slc, 'r>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
     where
         'slc: 'a,
     {
@@ -135,7 +135,7 @@ impl<'a> MetaMessageRef<'a> {
             0x09 => MetaMessageRef::DeviceName(data),
             0x20 => {
                 if data.len() != 1 {
-                    return Err(ReaderError::invalid_data());
+                    return Err(OldReaderError::invalid_data());
                 }
                 let c = u8::from_be_bytes(data.try_into().unwrap());
                 let channel = Channel::new(c)?;
@@ -143,7 +143,7 @@ impl<'a> MetaMessageRef<'a> {
             }
             0x21 => {
                 if data.len() != 1 {
-                    return Err(ReaderError::invalid_data());
+                    return Err(OldReaderError::invalid_data());
                 }
                 let port = *reader.read_next()?;
                 MetaMessageRef::MidiPort(port)
@@ -152,25 +152,25 @@ impl<'a> MetaMessageRef<'a> {
             0x51 => {
                 //FF 51 03 tttttt
                 if data.len() != 3 {
-                    return Err(ReaderError::invalid_data());
+                    return Err(OldReaderError::invalid_data());
                 }
                 MetaMessageRef::Tempo(TempoRef::new(data.try_into().unwrap()))
             }
             0x54 => {
-                return Err(ReaderError::unimplemented(
+                return Err(OldReaderError::unimplemented(
                     "SMPTE Offset not yet implemented.",
                 ))
             }
             0x58 if data.len() >= 4 => {
                 //FF 58 04 nn dd cc bb
                 if data.len() != 4 {
-                    return Err(ReaderError::invalid_data());
+                    return Err(OldReaderError::invalid_data());
                 }
                 MetaMessageRef::TimeSignature(TimeSignatureRef::new(data.try_into().unwrap()))
             }
             0x59 => {
                 if data.len() != 2 {
-                    return Err(ReaderError::invalid_data());
+                    return Err(OldReaderError::invalid_data());
                 }
                 MetaMessageRef::KeySignature(KeySignatureRef::new(data.try_into().unwrap()))
             }

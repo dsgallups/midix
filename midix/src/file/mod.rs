@@ -13,14 +13,14 @@ pub struct MidiFile {
 }
 
 impl MidiFile {
-    pub fn parse(bytes: &[u8]) -> ReadResult<Self> {
+    pub fn parse(bytes: &[u8]) -> OldReadResult<Self> {
         let mut reader = OldReader::from_byte_slice(bytes);
         let mut builder = MidiFileBuilder::default();
         loop {
             match reader.read_chunk() {
                 Ok(c) => builder.handle_chunk(c)?,
                 Err(e) => match e {
-                    ReaderError::EndOfReader => {
+                    OldReaderError::EndOfReader => {
                         break;
                     }
                     e => return Err(e),
@@ -46,7 +46,7 @@ pub struct MidiFileRef<'a> {
 }
 
 impl<'a> MidiFileRef<'a> {
-    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> ReadResult<Self>
+    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
     where
         'slc: 'a,
     {
@@ -56,7 +56,7 @@ impl<'a> MidiFileRef<'a> {
             match MidiChunk::read(reader) {
                 Ok(chunk) => chunks.push(chunk),
                 Err(e) => match e {
-                    ReaderError::EndOfReader => break,
+                    OldReaderError::EndOfReader => break,
                     e => {
                         return Err(e);
                     }
