@@ -80,7 +80,7 @@ fn parse_note_on() {
         parsed,
         MidiLiveMessage::ChannelVoice(ChannelVoiceMessage::new(
             Channel::new(1).unwrap(),
-            ChannelVoiceEvent::NoteOn {
+            VoiceEvent::NoteOn {
                 key: Key::new(72),
                 vel: Velocity::new(33)
             }

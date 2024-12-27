@@ -12,7 +12,7 @@ pub struct ChannelVoiceMessage {
     /// The MIDI channel that this event is associated with.
     channel: Channel,
     /// The MIDI message type and associated data.
-    message: ChannelVoiceEvent,
+    message: VoiceEvent,
 }
 
 impl ChannelVoiceMessage {
@@ -59,7 +59,7 @@ impl ChannelVoiceMessage {
             })
         }
     */
-    pub fn new(channel: Channel, message: ChannelVoiceEvent) -> Self {
+    pub fn new(channel: Channel, message: VoiceEvent) -> Self {
         Self { channel, message }
     }
 
@@ -76,18 +76,18 @@ impl ChannelVoiceMessage {
     /// Returns the key if the event has a key
     pub fn key(&self) -> Option<Key> {
         match self.message {
-            ChannelVoiceEvent::NoteOn { key, .. }
-            | ChannelVoiceEvent::NoteOff { key, .. }
-            | ChannelVoiceEvent::Aftertouch { key, .. } => Some(key),
+            VoiceEvent::NoteOn { key, .. }
+            | VoiceEvent::NoteOff { key, .. }
+            | VoiceEvent::Aftertouch { key, .. } => Some(key),
             _ => None,
         }
     }
     pub fn velocity(&self) -> Option<Velocity> {
         match self.message {
-            ChannelVoiceEvent::NoteOn { vel, .. }
-            | ChannelVoiceEvent::NoteOff { vel, .. }
-            | ChannelVoiceEvent::Aftertouch { vel, .. }
-            | ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => Some(vel),
+            VoiceEvent::NoteOn { vel, .. }
+            | VoiceEvent::NoteOff { vel, .. }
+            | VoiceEvent::Aftertouch { vel, .. }
+            | VoiceEvent::ChannelPressureAfterTouch { vel } => Some(vel),
             _ => None,
         }
     }
@@ -95,7 +95,7 @@ impl ChannelVoiceMessage {
     pub fn status(&self) -> u8 {
         self.message.status_nibble() << 4 | self.channel.bits()
     }
-    pub fn message(&self) -> &ChannelVoiceEvent {
+    pub fn message(&self) -> &VoiceEvent {
         &self.message
     }
 }
@@ -119,26 +119,26 @@ impl FromMidiMessage for ChannelVoiceMessage {
         Self: Sized,
     {
         let msg = match status >> 4 {
-            0x8 => ChannelVoiceEvent::NoteOff {
+            0x8 => VoiceEvent::NoteOff {
                 key: Key::from_bits(*data.get_byte(0)?)?,
                 vel: Velocity::from_bits(*data.get_byte(1)?)?,
             },
-            0x9 => ChannelVoiceEvent::NoteOn {
+            0x9 => VoiceEvent::NoteOn {
                 key: Key::from_bits(*data.get_byte(0)?)?,
                 vel: Velocity::from_bits(*data.get_byte(1)?)?,
             },
-            0xA => ChannelVoiceEvent::Aftertouch {
+            0xA => VoiceEvent::Aftertouch {
                 key: Key::from_bits(*data.get_byte(0)?)?,
                 vel: Velocity::from_bits(*data.get_byte(1)?)?,
             },
-            0xB => ChannelVoiceEvent::ControlChange {
+            0xB => VoiceEvent::ControlChange {
                 controller: Controller::from_bits(*data.get_byte(0)?)?,
                 value: check_u7(*data.get_byte(1)?)?,
             },
-            0xC => ChannelVoiceEvent::ProgramChange {
+            0xC => VoiceEvent::ProgramChange {
                 program: Program::from_bits(*data.get_byte(0)?)?,
             },
-            0xD => ChannelVoiceEvent::ChannelPressureAfterTouch {
+            0xD => VoiceEvent::ChannelPressureAfterTouch {
                 vel: Velocity::from_bits(*data.get_byte(0)?)?,
             },
             0xE => {
@@ -146,7 +146,7 @@ impl FromMidiMessage for ChannelVoiceMessage {
                 //Standard Midi Files
                 let lsb = *data.get_byte(0)?;
                 let msb = *data.get_byte(1)?;
-                ChannelVoiceEvent::PitchBend(PitchBend::from_byte_pair(lsb, msb)?)
+                VoiceEvent::PitchBend(PitchBend::from_byte_pair(lsb, msb)?)
             }
             _ => panic!("parsed midi message before checking that status is in range"),
         };

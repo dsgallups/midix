@@ -1,10 +1,9 @@
 use crate::{
     channel::Channel,
+    message::VoiceEventRef,
     parser::reader::{check_u7, inv_data, ReadResult, Reader},
     prelude::{ControllerRef, KeyRef, PitchBendRef, ProgramRef, VelocityRef},
 };
-
-use super::voice_event::VoiceEvent;
 
 /// Represents a MIDI voice message,.
 ///
@@ -17,7 +16,7 @@ pub struct ChannelVoice<'a> {
     /// Used for getting the channel
     status: u8,
     /// The MIDI message type and associated data.
-    message: VoiceEvent<'a>,
+    message: VoiceEventRef<'a>,
 }
 
 impl<'a> ChannelVoice<'a> {
@@ -26,33 +25,33 @@ impl<'a> ChannelVoice<'a> {
         //bugged
 
         let msg = match status >> 4 {
-            0x8 => VoiceEvent::NoteOff {
+            0x8 => VoiceEventRef::NoteOff {
                 key: KeyRef::new(check_u7(reader)?),
                 velocity: VelocityRef::new(check_u7(reader)?),
             },
-            0x9 => VoiceEvent::NoteOn {
+            0x9 => VoiceEventRef::NoteOn {
                 key: KeyRef::new(check_u7(reader)?),
                 velocity: VelocityRef::new(check_u7(reader)?),
             },
-            0xA => VoiceEvent::Aftertouch {
+            0xA => VoiceEventRef::Aftertouch {
                 key: KeyRef::new(check_u7(reader)?),
                 velocity: VelocityRef::new(check_u7(reader)?),
             },
-            0xB => VoiceEvent::ControlChange {
+            0xB => VoiceEventRef::ControlChange {
                 controller: ControllerRef::new(check_u7(reader)?),
                 value: check_u7(reader)?,
             },
-            0xC => VoiceEvent::ProgramChange {
+            0xC => VoiceEventRef::ProgramChange {
                 program: ProgramRef::new(check_u7(reader)?),
             },
-            0xD => VoiceEvent::ChannelPressureAfterTouch {
+            0xD => VoiceEventRef::ChannelPressureAfterTouch {
                 velocity: VelocityRef::new(check_u7(reader)?),
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
                 let [lsb, msb] = reader.read_exact_size()?;
-                VoiceEvent::PitchBend(PitchBendRef::new(lsb, msb))
+                VoiceEventRef::PitchBend(PitchBendRef::new(lsb, msb))
             }
             b => {
                 return Err(inv_data(
@@ -83,18 +82,18 @@ impl<'a> ChannelVoice<'a> {
     /// Returns the key if the event has a key
     pub fn key(&self) -> Option<KeyRef<'a>> {
         match self.message {
-            VoiceEvent::NoteOn { key, .. }
-            | VoiceEvent::NoteOff { key, .. }
-            | VoiceEvent::Aftertouch { key, .. } => Some(key),
+            VoiceEventRef::NoteOn { key, .. }
+            | VoiceEventRef::NoteOff { key, .. }
+            | VoiceEventRef::Aftertouch { key, .. } => Some(key),
             _ => None,
         }
     }
     pub fn velocity(&self) -> Option<VelocityRef<'a>> {
         match self.message {
-            VoiceEvent::NoteOn { velocity, .. }
-            | VoiceEvent::NoteOff { velocity, .. }
-            | VoiceEvent::Aftertouch { velocity, .. }
-            | VoiceEvent::ChannelPressureAfterTouch { velocity } => Some(velocity),
+            VoiceEventRef::NoteOn { velocity, .. }
+            | VoiceEventRef::NoteOff { velocity, .. }
+            | VoiceEventRef::Aftertouch { velocity, .. }
+            | VoiceEventRef::ChannelPressureAfterTouch { velocity } => Some(velocity),
             _ => None,
         }
     }
@@ -103,7 +102,7 @@ impl<'a> ChannelVoice<'a> {
         //self.message.status_nibble() << 4 | self.channel.bits()
         &self.status
     }
-    pub fn message(&self) -> &VoiceEvent {
+    pub fn message(&self) -> &VoiceEventRef {
         &self.message
     }
 

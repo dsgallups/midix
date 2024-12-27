@@ -4,8 +4,6 @@ mod meta;
 pub use meta::*;
 mod voice;
 pub use voice::*;
-mod voice_event;
-pub use voice_event::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TrackMessage<'a> {

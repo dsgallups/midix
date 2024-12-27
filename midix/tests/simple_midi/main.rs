@@ -47,7 +47,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(1).unwrap());
-    let VoiceEvent::ProgramChange { program } = cv.message() else {
+    let VoiceEventRef::ProgramChange { program } = cv.message() else {
         panic!();
     };
     assert_eq!(**program, 5);
@@ -62,7 +62,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(2).unwrap());
-    let VoiceEvent::ProgramChange { program } = cv.message() else {
+    let VoiceEventRef::ProgramChange { program } = cv.message() else {
         panic!();
     };
     assert_eq!(**program, 46);
@@ -77,7 +77,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(3).unwrap());
-    let VoiceEvent::ProgramChange { program } = cv.message() else {
+    let VoiceEventRef::ProgramChange { program } = cv.message() else {
         panic!();
     };
     assert_eq!(**program, 70);
@@ -92,10 +92,10 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(1).unwrap());
-    let VoiceEvent::NoteOn { key, vel } = cv.message() else {
+    let VoiceEventRef::NoteOn { key, velocity } = cv.message() else {
         panic!();
     };
-    assert_eq!(**program, 70);
+    //assert_eq!(**program, 70);
 
     panic!("next event: {:?}", reader.read_event());
 
