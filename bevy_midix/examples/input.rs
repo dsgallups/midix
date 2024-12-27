@@ -111,7 +111,7 @@ fn show_last_message(
     for data in midi_data.read() {
         let text = &mut instructions.single_mut();
 
-        if let MidiMessage::ChannelVoice(message) = data.message {
+        if let MidiLiveMessage::ChannelVoice(message) = data.message {
             let event_type = if message.is_note_on() {
                 "NoteOn"
             } else if message.is_note_off() {
