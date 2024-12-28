@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "nightly", feature(const_for))]
+#![warn(missing_docs)]
 #![doc = r#"
 # MIDIx
 
