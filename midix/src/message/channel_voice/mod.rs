@@ -20,7 +20,7 @@ pub struct ChannelVoice<'a> {
 
 impl<'a> ChannelVoice<'a> {
     pub fn new(channel: Channel<'_>, message: VoiceEvent<'a>) -> Self {
-        let status = *channel.byte() | message.status_nibble();
+        let status = *channel.byte() | (message.status_nibble() << 4);
         Self {
             status: Cow::Owned(status),
             message,
