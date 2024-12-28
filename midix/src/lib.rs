@@ -40,17 +40,21 @@ pub mod reader;
 pub(crate) mod utils;
 
 pub mod prelude {
-    pub use crate::bytes::*;
-    pub use crate::channel::Channel;
-    pub use crate::events::*;
-    pub use crate::file::{chunk::*, format::*, header::*, meta::*, track::*};
-    pub use crate::live::*;
-    pub use crate::message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *};
+    pub use crate::{
+        bytes::*,
+        channel::Channel,
+        events::*,
+        file::{format::*, header::*, meta::*, track::*},
+        live::*,
+        message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *},
+    };
+
     pub use crate::{
         reader::{ReadResult, Reader, ReaderState},
         *,
     };
 
+    #[allow(unused_imports)]
     pub(crate) use crate::reader::{inv_data, inv_input, unexp_eof};
 
     pub use core::fmt::Display;
