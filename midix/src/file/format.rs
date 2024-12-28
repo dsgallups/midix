@@ -58,7 +58,45 @@ impl SequenceTrack {
     sequence number.
 "#]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Format<'a> {
+pub struct Format<'a> {
+    inner: FormatInner<'a>,
+}
+impl<'a> Format<'a> {
+    pub const fn single_multichannel() -> Self {
+        Self {
+            inner: FormatInner::SingleMultiChannel,
+        }
+    }
+    pub const fn simultaneous(bytes: &'a [u8; 2]) -> Self {
+        Self {
+            inner: FormatInner::Simultaneous(Cow::Borrowed(bytes)),
+        }
+    }
+    pub const fn sequentially_independent(bytes: &'a [u8; 2]) -> Self {
+        Self {
+            inner: FormatInner::SequentiallyIndependent(Cow::Borrowed(bytes)),
+        }
+    }
+
+    pub fn num_tracks(&self) -> u16 {
+        use FormatInner::*;
+        match &self.inner {
+            SingleMultiChannel => 1,
+            Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(**num),
+        }
+    }
+    pub const fn format_type(&self) -> FormatType {
+        use FormatInner::*;
+        match self.inner {
+            SingleMultiChannel => FormatType::SingleMultiChannel,
+            Simultaneous(_) => FormatType::Simultaneous,
+            SequentiallyIndependent(_) => FormatType::SequentiallyIndependent,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum FormatInner<'a> {
     /// Format 0
     SingleMultiChannel,
     /// Format 1
@@ -66,36 +104,15 @@ pub enum Format<'a> {
     /// Format 2
     SequentiallyIndependent(Cow<'a, [u8; 2]>),
 }
-impl<'a> Format<'a> {
-    pub const fn single_multichannel() -> Self {
-        Self::SingleMultiChannel
-    }
-    pub const fn simultaneous(bytes: &'a [u8; 2]) -> Self {
-        Self::Simultaneous(Cow::Borrowed(bytes))
-    }
-    pub const fn sequentially_independent(bytes: &'a [u8; 2]) -> Self {
-        Self::SequentiallyIndependent(Cow::Borrowed(bytes))
-    }
 
-    pub fn num_tracks(&self) -> u16 {
-        use Format::*;
-        match self {
-            SingleMultiChannel => 1,
-            Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(**num),
-        }
-    }
-    pub const fn format_type(&self) -> FormatType {
-        use Format::*;
-        match self {
-            SingleMultiChannel => FormatType::SingleMultiChannel,
-            Simultaneous(_) => FormatType::Simultaneous,
-            SequentiallyIndependent(_) => FormatType::SequentiallyIndependent,
-        }
-    }
-}
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FormatType {
+    /// Format 0
     SingleMultiChannel,
+
+    /// Format 1
     Simultaneous,
+
+    /// Format 2
     SequentiallyIndependent,
 }
