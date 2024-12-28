@@ -3,7 +3,10 @@ pub use state::*;
 mod error;
 pub use error::*;
 
-use std::io::{BufRead, BufReader, Read};
+use std::{
+    borrow::Cow,
+    io::{BufRead, BufReader, Read},
+};
 
 use crate::prelude::*;
 
@@ -138,9 +141,9 @@ impl<'slc> Reader<&'slc [u8]> {
                                 //discard the last 0xF7
                                 data = &data[..data.len() - 1];
                             }
-                            TrackMessage::SystemExclusive(SysExRef::new(data))
+                            TrackMessage::SystemExclusive(SysEx::new_borrowed(data))
                         }
-                        0xFF => TrackMessage::Meta(MetaRef::read(self)?),
+                        0xFF => TrackMessage::Meta(Meta::read(self)?),
                         byte => {
                             //status if the byte has a leading 1, otherwise it's
                             //a running status
@@ -155,15 +158,15 @@ impl<'slc> Reader<&'slc [u8]> {
                                 };
                                 *prev_status = Some(*byte);
 
-                                *byte
+                                Cow::Borrowed(byte)
                             } else if let Some(prev_status) = prev_status {
-                                prev_status
+                                Cow::Owned(prev_status)
                             } else {
                                 return Err(inv_data(self, "Invalid MIDI event triggered"));
                             };
 
                             //todo
-                            TrackMessage::ChannelVoice(ChannelVoiceRef::read(status, self)?)
+                            TrackMessage::ChannelVoice(ChannelVoice::read(status, self)?)
                         }
                     };
 

@@ -28,9 +28,9 @@ If bit 15 of <division> is zero, the bits 14 thru 0 represent the number of delt
 
 If bit 15 of <division> is a one, delta times in a file correspond to subdivisions of a second, in a way consistent with SMPTE and MIDI Time Code. Bits 14 thru 8 contain one of the four values -24, -25, -29, or -30, corresponding to the four standard SMPTE and MIDI Time Code formats (-29 corresponds to 30 drop frame), and represents the number of frames per second. These negative numbers are stored in two's compliment form. The second byte (stored positive) is the resolution within a frame: typical values may be 4 (MIDI Time Code resolution), 8, 10, 80 (bit resolution), or 100. This stream allows exact specifications of time-code-based tracks, but also allows millisecond-based tracks by specifying 25 frames/sec and a resolution of 40 units per frame. If the events in a file are stored with a bit resolution of thirty-frame time code, the division word would be E250 hex.
 "#]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HeaderChunk<'a> {
-    format: FormatRef<'a>,
+    format: Format<'a>,
     timing: Timing<'a>,
 }
 
@@ -56,10 +56,10 @@ impl<'a> HeaderChunk<'a> {
                         "Type 0 MIDI format (SingleMultiChannel) defines multiple tracks!",
                     ));
                 };
-                FormatRef::SingleMultiChannel
+                Format::single_multichannel()
             } // Always 1 track
-            1 => FormatRef::Simultaneous(num_tracks),
-            2 => FormatRef::SequentiallyIndependent(num_tracks),
+            1 => Format::simultaneous(num_tracks),
+            2 => Format::sequentially_independent(num_tracks),
             t => return Err(inv_data(reader, format!("Invalid MIDI format {}", t))),
         };
 
@@ -67,11 +67,11 @@ impl<'a> HeaderChunk<'a> {
 
         Ok(Self { format, timing })
     }
-    pub const fn length(self) -> u32 {
+    pub const fn length(&self) -> u32 {
         6
     }
-    pub fn format(&self) -> FormatRef<'a> {
-        self.format
+    pub fn format(&self) -> &Format<'a> {
+        &self.format
     }
     pub fn format_type(&self) -> FormatType {
         self.format.format_type()
@@ -79,8 +79,8 @@ impl<'a> HeaderChunk<'a> {
     pub fn num_tracks(&self) -> u16 {
         self.format.num_tracks()
     }
-    pub fn timing(&self) -> Timing {
-        self.timing
+    pub fn timing(&self) -> &Timing {
+        &self.timing
     }
 }
 

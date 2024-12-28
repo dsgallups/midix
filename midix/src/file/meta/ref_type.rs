@@ -1,8 +1,8 @@
 use crate::prelude::*;
 /// A "meta message", as defined by the SMF spec.
 /// These events carry metadata about the track, such as tempo, time signature, copyright, etc...
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub enum MetaRef<'a> {
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub enum Meta<'a> {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
     TrackNumber(&'a [u8]),
@@ -34,7 +34,7 @@ pub enum MetaRef<'a> {
     ///
     /// Usually appears at the beginning of a track, before any midi events are sent, but there
     /// are no guarantees.
-    Tempo(TempoRef<'a>),
+    Tempo(Tempo<'a>),
     /// The MIDI SMPTE offset meta message specifies an offset for the starting point of a MIDI
     /// track from the start of a sequence in terms of SMPTE time (hours:minutes:seconds:frames:subframes).
     ///
@@ -42,8 +42,8 @@ pub enum MetaRef<'a> {
     SmpteOffset(&'a [u8]),
     /// In order of the MIDI specification, numerator, denominator, MIDI clocks per click, 32nd
     /// notes per quarter
-    TimeSignature(TimeSignatureRef<'a>),
-    KeySignature(KeySignatureRef<'a>),
+    TimeSignature(TimeSignature<'a>),
+    KeySignature(KeySignature<'a>),
     /// Arbitrary data intended for the sequencer.
     /// This data is never sent to a device.
     SequencerSpecific(&'a [u8]),
@@ -53,7 +53,7 @@ pub enum MetaRef<'a> {
     /// The slice is the actual payload of the meta-message.
     Unknown(&'a u8, &'a [u8]),
 }
-impl<'a> MetaRef<'a> {
+impl<'a> Meta<'a> {
     pub fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
@@ -63,16 +63,16 @@ impl<'a> MetaRef<'a> {
         let data = reader.read_varlen_slice()?;
 
         Ok(match type_byte {
-            0x00 => MetaRef::TrackNumber(data),
-            0x01 => MetaRef::Text(data),
-            0x02 => MetaRef::Copyright(data),
-            0x03 => MetaRef::TrackName(data),
-            0x04 => MetaRef::InstrumentName(data),
-            0x05 => MetaRef::Lyric(data),
-            0x06 => MetaRef::Marker(data),
-            0x07 => MetaRef::CuePoint(data),
-            0x08 => MetaRef::ProgramName(data),
-            0x09 => MetaRef::DeviceName(data),
+            0x00 => Meta::TrackNumber(data),
+            0x01 => Meta::Text(data),
+            0x02 => Meta::Copyright(data),
+            0x03 => Meta::TrackName(data),
+            0x04 => Meta::InstrumentName(data),
+            0x05 => Meta::Lyric(data),
+            0x06 => Meta::Marker(data),
+            0x07 => Meta::CuePoint(data),
+            0x08 => Meta::ProgramName(data),
+            0x09 => Meta::DeviceName(data),
             0x20 => {
                 if data.len() != 1 {
                     return Err(inv_data(
@@ -85,7 +85,7 @@ impl<'a> MetaRef<'a> {
                 }
                 //TODO: Need to check if it's a u4
                 let c = data.first().unwrap();
-                MetaRef::MidiChannel(c)
+                Meta::MidiChannel(c)
             }
             0x21 => {
                 if data.len() != 1 {
@@ -95,9 +95,9 @@ impl<'a> MetaRef<'a> {
                     ));
                 }
                 let port = *reader.read_next()?;
-                MetaRef::MidiPort(port)
+                Meta::MidiPort(port)
             }
-            0x2F => MetaRef::EndOfTrack,
+            0x2F => Meta::EndOfTrack,
             0x51 => {
                 //FF 51 03 tttttt
                 if data.len() != 3 {
@@ -109,7 +109,7 @@ impl<'a> MetaRef<'a> {
                         ),
                     ));
                 }
-                MetaRef::Tempo(TempoRef::new(data.try_into().unwrap()))
+                Meta::Tempo(Tempo::new(data.try_into().unwrap()))
             }
             0x54 => {
                 //TODO
@@ -127,7 +127,7 @@ impl<'a> MetaRef<'a> {
                         ),
                     ));
                 }
-                MetaRef::TimeSignature(TimeSignatureRef::new(data.try_into().unwrap()))
+                Meta::TimeSignature(TimeSignature::new(data.try_into().unwrap()))
             }
             0x59 => {
                 if data.len() != 2 {
@@ -139,10 +139,10 @@ impl<'a> MetaRef<'a> {
                         ),
                     ));
                 }
-                MetaRef::KeySignature(KeySignatureRef::new(data.try_into().unwrap()))
+                Meta::KeySignature(KeySignature::new(data.try_into().unwrap()))
             }
-            0x7F => MetaRef::SequencerSpecific(data),
-            _ => MetaRef::Unknown(type_byte, data),
+            0x7F => Meta::SequencerSpecific(data),
+            _ => Meta::Unknown(type_byte, data),
         })
     }
 

@@ -2,14 +2,14 @@ use crate::prelude::*;
 use std::io::ErrorKind;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum MidiLiveMessage {
-    ChannelVoice(ChannelVoice),
-    SystemCommon(SystemCommonMessage),
+pub enum MidiLiveMessage<'a> {
+    ChannelVoice(ChannelVoice<'a>),
+    SystemCommon(SystemCommonMessage<'a>),
     SystemRealTime(SystemRealTimeMessage),
 }
 
-impl MidiLiveMessage {
-    pub fn channel_voice(&self) -> Option<&ChannelVoice> {
+impl MidiLiveMessage<'_> {
+    pub fn channel_voice(&self) -> Option<&ChannelVoice<'_>> {
         match self {
             MidiLiveMessage::ChannelVoice(c) => Some(c),
             _ => None,
@@ -17,23 +17,23 @@ impl MidiLiveMessage {
     }
 }
 
-impl From<ChannelVoice> for MidiLiveMessage {
-    fn from(value: ChannelVoice) -> Self {
+impl<'a> From<ChannelVoice<'a>> for MidiLiveMessage<'a> {
+    fn from(value: ChannelVoice<'a>) -> Self {
         Self::ChannelVoice(value)
     }
 }
-impl From<SystemCommonMessage> for MidiLiveMessage {
-    fn from(value: SystemCommonMessage) -> Self {
+impl<'a> From<SystemCommonMessage<'a>> for MidiLiveMessage<'a> {
+    fn from(value: SystemCommonMessage<'a>) -> Self {
         Self::SystemCommon(value)
     }
 }
-impl From<SystemRealTimeMessage> for MidiLiveMessage {
+impl From<SystemRealTimeMessage> for MidiLiveMessage<'_> {
     fn from(value: SystemRealTimeMessage) -> Self {
         Self::SystemRealTime(value)
     }
 }
 
-impl FromMidiMessage for MidiLiveMessage {
+impl FromMidiMessage for MidiLiveMessage<'_> {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xFF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -58,7 +58,7 @@ impl FromMidiMessage for MidiLiveMessage {
     }
 }
 
-impl AsMidiBytes for MidiLiveMessage {
+impl AsMidiBytes for MidiLiveMessage<'_> {
     fn as_bytes(&self) -> Vec<u8> {
         use MidiLiveMessage::*;
         match self {
@@ -82,7 +82,7 @@ fn parse_note_on() {
             Channel::new(1).unwrap(),
             VoiceEvent::NoteOn {
                 key: Key::new(72),
-                vel: Velocity::new(33)
+                velocity: Velocity::new(33)
             }
         ))
     );

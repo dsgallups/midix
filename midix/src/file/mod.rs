@@ -1,15 +1,13 @@
-use crate::prelude::*;
-
 //pub mod builder;
 pub mod chunk;
 pub mod format;
 pub mod header;
 pub mod meta;
 pub mod track;
-
+/*
 pub struct MidiFile {
     header: MidiHeader,
-    tracks: Format,
+    tracks: FormatOwned,
 }
 
 impl MidiFile {
@@ -40,7 +38,7 @@ impl MidiFile {
             Format::SingleMultiChannel(ref c) => vec![c],
         }
     }
-}
+}*/
 
 /*
 pub struct MidiFileRef<'a> {

@@ -70,7 +70,7 @@ impl MidiOutput {
     }
 
     /// Send a midi message.
-    pub fn send(&self, msg: impl Into<MidiLiveMessage>) {
+    pub fn send(&self, msg: impl Into<MidiLiveMessage<'static>>) {
         self.sender
             .send(Message::Midi(msg.into()))
             .expect("Couldn't send MIDI message");
@@ -104,7 +104,7 @@ impl MidiOutputConnection {
 pub enum MidiOutputError {
     ConnectionError(ConnectErrorKind),
     SendError(midir::SendError),
-    SendDisconnectedError(MidiLiveMessage),
+    SendDisconnectedError(MidiLiveMessage<'static>),
     PortRefreshError,
 }
 
@@ -182,7 +182,7 @@ enum Message {
     RefreshPorts,
     ConnectToPort(MidiOutputPort),
     DisconnectFromPort,
-    Midi(MidiLiveMessage),
+    Midi(MidiLiveMessage<'static>),
 }
 
 enum Reply {

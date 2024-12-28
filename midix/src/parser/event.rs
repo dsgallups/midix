@@ -1,4 +1,6 @@
-use super::{HeaderChunk, TrackChunk, TrackEvent};
+use crate::prelude::TrackEvent;
+
+use super::{HeaderChunk, TrackChunk};
 
 #[derive(Debug, PartialEq)]
 pub enum Event<'a> {

@@ -1,18 +1,14 @@
-/// (in microseconds per MIDI quarter-note)
-///
-/// FF 51 03 tttttt
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Tempo;
+use std::borrow::Cow;
 
 /// (in microseconds per MIDI quarter-note)
 ///
 /// FF 51 03 tttttt
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct TempoRef<'a>(&'a [u8; 3]);
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct Tempo<'a>(Cow<'a, [u8; 3]>);
 
-impl<'a> TempoRef<'a> {
+impl<'a> Tempo<'a> {
     pub fn new(v: &'a [u8; 3]) -> Self {
-        Self(v)
+        Self(Cow::Borrowed(v))
     }
 
     pub fn micros_per_quarter_note(&self) -> u32 {

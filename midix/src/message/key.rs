@@ -1,7 +1,8 @@
 use core::fmt;
+use std::borrow::Cow;
 
-use crate::{bytes::MidiBits, utils::check_u7};
-
+use crate::bytes::MidiBits;
+/*
 /// Identifies a key press
 ///
 /// TODO docs
@@ -42,45 +43,50 @@ impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}-{}", self.note(), self.octave())
     }
-}
+}*/
 
 /// Identifies a key press
 ///
 /// TODO docs
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct KeyRef<'a>(&'a u8);
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct Key<'a>(Cow<'a, u8>);
 
-impl<'a> MidiBits for KeyRef<'a> {
-    type BitRepresentation = &'a u8;
+impl MidiBits for Key<'_> {
+    type BitRepresentation = u8;
     fn as_bits(&self) -> Self::BitRepresentation {
-        self.0
+        *self.0
     }
     fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
     where
         Self: Sized,
     {
-        Ok(Self(rep))
+        Ok(Self(Cow::Owned(rep)))
     }
 }
 
-impl<'a> KeyRef<'a> {
+impl<'a> Key<'a> {
+    pub const fn new(key: u8) -> Self {
+        Self(Cow::Owned(key))
+    }
     /// Create a new key. Does not check for u7.
-    pub(crate) const fn new(key: &'a u8) -> Self {
-        Self(key)
+    pub(crate) const fn new_borrowed(key: &'a u8) -> Self {
+        Self(Cow::Borrowed(key))
     }
 
     /// Identifies the note of the key pressed
-    pub const fn note(self) -> Note {
+    #[inline]
+    pub fn note(&self) -> Note {
         Note::from_midi_datum(*self.0)
     }
 
     /// Identifies the octave of the key pressed
-    pub const fn octave(&self) -> Octave {
+    #[inline]
+    pub fn octave(&self) -> Octave {
         Octave::from_midi_datum(*self.0)
     }
 }
 
-impl fmt::Display for KeyRef<'_> {
+impl fmt::Display for Key<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}-{}", self.note(), self.octave())
     }

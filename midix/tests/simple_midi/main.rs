@@ -8,7 +8,10 @@ fn midi_file_ref() {
         panic!()
     };
     assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
-    assert_eq!(header.timing(), Timing::ticks(&[0, 96]));
+    assert_eq!(
+        header.timing().ticks_per_quarter_note(),
+        Timing::new_ticks(&[0, 96]).ticks_per_quarter_note()
+    );
 
     let Ok(Event::Track(track)) = reader.read_event() else {
         panic!()
@@ -19,7 +22,7 @@ fn midi_file_ref() {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);
-    let TrackMessage::Meta(MetaRef::TimeSignature(time_sig)) = track_event.event() else {
+    let TrackMessage::Meta(Meta::TimeSignature(time_sig)) = track_event.event() else {
         panic!();
     };
     assert_eq!(time_sig.num(), 4);
@@ -33,7 +36,7 @@ fn midi_file_ref() {
     assert_eq!(track_event.delta_time(), 0);
 
     // microseconds per quarter note. In this case, it's 120bpm
-    let TrackMessage::Meta(MetaRef::Tempo(tempo)) = track_event.event() else {
+    let TrackMessage::Meta(Meta::Tempo(tempo)) = track_event.event() else {
         panic!();
     };
     assert_eq!(tempo.micros_per_quarter_note(), 500000);
@@ -47,7 +50,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(1).unwrap());
-    let VoiceEventRef::ProgramChange { program } = cv.message() else {
+    let VoiceEvent::ProgramChange { program } = cv.message() else {
         panic!();
     };
     assert_eq!(*program.byte(), 5);
@@ -62,7 +65,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(2).unwrap());
-    let VoiceEventRef::ProgramChange { program } = cv.message() else {
+    let VoiceEvent::ProgramChange { program } = cv.message() else {
         panic!();
     };
     assert_eq!(*program.byte(), 46);
@@ -77,7 +80,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(3).unwrap());
-    let VoiceEventRef::ProgramChange { program } = cv.message() else {
+    let VoiceEvent::ProgramChange { program } = cv.message() else {
         panic!();
     };
     assert_eq!(*program.byte(), 70);
@@ -92,7 +95,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(1).unwrap());
-    let VoiceEventRef::NoteOn { key, velocity } = cv.message() else {
+    let VoiceEvent::NoteOn { key, velocity } = cv.message() else {
         panic!();
     };
     //assert_eq!(**program, 70);

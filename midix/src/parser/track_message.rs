@@ -1,15 +1,15 @@
 use crate::{
-    message::{ChannelVoiceRef, SysExRef},
-    prelude::MetaRef,
+    message::{ChannelVoice, SysEx},
+    prelude::Meta,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TrackMessage<'a> {
-    ChannelVoice(ChannelVoiceRef<'a>),
-    SystemExclusive(SysExRef<'a>),
+    ChannelVoice(ChannelVoice<'a>),
+    SystemExclusive(SysEx<'a>),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
-    Meta(MetaRef<'a>),
+    Meta(Meta<'a>),
 }
 /*
 impl<'a> TrackMessage<'a> {

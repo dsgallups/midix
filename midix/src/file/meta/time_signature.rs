@@ -1,6 +1,4 @@
-///TODO
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct TimeSignature;
+use std::borrow::Cow;
 
 #[doc = r#"
 FF 58 04 nn dd cc bb Time Signature
@@ -29,12 +27,12 @@ That is, 6/8 time (8 is 2 to the 3rd power, so this is 06 03),
 36 MIDI clocks per dotted-quarter (24 hex!), and
 eight notated 32nd-notes per quarter-note.
 "#]
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct TimeSignatureRef<'a>(&'a [u8; 4]);
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct TimeSignature<'a>(Cow<'a, [u8; 4]>);
 
-impl<'a> TimeSignatureRef<'a> {
+impl<'a> TimeSignature<'a> {
     pub fn new(v: &'a [u8; 4]) -> Self {
-        Self(v)
+        Self(Cow::Borrowed(v))
     }
     /// numerator of the time signature
     pub fn num(&self) -> u8 {

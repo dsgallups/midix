@@ -6,12 +6,12 @@ pub trait SystemCommonMessageTrait {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SystemCommonMessage {
+pub enum SystemCommonMessage<'a> {
     /// A system-exclusive event.
     ///
     /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
     /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
-    SystemExclusive(SysEx),
+    SystemExclusive(SysEx<'a>),
     /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
     MidiTimeCodeQuarterFrame {
         message: MtcQuarterFrameMessage,
@@ -27,7 +27,7 @@ pub enum SystemCommonMessage {
     /// Request the device to tune itself.
     TuneRequest,
 }
-impl SystemCommonMessageTrait for SystemCommonMessage {
+impl SystemCommonMessage<'_> {
     fn status(&self) -> u8 {
         use SystemCommonMessage::*;
         match self {
@@ -40,7 +40,7 @@ impl SystemCommonMessageTrait for SystemCommonMessage {
     }
 }
 
-impl AsMidiBytes for SystemCommonMessage {
+impl AsMidiBytes for SystemCommonMessage<'_> {
     fn as_bytes(&self) -> Vec<u8> {
         use SystemCommonMessage::*;
         match self {
@@ -55,7 +55,7 @@ impl AsMidiBytes for SystemCommonMessage {
     }
 }
 
-impl FromMidiMessage for SystemCommonMessage {
+impl FromMidiMessage for SystemCommonMessage<'_> {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {

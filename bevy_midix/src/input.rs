@@ -111,7 +111,7 @@ impl MidiInputConnection {
 #[derive(Resource, Event, Debug)]
 pub struct MidiData {
     pub stamp: u64,
-    pub message: MidiLiveMessage,
+    pub message: MidiLiveMessage<'static>,
 }
 
 /// The [`Error`] type for midi input operations, accessible as an [`Event`](bevy::ecs::event::Event).
