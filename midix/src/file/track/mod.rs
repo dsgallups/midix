@@ -3,17 +3,41 @@ pub use event::*;
 mod message;
 pub use message::*;
 
-/*
-    todo: Text, Lyrics, Markers, CuePoints, MidiChannel
+use crate::prelude::*;
 
-    Midi file should have like copyrights(),
-    etc
-*/
-/*/// Defines a track of a midi file
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MidiTrack(Vec<MidiTrackEvent>);
-impl MidiTrack {
-    pub fn new(events: Vec<MidiTrackEvent>) -> Self {
-        Self(events)
+// I would like to return some type of reader...
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TrackChunk {
+    length: u32,
+}
+
+impl TrackChunk {
+    /// Assumes that the chunk type bytes ("MTrk") have ALREADY been read
+    pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
+        let length: &[u8; 4] = reader.read_exact_size()?;
+
+        let length = u32::from_be_bytes(*length);
+
+        Ok(Self { length })
     }
-}*/
+    pub fn length(&self) -> u32 {
+        self.length
+    }
+    /*/// Slow, can be improved by implementing iterator on reader
+    pub fn events(&self) -> OldReadResult<Vec<MidiTrackEventRef<'a>>> {
+        let mut reader = OldReader::from_byte_slice(self.data);
+
+        let mut events: Vec<MidiTrackEventRef<'a>> = Vec::new();
+        loop {
+            match MidiTrackEventRef::read(&mut reader) {
+                Ok(e) => events.push(e),
+                Err(err) => match err {
+                    OldReaderError::EndOfReader => break,
+                    e => return Err(e),
+                },
+            }
+        }
+
+        Ok(events)
+    }*/
+}

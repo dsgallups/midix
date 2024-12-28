@@ -29,7 +29,7 @@ impl<'a> ChannelVoice<'a> {
 
     /// TODO: read functions should take in an iterator that yields u8s
     pub(crate) fn read(status: Cow<'a, u8>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
-        use crate::parser::reader::check_u7;
+        use crate::reader::check_u7;
         //bugged
 
         let msg = match status.as_ref() >> 4 {

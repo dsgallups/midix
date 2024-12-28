@@ -19,20 +19,12 @@ impl<'a> SysEx<'a> {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
-
-    pub fn as_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(self.len() + 2);
-        bytes.push(0xF0);
-        bytes.extend(self.0.into_iter());
-        bytes.push(0xF7);
-        bytes
-    }
 }
 impl AsMidiBytes for SysEx<'_> {
     fn as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.len() + 2);
         bytes.push(0xF0);
-        bytes.extend(self.0.into_iter());
+        bytes.extend(self.0.iter());
         bytes.push(0xF7);
         bytes
     }

@@ -32,24 +32,26 @@ mod error;
 
 pub mod bytes;
 pub mod channel;
+pub mod events;
 pub mod file;
 pub mod live;
 pub mod message;
-pub mod parser;
+pub mod reader;
 pub(crate) mod utils;
 
 pub mod prelude {
     pub use crate::bytes::*;
     pub use crate::channel::Channel;
+    pub use crate::events::*;
     pub use crate::file::{chunk::*, format::*, header::*, meta::*, track::*};
     pub use crate::live::*;
     pub use crate::message::{controller::*, key::*, pitch_bend::*, program::*, velocity::*, *};
-    pub use crate::parser::{
+    pub use crate::{
         reader::{ReadResult, Reader, ReaderState},
         *,
     };
 
-    pub(crate) use crate::parser::reader::{inv_data, inv_input, unexp_eof};
+    pub(crate) use crate::reader::{inv_data, inv_input, unexp_eof};
 
     pub use core::fmt::Display;
 

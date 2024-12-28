@@ -16,7 +16,10 @@ impl<'a> Channel<'a> {
     pub fn new(channel: u8) -> Result<Self, std::io::Error> {
         Ok(Self(Cow::Owned(check_u4(channel)?)))
     }
-
+    ///Identify a channel
+    pub fn new_borrowed(channel: &'a u8) -> Result<Self, std::io::Error> {
+        Ok(Self(Cow::Borrowed(channel)))
+    }
     pub fn from_status(status: u8) -> Self {
         let channel = status & 0b0000_1111;
         println!("status, channel: {}, {}", status, channel);

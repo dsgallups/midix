@@ -1,7 +1,10 @@
-use crate::prelude::*;
+use crate::{
+    message::{ChannelVoice, SysEx},
+    prelude::Meta,
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum MidiTrackMessage<'a> {
+pub enum TrackMessage<'a> {
     ChannelVoice(ChannelVoice<'a>),
     SystemExclusive(SysEx<'a>),
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
