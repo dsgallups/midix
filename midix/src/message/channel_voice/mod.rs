@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::prelude::*;
 mod event;
 pub use event::*;
@@ -7,59 +9,72 @@ pub use event::*;
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct ChannelVoiceMessage {
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct ChannelVoice<'a> {
     /// The MIDI channel that this event is associated with.
-    channel: Channel,
+    /// Used for getting the channel as the status' lsb contains the channel
+    status: Cow<'a, u8>,
     /// The MIDI message type and associated data.
-    message: ChannelVoiceEvent,
+    message: VoiceEvent<'a>,
 }
 
-impl ChannelVoiceMessage {
+impl<'a> ChannelVoice<'a> {
+    pub fn new(channel: Channel<'_>, message: VoiceEvent<'a>) -> Self {
+        let status = *channel.byte() | (message.status_nibble() << 4);
+        Self {
+            status: Cow::Owned(status),
+            message,
+        }
+    }
+
     /// TODO: read functions should take in an iterator that yields u8s
-    pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
-        let status = reader.read_next()?;
-        let msg = match status >> 4 {
-            0x8 => ChannelVoiceEvent::NoteOff {
-                key: Key::from_bits(*reader.read_next()?)?,
-                vel: Velocity::from_bits(*reader.read_next()?)?,
+    pub(crate) fn read(status: Cow<'a, u8>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
+        use crate::reader::check_u7;
+        //bugged
+
+        let msg = match status.as_ref() >> 4 {
+            0x8 => VoiceEvent::NoteOff {
+                key: Key::new_borrowed(check_u7(reader)?),
+                velocity: Velocity::new_borrowed(check_u7(reader)?),
             },
-            0x9 => ChannelVoiceEvent::NoteOn {
-                key: Key::from_bits(*reader.read_next()?)?,
-                vel: Velocity::from_bits(*reader.read_next()?)?,
+            0x9 => VoiceEvent::NoteOn {
+                key: Key::new_borrowed(check_u7(reader)?),
+                velocity: Velocity::new_borrowed(check_u7(reader)?),
             },
-            0xA => ChannelVoiceEvent::Aftertouch {
-                key: Key::from_bits(*reader.read_next()?)?,
-                vel: Velocity::from_bits(*reader.read_next()?)?,
+            0xA => VoiceEvent::Aftertouch {
+                key: Key::new_borrowed(check_u7(reader)?),
+                velocity: Velocity::new_borrowed(check_u7(reader)?),
             },
-            0xB => ChannelVoiceEvent::ControlChange {
-                controller: Controller::from_bits(*reader.read_next()?)?,
-                value: check_u7(*reader.read_next()?)?,
+            0xB => VoiceEvent::ControlChange {
+                controller: Controller::new_borrowed(check_u7(reader)?),
+                value: Cow::Borrowed(check_u7(reader)?),
             },
-            0xC => ChannelVoiceEvent::ProgramChange {
-                program: Program::from_bits(*reader.read_next()?)?,
+            0xC => VoiceEvent::ProgramChange {
+                program: Program::new_borrowed(check_u7(reader)?),
             },
-            0xD => ChannelVoiceEvent::ChannelPressureAfterTouch {
-                vel: Velocity::from_bits(*reader.read_next()?)?,
+            0xD => VoiceEvent::ChannelPressureAfterTouch {
+                velocity: Velocity::new_borrowed(check_u7(reader)?),
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
-                let lsb = *reader.read_next()?;
-                let msb = *reader.read_next()?;
-                ChannelVoiceEvent::PitchBend(PitchBend::from_byte_pair(lsb, msb)?)
+                let [lsb, msb] = reader.read_exact_size()?;
+                VoiceEvent::PitchBend(PitchBend::new_borrowed(lsb, msb))
             }
-            _ => panic!("parsed midi message before checking that status is in range"),
+            b => {
+                return Err(inv_data(
+                    reader,
+                    format!("Invalid status byte for message: {}", b),
+                ))
+            }
         };
-        let channel = status & 0b0000_1111;
-        Ok(ChannelVoiceMessage {
-            channel: Channel::new(channel)?,
+        Ok(ChannelVoice {
+            status,
             message: msg,
         })
     }
-
-    pub fn new(channel: Channel, message: ChannelVoiceEvent) -> Self {
-        Self { channel, message }
+    pub fn channel(&self) -> Channel {
+        Channel::from_status(*self.status)
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
@@ -73,33 +88,33 @@ impl ChannelVoiceMessage {
     }
 
     /// Returns the key if the event has a key
-    pub fn key(&self) -> Option<Key> {
-        match self.message {
-            ChannelVoiceEvent::NoteOn { key, .. }
-            | ChannelVoiceEvent::NoteOff { key, .. }
-            | ChannelVoiceEvent::Aftertouch { key, .. } => Some(key),
+    pub fn key(&self) -> Option<&Key<'a>> {
+        match &self.message {
+            VoiceEvent::NoteOn { key, .. }
+            | VoiceEvent::NoteOff { key, .. }
+            | VoiceEvent::Aftertouch { key, .. } => Some(key),
             _ => None,
         }
     }
-    pub fn velocity(&self) -> Option<Velocity> {
-        match self.message {
-            ChannelVoiceEvent::NoteOn { vel, .. }
-            | ChannelVoiceEvent::NoteOff { vel, .. }
-            | ChannelVoiceEvent::Aftertouch { vel, .. }
-            | ChannelVoiceEvent::ChannelPressureAfterTouch { vel } => Some(vel),
+    pub fn velocity(&self) -> Option<&Velocity<'a>> {
+        match &self.message {
+            VoiceEvent::NoteOn { velocity, .. }
+            | VoiceEvent::NoteOff { velocity, .. }
+            | VoiceEvent::Aftertouch { velocity, .. }
+            | VoiceEvent::ChannelPressureAfterTouch { velocity } => Some(velocity),
             _ => None,
         }
     }
 
-    pub fn status(&self) -> u8 {
-        self.message.status_nibble() << 4 | self.channel.bits()
+    pub fn status(&self) -> &u8 {
+        //self.message.status_nibble() << 4 | self.channel.bits()
+        &self.status
     }
-    pub fn message(&self) -> &ChannelVoiceEvent {
+    pub fn message(&self) -> &VoiceEvent {
         &self.message
     }
-}
-impl AsMidiBytes for ChannelVoiceMessage {
-    /// Get the raw midi packet for this message
+
+    /*/// Get the raw midi packet for this message
     fn as_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
         packet.push(self.status());
@@ -107,10 +122,21 @@ impl AsMidiBytes for ChannelVoiceMessage {
         packet.extend(data);
 
         packet
+    }*/
+}
+impl AsMidiBytes for ChannelVoice<'_> {
+    /// Get the raw midi packet for this message
+    fn as_bytes(&self) -> Vec<u8> {
+        let mut packet = Vec::with_capacity(3);
+        packet.push(*self.status());
+        let data = self.message.to_raw();
+        packet.extend(data);
+
+        packet
     }
 }
 
-impl FromMidiMessage for ChannelVoiceMessage {
+impl FromMidiMessage for ChannelVoice<'_> {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xEF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -118,40 +144,39 @@ impl FromMidiMessage for ChannelVoiceMessage {
         Self: Sized,
     {
         let msg = match status >> 4 {
-            0x8 => ChannelVoiceEvent::NoteOff {
+            0x8 => VoiceEvent::NoteOff {
                 key: Key::from_bits(*data.get_byte(0)?)?,
-                vel: Velocity::from_bits(*data.get_byte(1)?)?,
+                velocity: Velocity::from_bits(*data.get_byte(1)?)?,
             },
-            0x9 => ChannelVoiceEvent::NoteOn {
+            0x9 => VoiceEvent::NoteOn {
                 key: Key::from_bits(*data.get_byte(0)?)?,
-                vel: Velocity::from_bits(*data.get_byte(1)?)?,
+                velocity: Velocity::from_bits(*data.get_byte(1)?)?,
             },
-            0xA => ChannelVoiceEvent::Aftertouch {
+            0xA => VoiceEvent::Aftertouch {
                 key: Key::from_bits(*data.get_byte(0)?)?,
-                vel: Velocity::from_bits(*data.get_byte(1)?)?,
+                velocity: Velocity::from_bits(*data.get_byte(1)?)?,
             },
-            0xB => ChannelVoiceEvent::ControlChange {
+            0xB => VoiceEvent::ControlChange {
                 controller: Controller::from_bits(*data.get_byte(0)?)?,
-                value: check_u7(*data.get_byte(1)?)?,
+                value: Cow::Owned(check_u7(*data.get_byte(1)?)?),
             },
-            0xC => ChannelVoiceEvent::ProgramChange {
+            0xC => VoiceEvent::ProgramChange {
                 program: Program::from_bits(*data.get_byte(0)?)?,
             },
-            0xD => ChannelVoiceEvent::ChannelPressureAfterTouch {
-                vel: Velocity::from_bits(*data.get_byte(0)?)?,
+            0xD => VoiceEvent::ChannelPressureAfterTouch {
+                velocity: Velocity::from_bits(*data.get_byte(0)?)?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
                 let lsb = *data.get_byte(0)?;
                 let msb = *data.get_byte(1)?;
-                ChannelVoiceEvent::PitchBend(PitchBend::from_byte_pair(lsb, msb)?)
+                VoiceEvent::PitchBend(PitchBend::from_byte_pair(lsb, msb)?)
             }
             _ => panic!("parsed midi message before checking that status is in range"),
         };
-        let channel = status & 0b0000_1111;
-        Ok(ChannelVoiceMessage {
-            channel: Channel::new(channel)?,
+        Ok(ChannelVoice {
+            status: Cow::Owned(status),
             message: msg,
         })
     }

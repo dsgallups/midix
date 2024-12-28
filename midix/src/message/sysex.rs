@@ -1,60 +1,32 @@
+use std::borrow::Cow;
+
 use crate::bytes::AsMidiBytes;
 
-pub trait SystemExclusive {
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool;
-}
-
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SystemExclusiveOwned(Vec<u8>);
+pub struct SysEx<'a>(Cow<'a, [u8]>);
 
-impl SystemExclusiveOwned {
-    pub fn new(data: Vec<u8>) -> Self {
-        Self(data)
+impl<'a> SysEx<'a> {
+    pub const fn new(data: Vec<u8>) -> Self {
+        Self(Cow::Owned(data))
     }
-}
 
-impl SystemExclusive for SystemExclusiveOwned {
-    fn len(&self) -> usize {
+    pub const fn new_borrowed(data: &'a [u8]) -> Self {
+        Self(Cow::Borrowed(data))
+    }
+
+    pub fn len(&self) -> usize {
         self.0.len()
     }
-    fn is_empty(&self) -> bool {
+
+    pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 }
-
-impl AsMidiBytes for SystemExclusiveOwned {
+impl AsMidiBytes for SysEx<'_> {
     fn as_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.len() + 2);
         bytes.push(0xF0);
-        bytes.extend(&self.0);
-        bytes.push(0xF7);
-        bytes
-    }
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SystemExclusiveBorrowed<'a>(&'a [u8]);
-
-impl<'a> SystemExclusiveBorrowed<'a> {
-    pub fn new(data: &'a [u8]) -> Self {
-        Self(data)
-    }
-}
-
-impl SystemExclusive for SystemExclusiveBorrowed<'_> {
-    fn len(&self) -> usize {
-        self.0.len()
-    }
-    fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-}
-impl AsMidiBytes for SystemExclusiveBorrowed<'_> {
-    fn as_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(self.len() + 2);
-        bytes.push(0xF0);
-        bytes.extend(self.0);
+        bytes.extend(self.0.iter());
         bytes.push(0xF7);
         bytes
     }

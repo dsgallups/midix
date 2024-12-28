@@ -1,15 +1,20 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
+#[doc = r"
+An emittable message by a live MIDI device
+"]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum MidiLiveMessage {
-    ChannelVoice(ChannelVoiceMessage),
-    SystemCommon(SystemCommonMessage),
+pub enum MidiLiveMessage<'a> {
+    /// A MIDI voice message associated with a channel
+    ChannelVoice(ChannelVoice<'a>),
+    SystemCommon(SystemCommonMessage<'a>),
     SystemRealTime(SystemRealTimeMessage),
 }
 
-impl MidiLiveMessage {
-    pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
+impl MidiLiveMessage<'_> {
+    /// returns Some if the message contains a [`ChannelVoice`] event.
+    pub fn channel_voice(&self) -> Option<&ChannelVoice<'_>> {
         match self {
             MidiLiveMessage::ChannelVoice(c) => Some(c),
             _ => None,
@@ -17,23 +22,23 @@ impl MidiLiveMessage {
     }
 }
 
-impl From<ChannelVoiceMessage> for MidiLiveMessage {
-    fn from(value: ChannelVoiceMessage) -> Self {
+impl<'a> From<ChannelVoice<'a>> for MidiLiveMessage<'a> {
+    fn from(value: ChannelVoice<'a>) -> Self {
         Self::ChannelVoice(value)
     }
 }
-impl From<SystemCommonMessage> for MidiLiveMessage {
-    fn from(value: SystemCommonMessage) -> Self {
+impl<'a> From<SystemCommonMessage<'a>> for MidiLiveMessage<'a> {
+    fn from(value: SystemCommonMessage<'a>) -> Self {
         Self::SystemCommon(value)
     }
 }
-impl From<SystemRealTimeMessage> for MidiLiveMessage {
+impl From<SystemRealTimeMessage> for MidiLiveMessage<'_> {
     fn from(value: SystemRealTimeMessage) -> Self {
         Self::SystemRealTime(value)
     }
 }
 
-impl FromMidiMessage for MidiLiveMessage {
+impl FromMidiMessage for MidiLiveMessage<'_> {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xFF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -41,9 +46,9 @@ impl FromMidiMessage for MidiLiveMessage {
         Self: Sized,
     {
         match status {
-            0x80..=0xEF => Ok(Self::ChannelVoice(
-                ChannelVoiceMessage::from_status_and_data(status, data)?,
-            )),
+            0x80..=0xEF => Ok(Self::ChannelVoice(ChannelVoice::from_status_and_data(
+                status, data,
+            )?)),
             0xF0..=0xF7 => Ok(Self::SystemCommon(
                 SystemCommonMessage::from_status_and_data(status, data)?,
             )),
@@ -58,13 +63,12 @@ impl FromMidiMessage for MidiLiveMessage {
     }
 }
 
-impl AsMidiBytes for MidiLiveMessage {
+impl AsMidiBytes for MidiLiveMessage<'_> {
     fn as_bytes(&self) -> Vec<u8> {
-        use MidiLiveMessage::*;
         match self {
-            ChannelVoice(c) => c.as_bytes(),
-            SystemCommon(s) => s.as_bytes(),
-            SystemRealTime(r) => r.as_bytes(),
+            MidiLiveMessage::ChannelVoice(c) => c.as_bytes(),
+            MidiLiveMessage::SystemCommon(s) => s.as_bytes(),
+            MidiLiveMessage::SystemRealTime(r) => r.as_bytes(),
         }
     }
 }
@@ -72,17 +76,17 @@ impl AsMidiBytes for MidiLiveMessage {
 #[test]
 fn parse_note_on() {
     use crate::prelude::*;
-    let message = [0b10010001, 0b01001000, 0b00100001];
+    let message = [0b1001_0001, 0b010_01000, 0b001_00001];
     let parsed = MidiLiveMessage::from_bytes(&message).unwrap();
     //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
 
     assert_eq!(
         parsed,
-        MidiLiveMessage::ChannelVoice(ChannelVoiceMessage::new(
+        MidiLiveMessage::ChannelVoice(ChannelVoice::new(
             Channel::new(1).unwrap(),
-            ChannelVoiceEvent::NoteOn {
+            VoiceEvent::NoteOn {
                 key: Key::new(72),
-                vel: Velocity::new(33)
+                velocity: Velocity::new(33)
             }
         ))
     );
