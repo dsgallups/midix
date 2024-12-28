@@ -1,20 +1,35 @@
-//! Contains traits that can represent structs
+//! Contains traits that can represent structs for conformity purposes.
 //!
 use std::io::{self, ErrorKind};
 
 /// A representation of some type as a part of a longer midi message
 pub trait MidiBits {
     type BitRepresentation;
+
+    /// Return the type as its bit representation
     fn as_bits(&self) -> Self::BitRepresentation;
+
+    /// Attempt to create the type from the allowed [`BitRepresentation`]
+    ///
+    /// # Errors
+    /// If the bit representation cannot actually represent the type
     fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
     where
         Self: Sized;
 }
 
-/// Some data that is parsable from a midi message
+/// Some data that is parsable from a midi [`ChannelVoice`] message
 pub trait FromMidiMessage {
+    /// The minimum allowed status byte for the type
     const MIN_STATUS_BYTE: u8;
+
+    /// The maximum allowed status byte for the type
     const MAX_STATUS_BYTE: u8;
+
+    /// Attempt to create the type from a byte slice
+    ///
+    /// # Errors
+    /// If the byte slice cannot actually represent the type
     fn from_bytes(bytes: &[u8]) -> Result<Self, std::io::Error>
     where
         Self: Sized,
@@ -36,7 +51,12 @@ pub trait FromMidiMessage {
 
         Self::from_status_and_data(status, data)
     }
-
+    /// Attempt to create the type from a status and set of data.
+    ///
+    /// This is used mainly for comfority in [`ChannelVoice`] events.
+    ///
+    /// # Errors
+    /// If the status and data cannot represent the type
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
     where
         Self: Sized;

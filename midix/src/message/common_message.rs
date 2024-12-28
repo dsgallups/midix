@@ -49,8 +49,7 @@ impl AsMidiBytes for SystemCommonMessage<'_> {
                 vec![self.status(), *lsb, *msb]
             }
             SongSelect(v) => vec![self.status(), *v],
-            TuneRequest => vec![self.status()],
-            Undefined(_) => vec![self.status()],
+            TuneRequest | Undefined(_) => vec![self.status()],
         }
     }
 }

@@ -9,6 +9,7 @@ impl<'a> SysEx<'a> {
     pub const fn new(data: Vec<u8>) -> Self {
         Self(Cow::Owned(data))
     }
+
     pub const fn new_borrowed(data: &'a [u8]) -> Self {
         Self(Cow::Borrowed(data))
     }
@@ -16,6 +17,7 @@ impl<'a> SysEx<'a> {
     pub fn len(&self) -> usize {
         self.0.len()
     }
+
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }

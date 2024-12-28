@@ -1,4 +1,4 @@
-#![doc = r#"
+#![doc = r"
 # Reader for parsing midi
 
 Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
@@ -13,7 +13,7 @@ Our types should be refactored such that constructors are crate visible only
 and then we can have owned types accordingly. So really reader should have our types
 
 We should probably have a parser that can yield an enum
-"#]
+"]
 
 mod state;
 pub use state::*;
@@ -88,6 +88,7 @@ impl<R: BufRead> Reader<R> {
 }
 
 impl<'slc> Reader<&'slc [u8]> {
+    #[must_use]
     pub const fn from_byte_slice(slice: &'slc [u8]) -> Self {
         Self {
             reader: slice,
@@ -95,6 +96,11 @@ impl<'slc> Reader<&'slc [u8]> {
         }
     }
 
+    /// Read the buffer and return an event
+    ///
+    /// # Errors
+    ///
+    /// If the next set of bytes are invalid given the current state of the reader
     pub fn read_event<'a>(&mut self) -> ReadResult<Event<'a>>
     where
         'slc: 'a,
@@ -129,8 +135,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             return Err(inv_data(
                                 self,
                                 format!(
-                                    "Expected a MIDI Chunk header. Found unexpected input: {:?}",
-                                    bytes
+                                    "Expected a MIDI Chunk header. Found unexpected input: {bytes:?}",
                                 ),
                             ));
                         }
@@ -231,7 +236,7 @@ impl<'slc> Reader<&'slc [u8]> {
 
         slice
             .try_into()
-            .map_err(|e| inv_data(self, format!("{:?}", e)))
+            .map_err(|e| inv_data(self, format!("{e:?}")))
     }
 
     /// Get the next byte without incrementing
@@ -269,7 +274,7 @@ pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
     for _ in 0..4 {
         let next = reader.read_next()?;
         dec <<= 7;
-        let add = (next & 0x7F) as u32;
+        let add = u32::from(next & 0x7F);
         dec |= add;
 
         //need to continue
@@ -284,7 +289,7 @@ pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
 /// grabs the next byte from the reader and checks it's a u7
 pub(crate) fn check_u7<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
-    (byte & 0b10000000 == 0)
+    (byte & 0b1000_0000 == 0)
         .then_some(byte)
         .ok_or(inv_data(reader, "Leading bit found"))
 }
@@ -293,7 +298,7 @@ pub(crate) fn check_u7<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'sl
 #[allow(dead_code)]
 pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
     let byte = reader.read_next()?;
-    (byte & 0b11110000 == 0)
+    (byte & 0b1111_0000 == 0)
         .then_some(byte)
         .ok_or(inv_data(reader, "Leading bit found"))
 }

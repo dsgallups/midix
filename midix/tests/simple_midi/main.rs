@@ -95,7 +95,11 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(1).unwrap());
-    let VoiceEvent::NoteOn { key, velocity } = cv.message() else {
+    let VoiceEvent::NoteOn {
+        key: _,
+        velocity: _,
+    } = cv.message()
+    else {
         panic!();
     };
     //assert_eq!(**program, 70);

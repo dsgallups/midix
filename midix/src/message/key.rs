@@ -99,7 +99,7 @@ fn test_note() {
     assert_eq!(Note::C, c.note());
 
     let a_sharp = Key::new(94);
-    assert_eq!(Note::ASharp, a_sharp.note())
+    assert_eq!(Note::ASharp, a_sharp.note());
 }
 
 #[test]
@@ -109,7 +109,7 @@ fn test_octave() {
     assert_eq!(0, c.octave().as_number());
 
     let a_sharp = Key::new(94);
-    assert_eq!(6, a_sharp.octave().as_number())
+    assert_eq!(6, a_sharp.octave().as_number());
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]

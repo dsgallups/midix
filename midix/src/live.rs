@@ -1,14 +1,19 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
+#[doc = r"
+An emittable message by a live MIDI device
+"]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MidiLiveMessage<'a> {
+    /// A MIDI voice message associated with a channel
     ChannelVoice(ChannelVoice<'a>),
     SystemCommon(SystemCommonMessage<'a>),
     SystemRealTime(SystemRealTimeMessage),
 }
 
 impl MidiLiveMessage<'_> {
+    /// returns Some if the message contains a [`ChannelVoice`] event.
     pub fn channel_voice(&self) -> Option<&ChannelVoice<'_>> {
         match self {
             MidiLiveMessage::ChannelVoice(c) => Some(c),
@@ -60,11 +65,10 @@ impl FromMidiMessage for MidiLiveMessage<'_> {
 
 impl AsMidiBytes for MidiLiveMessage<'_> {
     fn as_bytes(&self) -> Vec<u8> {
-        use MidiLiveMessage::*;
         match self {
-            ChannelVoice(c) => c.as_bytes(),
-            SystemCommon(s) => s.as_bytes(),
-            SystemRealTime(r) => r.as_bytes(),
+            MidiLiveMessage::ChannelVoice(c) => c.as_bytes(),
+            MidiLiveMessage::SystemCommon(s) => s.as_bytes(),
+            MidiLiveMessage::SystemRealTime(r) => r.as_bytes(),
         }
     }
 }
@@ -72,7 +76,7 @@ impl AsMidiBytes for MidiLiveMessage<'_> {
 #[test]
 fn parse_note_on() {
     use crate::prelude::*;
-    let message = [0b10010001, 0b01001000, 0b00100001];
+    let message = [0b1001_0001, 0b010_01000, 0b001_00001];
     let parsed = MidiLiveMessage::from_bytes(&message).unwrap();
     //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
 

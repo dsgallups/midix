@@ -28,6 +28,7 @@ pub struct ReaderState {
 
 #[allow(dead_code)]
 impl ReaderState {
+    #[must_use]
     pub const fn default() -> Self {
         Self {
             offset: 0,
@@ -35,10 +36,12 @@ impl ReaderState {
             state: ParseState::Init,
         }
     }
+    #[must_use]
     pub const fn offset(&self) -> usize {
         self.offset
     }
 
+    #[must_use]
     pub fn parse_state(&self) -> ParseState {
         self.state
     }
