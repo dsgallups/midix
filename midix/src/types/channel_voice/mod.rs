@@ -124,10 +124,9 @@ impl<'a> ChannelVoice<'a> {
     pub fn message(&self) -> &VoiceEvent {
         &self.message
     }
-}
-impl AsMidiBytes for ChannelVoice<'_> {
+
     /// Get the raw midi packet for this message
-    fn as_bytes(&self) -> Vec<u8> {
+    pub fn as_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
         packet.push(*self.status());
         let data = self.message.to_raw();
@@ -137,7 +136,7 @@ impl AsMidiBytes for ChannelVoice<'_> {
     }
 }
 
-impl FromMidiMessage for ChannelVoice<'_> {
+impl FromLiveEventBytes for ChannelVoice<'_> {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xEF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -146,26 +145,26 @@ impl FromMidiMessage for ChannelVoice<'_> {
     {
         let msg = match status >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::from_bits(*data.get_byte(0)?)?,
-                velocity: Velocity::from_bits(*data.get_byte(1)?)?,
+                key: Key::new_checked(*data.get_byte(0)?)?,
+                velocity: Velocity::new_checked(*data.get_byte(1)?)?,
             },
             0x9 => VoiceEvent::NoteOn {
-                key: Key::from_bits(*data.get_byte(0)?)?,
-                velocity: Velocity::from_bits(*data.get_byte(1)?)?,
+                key: Key::new_checked(*data.get_byte(0)?)?,
+                velocity: Velocity::new_checked(*data.get_byte(1)?)?,
             },
             0xA => VoiceEvent::Aftertouch {
-                key: Key::from_bits(*data.get_byte(0)?)?,
-                velocity: Velocity::from_bits(*data.get_byte(1)?)?,
+                key: Key::new_checked(*data.get_byte(0)?)?,
+                velocity: Velocity::new_checked(*data.get_byte(1)?)?,
             },
             0xB => VoiceEvent::ControlChange {
-                controller: Controller::from_bits(*data.get_byte(0)?)?,
+                controller: Controller::new_checked(*data.get_byte(0)?)?,
                 value: Cow::Owned(check_u7(*data.get_byte(1)?)?),
             },
             0xC => VoiceEvent::ProgramChange {
-                program: Program::from_bits(*data.get_byte(0)?)?,
+                program: Program::new_checked(*data.get_byte(0)?)?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
-                velocity: Velocity::from_bits(*data.get_byte(0)?)?,
+                velocity: Velocity::new_checked(*data.get_byte(0)?)?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of

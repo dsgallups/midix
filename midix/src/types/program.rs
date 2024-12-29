@@ -21,23 +21,16 @@ impl<'a> Program<'a> {
     pub(crate) const fn new_borrowed(program: &'a u8) -> Self {
         Self(Cow::Borrowed(program))
     }
+    /// Creates a new program command.
+    ///
+    /// Checks for correctness.
+    pub fn new_checked(rep: u8) -> Result<Self, std::io::Error> {
+        Ok(Self::new(check_u7(rep)?))
+    }
 
     /// Get a reference to the underlying byte for the program.
     pub fn byte(&self) -> &u8 {
         self.0.as_ref()
-    }
-}
-
-impl MidiBits for Program<'_> {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> Self::BitRepresentation {
-        *self.0
-    }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
-        Ok(Self::new(check_u7(rep)?))
     }
 }
 

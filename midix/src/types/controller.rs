@@ -15,14 +15,16 @@ impl<'a> Controller<'a> {
     pub(crate) const fn new_borrowed(byte: &'a u8) -> Self {
         Self(Cow::Borrowed(byte))
     }
-}
 
-impl MidiBits for Controller<'_> {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> Self::BitRepresentation {
-        *self.0
+    /// Get a reference to the underlying byte
+    pub fn byte(&self) -> &u8 {
+        &self.0
     }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
+
+    /// Creates a new controller from the provided byte
+    ///
+    /// Checks for correctness
+    pub fn new_checked(rep: u8) -> Result<Self, std::io::Error>
     where
         Self: Sized,
     {

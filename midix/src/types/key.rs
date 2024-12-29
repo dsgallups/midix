@@ -1,7 +1,7 @@
 use core::fmt;
 use std::borrow::Cow;
 
-use crate::bytes::MidiBits;
+use crate::utils::check_u7;
 
 #[doc = r#"
 Identifies a key for some message.
@@ -10,23 +10,10 @@ Keys are interpeted as a 7-bit number.
 
 Each value corresponds to some [`Note`] and [`Octave`].
 
-[`Key`] 0 is `C(-1)`, and [`Key`] is `G9`.
+[`Key`] `0` is `C(-1)`, and [`Key`] `127` is `G9`.
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Key<'a>(Cow<'a, u8>);
-
-impl MidiBits for Key<'_> {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> Self::BitRepresentation {
-        *self.0
-    }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
-        Ok(Self(Cow::Owned(rep)))
-    }
-}
 
 impl<'a> Key<'a> {
     /// Create a new key. Does not check for correctness.
@@ -36,6 +23,14 @@ impl<'a> Key<'a> {
     /// Create a new key. Does not check for correctness.
     pub(crate) const fn new_borrowed(key: &'a u8) -> Self {
         Self(Cow::Borrowed(key))
+    }
+
+    /// Create a new key. Checks for correctness.
+    pub fn new_checked(rep: u8) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        Ok(Self(Cow::Owned(check_u7(rep)?)))
     }
 
     /// Identifies the note of the key pressed
@@ -48,6 +43,11 @@ impl<'a> Key<'a> {
     #[inline]
     pub fn octave(&self) -> Octave {
         Octave::from_key_byte(*self.0)
+    }
+
+    /// Returns the underlying byte of the key
+    pub fn byte(&self) -> &u8 {
+        &self.0
     }
 }
 

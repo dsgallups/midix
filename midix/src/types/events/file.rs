@@ -44,7 +44,7 @@ pub enum FileEvent<'a> {
 
     /// A track chunk header
     ///
-    /// See [`TrackChunk`] for a breakdown on layout
+    /// See [`TrackChunkHeader`] for a breakdown on layout
     Track(TrackChunkHeader),
 
     /// An unknown event.
@@ -70,7 +70,7 @@ impl<'a> FileEvent<'a> {
         Self::Header(h)
     }
 
-    /// Create a new [`FileEvent::Track`] from a [`TrackChunk`]
+    /// Create a new [`FileEvent::Track`] from a [`TrackChunkHeader`]
     pub fn track(t: TrackChunkHeader) -> Self {
         Self::Track(t)
     }

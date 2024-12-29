@@ -5,7 +5,7 @@ An enumerationg of categories which may be
 
 Track Messages fall into three categories:
 - [`ChannelVoice`]: Notes, velocities, pedals, channel events.
-- [`SystemExclusive`]: Inaudible events communicated between devices
+- [`SysEx`]: Inaudible events communicated between devices
 - [`Meta`]: Identifiers for the track, like name, copyright information, arbitrary text.
 "#]
 #[derive(Clone, Debug, PartialEq)]

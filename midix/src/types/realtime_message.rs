@@ -24,30 +24,9 @@ pub enum SystemRealTime {
     Undefined(u8),
 }
 
-impl AsMidiBytes for SystemRealTime {
-    fn as_bytes(&self) -> Vec<u8> {
-        vec![self.as_bits()]
-    }
-}
-
-impl FromMidiMessage for SystemRealTime {
-    const MIN_STATUS_BYTE: u8 = 0xF8;
-    const MAX_STATUS_BYTE: u8 = 0xFF;
-
-    /// Create a system realtime event from its id byte.
-    fn from_status_and_data(status: u8, bytes: &[u8]) -> Result<Self, std::io::Error> {
-        if bytes.is_empty() {
-            return Err(io_error!(
-                ErrorKind::InvalidData,
-                "System real time messages do not have data bytes"
-            ));
-        }
-        Self::from_bits(status)
-    }
-}
-impl MidiBits for SystemRealTime {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> Self::BitRepresentation {
+impl SystemRealTime {
+    /// Get the underlying byte
+    pub fn byte(&self) -> u8 {
         use SystemRealTime::*;
         match self {
             TimingClock => 0xF8,
@@ -59,10 +38,9 @@ impl MidiBits for SystemRealTime {
             Reset => 0xFF,
         }
     }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
+
+    /// Interpret a byte as a [`SystemRealTime`] message
+    pub fn from_byte(rep: u8) -> Result<Self, std::io::Error> {
         use SystemRealTime::*;
         Ok(match rep {
             0xF8 => TimingClock,
@@ -76,5 +54,21 @@ impl MidiBits for SystemRealTime {
                 Undefined(rep)
             }
         })
+    }
+}
+
+impl FromLiveEventBytes for SystemRealTime {
+    const MIN_STATUS_BYTE: u8 = 0xF8;
+    const MAX_STATUS_BYTE: u8 = 0xFF;
+
+    /// Create a system realtime event from its id byte.
+    fn from_status_and_data(status: u8, bytes: &[u8]) -> Result<Self, std::io::Error> {
+        if bytes.is_empty() {
+            return Err(io_error!(
+                ErrorKind::InvalidData,
+                "System real time messages do not have data bytes"
+            ));
+        }
+        Self::from_byte(status)
     }
 }

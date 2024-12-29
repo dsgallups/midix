@@ -39,13 +39,12 @@ impl SystemCommon<'_> {
             Undefined(v) => *v,
         }
     }
-}
 
-impl AsMidiBytes for SystemCommon<'_> {
-    fn as_bytes(&self) -> Vec<u8> {
+    /// Represents the message as an array of bytes for some live MIDI stream
+    pub fn as_bytes(&self) -> Vec<u8> {
         use SystemCommon::*;
         match self {
-            SystemExclusive(b) => b.as_bytes(),
+            SystemExclusive(b) => b.to_live_bytes(),
             SongPositionPointer { lsb, msb } => {
                 vec![self.status(), *lsb, *msb]
             }
@@ -55,7 +54,7 @@ impl AsMidiBytes for SystemCommon<'_> {
     }
 }
 
-impl FromMidiMessage for SystemCommon<'_> {
+impl FromLiveEventBytes for SystemCommon<'_> {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {
@@ -129,9 +128,9 @@ pub enum MtcQuarterFrameMessage {
     HoursHigh,
 }
 
-impl MidiBits for MtcQuarterFrameMessage {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> u8 {
+impl MtcQuarterFrameMessage {
+    /// Represents the message as a byte
+    pub fn as_byte(&self) -> u8 {
         use MtcQuarterFrameMessage::*;
         match self {
             FramesLow => 0,
@@ -144,7 +143,9 @@ impl MidiBits for MtcQuarterFrameMessage {
             HoursHigh => 7,
         }
     }
-    fn from_bits(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
+
+    /// Creates a new message from a byte. This type always checks for correctness.
+    pub fn new(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
         use MtcQuarterFrameMessage::*;
         Ok(match code {
             0 => FramesLow,

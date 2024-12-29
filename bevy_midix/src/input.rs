@@ -3,7 +3,7 @@ use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind; // XXX: do we expose this?
 pub use midir::{Ignore, MidiInputPort};
-use midix::bytes::FromMidiMessage;
+use midix::bytes::FromLiveEventBytes;
 use midix::types::events::LiveEvent;
 use std::error::Error;
 use std::fmt::Display;

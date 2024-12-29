@@ -1,10 +1,8 @@
 use std::borrow::Cow;
 
-use crate::prelude::*;
-
 #[doc = r#"
 A System Exclusive messsage, found in
-both [`LiveEvent`]s and [`FileEvent`]s.
+both [`LiveEvent`](crate::prelude::LiveEvent)s and [`FileEvent`](crate::prelude::FileEvent)s.
 
 # Overview
 System Exclusive messages include a
@@ -41,9 +39,11 @@ impl<'a> SysEx<'a> {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
-}
-impl AsMidiBytes for SysEx<'_> {
-    fn as_bytes(&self) -> Vec<u8> {
+
+    /// Interprets the sysex as a live-streamed set of bytes.
+    ///
+    /// Note that live bytes don't have an identifying length, unlike a file system common message.
+    pub fn to_live_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::with_capacity(self.len() + 2);
         bytes.push(0xF0);
         bytes.extend(self.0.iter());

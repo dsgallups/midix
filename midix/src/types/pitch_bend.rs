@@ -58,20 +58,17 @@ impl<'a> PitchBend<'a> {
     pub fn msb(&self) -> &u8 {
         self.msb.as_ref()
     }
-}
 
-impl MidiBits for PitchBend<'_> {
-    type BitRepresentation = u16;
-    fn as_bits(&self) -> Self::BitRepresentation {
+    /// Represents a pitch bend, lsb then msb, as a u16
+    pub fn as_bits(&self) -> u16 {
         let lsb = *self.lsb;
         let msb = *self.msb;
         let combined: u16 = ((msb as u16) << 8) | (lsb as u16);
         combined
     }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
+
+    /// Represents a u16, lsb then msb, as a pitch bend
+    pub fn from_bits(rep: u16) -> Result<Self, std::io::Error> {
         let lsb = (rep >> 8) as u8;
         let msb = (rep & 0x00FF) as u8;
         Self::new_checked(lsb, msb)

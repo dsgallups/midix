@@ -1,6 +1,49 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
+pub trait FromLiveEventBytes {
+    /// The minimum allowed status byte for the type
+    const MIN_STATUS_BYTE: u8;
+
+    /// The maximum allowed status byte for the type
+    const MAX_STATUS_BYTE: u8;
+
+    /// Attempt to create the type from a byte slice
+    ///
+    /// # Errors
+    /// If the byte slice cannot actually represent the type
+    fn from_bytes(bytes: &[u8]) -> Result<Self, std::io::Error>
+    where
+        Self: Sized,
+    {
+        if bytes.is_empty() {
+            return Err(io_error!(
+                ErrorKind::InvalidInput,
+                "Invalid live event (no byte data!)"
+            ));
+        }
+        let (status, data) = bytes.split_at(1);
+        let status = status[0];
+        if !(Self::MIN_STATUS_BYTE..=Self::MAX_STATUS_BYTE).contains(&status) {
+            return Err(io_error!(
+                ErrorKind::InvalidData,
+                "Invalid status message for type!)"
+            ));
+        }
+
+        Self::from_status_and_data(status, data)
+    }
+    /// Attempt to create the type from a status and set of data.
+    ///
+    /// This is used mainly for comfority in [`ChannelVoice`](crate::prelude::ChannelVoice) events.
+    ///
+    /// # Errors
+    /// If the status and data cannot represent the type
+    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
+    where
+        Self: Sized;
+}
+
 #[doc = r"
 An emittable message to/from a streaming MIDI device.
 
@@ -27,6 +70,15 @@ impl LiveEvent<'_> {
             _ => None,
         }
     }
+
+    /// Returns the event as a set of bytes. These bytes are to be interpreted by a MIDI live stream
+    pub fn as_bytes(&self) -> Vec<u8> {
+        match self {
+            LiveEvent::ChannelVoice(c) => c.as_bytes(),
+            LiveEvent::SystemCommon(s) => s.as_bytes(),
+            LiveEvent::SystemRealTime(r) => vec![r.byte()],
+        }
+    }
 }
 
 impl<'a> From<ChannelVoice<'a>> for LiveEvent<'a> {
@@ -45,7 +97,7 @@ impl From<SystemRealTime> for LiveEvent<'_> {
     }
 }
 
-impl FromMidiMessage for LiveEvent<'_> {
+impl FromLiveEventBytes for LiveEvent<'_> {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xFF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -66,16 +118,6 @@ impl FromMidiMessage for LiveEvent<'_> {
                 ErrorKind::InvalidData,
                 "Received a status that is not a midi message"
             )),
-        }
-    }
-}
-
-impl AsMidiBytes for LiveEvent<'_> {
-    fn as_bytes(&self) -> Vec<u8> {
-        match self {
-            LiveEvent::ChannelVoice(c) => c.as_bytes(),
-            LiveEvent::SystemCommon(s) => s.as_bytes(),
-            LiveEvent::SystemRealTime(r) => r.as_bytes(),
         }
     }
 }

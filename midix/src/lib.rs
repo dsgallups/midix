@@ -25,26 +25,37 @@ Web: http://www.csw2.co.uk
 Please give it a look for a deeper dive into MIDI!
 "#]
 
+use std::io::{self, ErrorKind};
+
 #[macro_use]
 mod error;
 
-pub mod bytes;
 pub mod reader;
 pub mod types;
 pub(crate) mod utils;
+
+pub(crate) trait ReadDataBytesExt {
+    fn get_byte(&self, byte: usize) -> Result<&u8, io::Error>;
+}
+
+impl ReadDataBytesExt for &[u8] {
+    fn get_byte(&self, byte: usize) -> Result<&u8, io::Error> {
+        self.get(byte).ok_or(io_error!(
+            ErrorKind::InvalidInput,
+            "Data not accessible for message!"
+        ))
+    }
+}
 
 pub mod prelude {
     #![doc = r#"
         Common re-exports when working with `midix`
     "#]
-    pub use crate::{
-        bytes::*,
-        types::{
-            channel::*,
-            events::*,
-            file::{chunk::*, meta::*, track::*, *},
-            *,
-        },
+    pub use crate::types::{
+        channel::*,
+        events::*,
+        file::{chunk::*, meta::*, track::*, *},
+        *,
     };
 
     pub use crate::{

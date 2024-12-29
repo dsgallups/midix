@@ -21,23 +21,19 @@ impl<'a> Velocity<'a> {
     pub(crate) const fn new_borrowed(velocity: &'a u8) -> Self {
         Self(Cow::Borrowed(velocity))
     }
-
-    /// Get a reference to the underlying byte
-    pub fn byte(&self) -> &u8 {
-        &self.0
-    }
-}
-
-impl MidiBits for Velocity<'_> {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> Self::BitRepresentation {
-        *self.0
-    }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
+    /// Creates a new velocity from the provided byte
+    ///
+    /// Checks for correctness
+    pub fn new_checked(rep: u8) -> Result<Self, std::io::Error>
     where
         Self: Sized,
     {
         Ok(Self(Cow::Owned(check_u7(rep)?)))
+    }
+
+    /// Get a reference to the underlying byte
+    pub fn byte(&self) -> &u8 {
+        &self.0
     }
 }
 
