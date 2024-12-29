@@ -10,6 +10,7 @@ TODO
 
 "#]
 
+pub mod channel;
 pub mod controller;
 pub mod events;
 pub mod file;

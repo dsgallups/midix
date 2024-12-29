@@ -1,13 +1,15 @@
 #![doc = r"
-# Reader for parsing midi
+Contains a high-level interface for a pull-based MIDI file parser
+
+See the [`Reader`] docs for more information
+
+# Acknowledgments
 
 Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 
 
-## TODO
-- [ ] Config
 
-
+# TO REMOVE
 Parser should have read_event() which will YIELD a type from it.
 Our types should be refactored such that constructors are crate visible only
 and then we can have owned types accordingly. So really reader should have our types
@@ -23,10 +25,63 @@ pub use error::*;
 use std::{
     borrow::Cow,
     io::{BufRead, BufReader, Read},
+    os::unix::fs::FileExt,
 };
 
 use crate::prelude::*;
 
+#[doc = r#"
+A MIDI event reader.
+
+Consumes bytes and streams MIDI [`FileEvent`]s.
+
+# Overview
+MIDI Files are made up of -chunks-. Each chunk has a 4-character
+type and a 32-bit length, which is the number of bytes in the chunk.
+This structure allows future chunk types to be designed which may be
+easily be ignored if encountered by a program written before the
+chunk type is introduced.
+
+IF an alien chunk is discovered while parsing, the Reader will assume the header
+has a CORRECT length and yield
+
+Each chunk begins with a 4-character ASCII type. It is followed by a 32-bit length, most significant byte first (a length of 6 is stored as 00 00 00 06). This length refers to the number of bytes of data which follow: the eight bytes of type and length are not included. Therefore, a chunk with a length of 6 would actually occupy 14 bytes in the disk file.
+
+This chunk architecture is similar to that used by Electronic Arts' IFF format, and the chunks described herein could easily be placed in an IFF file. The MIDI File itself is not an IFF file: it contains no nested chunks, and chunks are not constrained to be an even number of bytes long. Converting it to an IFF file is as easy as padding odd length chunks, and sticking the whole thing inside a FORM chunk.
+
+# Errors
+This parser will error if the file does not begin
+with a MIDI header or MIDI track
+
+# Examples
+```rust
+use midix::prelude::*;
+
+let midi_header = [
+    /* MIDI Header */
+    0x4D, 0x54, 0x68, 0x64, // "MThdd"
+    0x00, 0x00, 0x00, 0x06, // Chunk length (6)
+    0x00, 0x00, // format 0
+    0x00, 0x01, // one track
+    0x00, 0x60  // 96 per quarter note
+];
+
+let mut reader = Reader::from_byte_slice(&midi_header);
+
+// The first and only event will be the midi header
+let Ok(FileEvent::Header(header)) = reader.read_event() else {
+    panic!("Expected a header event");
+};
+
+// format 0 implies a single multi-channel file (only one track)
+assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
+
+assert_eq!(
+    header.timing().ticks_per_quarter_note(),
+    Timing::new_ticks(&[0, 96]).ticks_per_quarter_note()
+);
+
+"#]
 #[derive(Clone)]
 pub struct Reader<R> {
     reader: R,
@@ -125,19 +180,16 @@ impl<'slc> Reader<&'slc [u8]> {
                             //todo: set new state
                             self.state.set_parse_state(ParseState::InsideTrack {
                                 start: self.buffer_position(),
-                                length: chunk.length() as usize,
+                                length: chunk.len() as usize,
                                 prev_status: None,
                             });
                             break FileEvent::Track(chunk);
                         }
                         bytes => {
-                            self.state.set_parse_state(ParseState::Done);
-                            return Err(inv_data(
-                                self,
-                                format!(
-                                    "Expected a MIDI Chunk header. Found unexpected input: {bytes:?}",
-                                ),
-                            ));
+                            //let chunk
+                            let chunk = UnknownChunk::read(bytes, self)?;
+
+                            break FileEvent::UnknownChunk(chunk);
                         }
                     }
                 }

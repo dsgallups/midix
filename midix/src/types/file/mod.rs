@@ -3,6 +3,7 @@ pub mod format;
 pub mod header;
 pub mod meta;
 pub mod track;
+pub mod unknown_chunk;
 
 /// Represents a 4 character type
 ///

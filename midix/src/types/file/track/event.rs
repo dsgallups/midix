@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TrackEvent<'a> {
     /// Variable length quantity
     /// Delta-time is in some fraction of a beat

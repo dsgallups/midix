@@ -20,7 +20,7 @@ impl TrackChunk {
 
         Ok(Self { length })
     }
-    pub fn length(&self) -> u32 {
+    pub fn len(&self) -> u32 {
         self.length
     }
     /*/// Slow, can be improved by implementing iterator on reader

@@ -1,5 +1,12 @@
-//! Contains traits that can represent structs for conformity purposes.
-//!
+#![doc = r#"
+Contains traits that are used to enforce common methods on types
+
+# Overview
+- [`AsMidiBytes`] defines something that can turn itself into a part of a MIDI file as a `Vec<u8>`. This should be removed
+
+
+This module may be removed in the future.
+"#]
 use std::io::{self, ErrorKind};
 
 /// A representation of some type as a part of a longer midi message

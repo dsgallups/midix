@@ -1,8 +1,9 @@
 use crate::prelude::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum FileEvent<'a> {
     Header(HeaderChunk<'a>),
+    UnknownChunk(UnknownChunk<'a>),
     Track(TrackChunk),
     TrackEvent(TrackEvent<'a>),
     EOF,

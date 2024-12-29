@@ -29,19 +29,21 @@ Please give it a look for a deeper dive into MIDI!
 mod error;
 
 pub mod bytes;
-pub mod channel;
 pub mod reader;
 pub mod types;
 pub(crate) mod utils;
 
 pub mod prelude {
+    #![doc = r#"
+        Common re-exports when working with `midix`
+    "#]
     pub use crate::{
         bytes::*,
-        channel::Channel,
         types::{
+            channel::*,
             controller::*,
             events::*,
-            file::{format::*, header::*, meta::*, track::*},
+            file::{format::*, header::*, meta::*, track::*, unknown_chunk::*},
             key::*,
             pitch_bend::*,
             program::*,

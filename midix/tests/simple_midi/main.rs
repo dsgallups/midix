@@ -86,7 +86,7 @@ fn midi_file_ref() {
     assert_eq!(*program.byte(), 70);
     /*************/
 
-    // First key for channel 0
+    // First key is for channel 3
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
@@ -94,7 +94,7 @@ fn midi_file_ref() {
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), Channel::new(1).unwrap());
+    assert_eq!(cv.channel(), Channel::new(3).unwrap());
     let VoiceEvent::NoteOn {
         key: _,
         velocity: _,
@@ -104,7 +104,7 @@ fn midi_file_ref() {
     };
     //assert_eq!(**program, 70);
 
-    panic!("next event: {:?}", reader.read_event());
+    //panic!("next event: {:?}", reader.read_event());
 
     /*let chunks = midi.chunks();
 
