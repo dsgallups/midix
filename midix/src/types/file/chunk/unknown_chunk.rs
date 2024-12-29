@@ -2,6 +2,13 @@ use std::borrow::Cow;
 
 use crate::reader::{ReadResult, Reader};
 
+#[doc = r#"
+Identifies a chunk of a MIDI file that cannot be parsed.
+
+It is up to the user for how to handle such chunks. Typically, these data are
+ignored. However, sometimes there are particular use cases for handling
+non-standard chunk types. We leave the option up to you.
+"#]
 #[derive(Clone, Debug, PartialEq)]
 pub struct UnknownChunk<'a> {
     name: Cow<'a, [u8]>,

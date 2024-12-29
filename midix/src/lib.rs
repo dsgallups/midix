@@ -43,7 +43,7 @@ pub mod prelude {
             channel::*,
             controller::*,
             events::*,
-            file::{format::*, header::*, meta::*, track::*, unknown_chunk::*},
+            file::{chunk::*, meta::*, track::*, *},
             key::*,
             pitch_bend::*,
             program::*,

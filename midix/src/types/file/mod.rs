@@ -1,9 +1,9 @@
 //pub mod builder;
-pub mod format;
-pub mod header;
+mod format;
+pub use format::*;
+pub mod chunk;
 pub mod meta;
 pub mod track;
-pub mod unknown_chunk;
 
 /// Represents a 4 character type
 ///

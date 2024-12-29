@@ -1,10 +1,6 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
-pub trait SystemCommonMessageTrait {
-    fn status(&self) -> u8;
-}
-
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemCommon<'a> {
     /// A system-exclusive event.
@@ -161,42 +157,5 @@ impl MidiBits for MtcQuarterFrameMessage {
                 ))
             }
         })
-    }
-}
-
-/// Borrowed bytes from some reader. EXPECT THIS TO BREAK IN A FUTURE RELEASE!
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum BorrowedSystemCommonMessage<'a> {
-    /// A system-exclusive event.
-    ///
-    /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
-    /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
-    SystemExclusive(&'a [u8]),
-    /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
-    MidiTimeCodeQuarterFrame {
-        message: MtcQuarterFrameMessage,
-        tag: u8,
-    },*/
-    /// An undefined System Common message
-    Undefined(u8),
-    /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
-    /// sequence.
-    SongPositionPointer { lsb: u8, msb: u8 },
-    /// Select a given song index.
-    SongSelect(u8),
-    /// Request the device to tune itself.
-    TuneRequest,
-}
-
-impl SystemCommonMessageTrait for BorrowedSystemCommonMessage<'_> {
-    fn status(&self) -> u8 {
-        use BorrowedSystemCommonMessage::*;
-        match &self {
-            SystemExclusive(_) => 0xF0,
-            SongPositionPointer { .. } => 0xF2,
-            SongSelect(_) => 0xF3,
-            TuneRequest => 0xF6,
-            Undefined(v) => *v,
-        }
     }
 }

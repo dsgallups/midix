@@ -31,7 +31,8 @@ eight notated 32nd-notes per quarter-note.
 pub struct TimeSignature<'a>(Cow<'a, [u8; 4]>);
 
 impl<'a> TimeSignature<'a> {
-    pub fn new(v: &'a [u8; 4]) -> Self {
+    /// Interpret a byte slice as a time signature
+    pub fn new_from_byte_slice(v: &'a [u8; 4]) -> Self {
         Self(Cow::Borrowed(v))
     }
     /// numerator of the time signature

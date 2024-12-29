@@ -1,7 +1,6 @@
 use crate::prelude::*;
 
 #[doc = r#"
-
 An event that can be yielded from or put into a `.mid` file.
 
 This type is yielded by [`Reader::read_event`] and will be consumed by a Writer in the future.
@@ -46,7 +45,7 @@ pub enum FileEvent<'a> {
     /// A track chunk header
     ///
     /// See [`TrackChunk`] for a breakdown on layout
-    Track(TrackChunk),
+    Track(TrackChunkHeader),
 
     /// An unknown event.
     ///
@@ -72,7 +71,7 @@ impl<'a> FileEvent<'a> {
     }
 
     /// Create a new [`FileEvent::Track`] from a [`TrackChunk`]
-    pub fn track(t: TrackChunk) -> Self {
+    pub fn track(t: TrackChunkHeader) -> Self {
         Self::Track(t)
     }
 

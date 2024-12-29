@@ -1,5 +1,13 @@
 use crate::prelude::*;
 
+#[doc = r#"
+Identifies some event emitted by a track in a MIDI file.
+
+# Overview
+All MIDI track events have an associated `delta_time`. This
+identifies the amount of time since the previous event.
+
+"#]
 #[derive(Clone, Debug, PartialEq)]
 pub struct TrackEvent<'a> {
     /// Variable length quantity
@@ -15,14 +23,15 @@ impl<'a> TrackEvent<'a> {
         Self { delta_time, event }
     }
 
+    /// Get the difference in time from the last event
+    ///
+    /// The actual value should be interpreted by the MIDI file's
+    /// [`Timing`] event.
     pub fn delta_time(&self) -> u32 {
         self.delta_time
     }
+    /// Get a refrence to the message for the track event
     pub fn event(&self) -> &TrackMessage<'a> {
         &self.event
     }
-
-    /*pub fn to_owned(self) -> MidiTrackEvent {
-        MidiTrackEvent::new(self.delta_time, self.event.to_owned())
-    }*/
 }

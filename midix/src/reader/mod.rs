@@ -165,7 +165,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             break FileEvent::Header(HeaderChunk::read(self)?);
                         }
                         b"MTrk" => {
-                            let chunk = TrackChunk::read(self)?;
+                            let chunk = TrackChunkHeader::read(self)?;
                             //todo: set new state
                             self.state.set_parse_state(ParseState::InsideTrack {
                                 start: self.buffer_position(),
