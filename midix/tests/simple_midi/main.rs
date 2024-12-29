@@ -4,7 +4,7 @@ fn midi_file_ref() {
     let bytes = include_bytes!("./simple.mid");
     let mut reader = Reader::from_byte_slice(bytes);
 
-    let Ok(Event::Header(header)) = reader.read_event() else {
+    let Ok(FileEvent::Header(header)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
@@ -13,12 +13,12 @@ fn midi_file_ref() {
         Timing::new_ticks(&[0, 96]).ticks_per_quarter_note()
     );
 
-    let Ok(Event::Track(track)) = reader.read_event() else {
+    let Ok(FileEvent::Track(track)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(track.length(), 59);
 
-    let Ok(Event::TrackEvent(track_event)) = reader.read_event() else {
+    let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);
@@ -30,7 +30,7 @@ fn midi_file_ref() {
     assert_eq!(time_sig.clocks_per_click(), 24);
     assert_eq!(time_sig.notated_32nds_per_24_clocks(), 8);
 
-    let Ok(Event::TrackEvent(track_event)) = reader.read_event() else {
+    let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);
@@ -42,7 +42,7 @@ fn midi_file_ref() {
     assert_eq!(tempo.micros_per_quarter_note(), 500000);
 
     //channel 0 program change to 5
-    let Ok(Event::TrackEvent(track_event)) = reader.read_event() else {
+    let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);
@@ -57,7 +57,7 @@ fn midi_file_ref() {
     /*************/
 
     //channel 2 program change to 46
-    let Ok(Event::TrackEvent(track_event)) = reader.read_event() else {
+    let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);
@@ -72,7 +72,7 @@ fn midi_file_ref() {
     /*************/
 
     //channel 3 program change to 70
-    let Ok(Event::TrackEvent(track_event)) = reader.read_event() else {
+    let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);
@@ -87,7 +87,7 @@ fn midi_file_ref() {
     /*************/
 
     // First key for channel 0
-    let Ok(Event::TrackEvent(track_event)) = reader.read_event() else {
+    let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);

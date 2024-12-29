@@ -101,7 +101,7 @@ impl<'slc> Reader<&'slc [u8]> {
     /// # Errors
     ///
     /// If the next set of bytes are invalid given the current state of the reader
-    pub fn read_event<'a>(&mut self) -> ReadResult<Event<'a>>
+    pub fn read_event<'a>(&mut self) -> ReadResult<FileEvent<'a>>
     where
         'slc: 'a,
     {
@@ -118,7 +118,7 @@ impl<'slc> Reader<&'slc [u8]> {
                     match chunk {
                         b"MThd" => {
                             //HeaderChunk should handle us
-                            break Event::Header(HeaderChunk::read(self)?);
+                            break FileEvent::Header(HeaderChunk::read(self)?);
                         }
                         b"MTrk" => {
                             let chunk = TrackChunk::read(self)?;
@@ -128,7 +128,7 @@ impl<'slc> Reader<&'slc [u8]> {
                                 length: chunk.length() as usize,
                                 prev_status: None,
                             });
-                            break Event::Track(chunk);
+                            break FileEvent::Track(chunk);
                         }
                         bytes => {
                             self.state.set_parse_state(ParseState::Done);
@@ -192,9 +192,9 @@ impl<'slc> Reader<&'slc [u8]> {
                         }
                     };
 
-                    break Event::TrackEvent(TrackEvent::new(delta_time, message));
+                    break FileEvent::TrackEvent(TrackEvent::new(delta_time, message));
                 }
-                ParseState::Done => break Event::EOF,
+                ParseState::Done => break FileEvent::EOF,
             }
         };
         Ok(event)

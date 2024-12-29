@@ -1,4 +1,17 @@
+#![doc = r#"
+Basic types that are used commonly among parsing and streaming.
+
+# Overview
+
+MIDI can be interpreted in two main ways: through `LiveEvent`s and regular file `Events`.
+
+TODO
+
+
+"#]
+
 pub mod controller;
+pub mod file;
 pub mod key;
 pub mod pitch_bend;
 pub mod program;

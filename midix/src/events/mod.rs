@@ -1,14 +1,14 @@
 use crate::prelude::*;
 
 #[derive(Debug, PartialEq)]
-pub enum Event<'a> {
+pub enum FileEvent<'a> {
     Header(HeaderChunk<'a>),
     Track(TrackChunk),
     TrackEvent(TrackEvent<'a>),
     EOF,
 }
 
-impl<'a> Event<'a> {
+impl<'a> FileEvent<'a> {
     pub fn header(h: HeaderChunk<'a>) -> Self {
         Self::Header(h)
     }
