@@ -41,13 +41,8 @@ pub mod prelude {
         bytes::*,
         types::{
             channel::*,
-            controller::*,
             events::*,
             file::{chunk::*, meta::*, track::*, *},
-            key::*,
-            pitch_bend::*,
-            program::*,
-            velocity::*,
             *,
         },
     };

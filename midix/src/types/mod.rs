@@ -11,16 +11,26 @@ TODO
 "#]
 
 pub mod channel;
-pub mod controller;
+
 pub mod events;
 pub mod file;
-pub mod key;
-pub mod pitch_bend;
-pub mod program;
-pub mod velocity;
+mod pitch_bend;
+pub use pitch_bend::*;
+
+mod program;
+pub use program::*;
+
+mod velocity;
+pub use velocity::*;
+
+mod key;
+pub use key::*;
 
 mod channel_voice;
 pub use channel_voice::*;
+
+mod controller;
+pub use controller::*;
 
 mod common_message;
 pub use common_message::*;

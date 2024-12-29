@@ -2,52 +2,16 @@ use core::fmt;
 use std::borrow::Cow;
 
 use crate::bytes::MidiBits;
-/*
-/// Identifies a key press
-///
-/// TODO docs
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Key(u8);
 
-impl MidiBits for Key {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> Self::BitRepresentation {
-        self.0
-    }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
-        Ok(Self(check_u7(rep)?))
-    }
-}
+#[doc = r#"
+Identifies a key for some message.
 
-impl Key {
-    /// Create a new key. Does not check for correctness.
-    pub const fn new(key: u8) -> Self {
-        Self(key)
-    }
+Keys are interpeted as a 7-bit number.
 
-    /// Identifies the note of the key pressed
-    pub const fn note(self) -> Note {
-        Note::from_midi_datum(self.0)
-    }
+Each value corresponds to some [`Note`] and [`Octave`].
 
-    /// Identifies the octave of the key pressed
-    pub const fn octave(&self) -> Octave {
-        Octave::from_midi_datum(self.0)
-    }
-}
-
-impl fmt::Display for Key {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}-{}", self.note(), self.octave())
-    }
-}*/
-
-/// Identifies a key press
-///
-/// TODO docs
+[`Key`] 0 is `C(-1)`, and [`Key`] is `G9`.
+"#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Key<'a>(Cow<'a, u8>);
 
@@ -65,10 +29,11 @@ impl MidiBits for Key<'_> {
 }
 
 impl<'a> Key<'a> {
+    /// Create a new key. Does not check for correctness.
     pub const fn new(key: u8) -> Self {
         Self(Cow::Owned(key))
     }
-    /// Create a new key. Does not check for u7.
+    /// Create a new key. Does not check for correctness.
     pub(crate) const fn new_borrowed(key: &'a u8) -> Self {
         Self(Cow::Borrowed(key))
     }
@@ -76,13 +41,13 @@ impl<'a> Key<'a> {
     /// Identifies the note of the key pressed
     #[inline]
     pub fn note(&self) -> Note {
-        Note::from_midi_datum(*self.0)
+        Note::from_key_byte(*self.0)
     }
 
     /// Identifies the octave of the key pressed
     #[inline]
     pub fn octave(&self) -> Octave {
-        Octave::from_midi_datum(*self.0)
+        Octave::from_key_byte(*self.0)
     }
 }
 
@@ -112,8 +77,9 @@ fn test_octave() {
     assert_eq!(6, a_sharp.octave().as_number());
 }
 
+#[allow(missing_docs)]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-/// identifies the note played
+/// Identifier for the note played
 pub enum Note {
     C,
     CSharp,
@@ -129,7 +95,8 @@ pub enum Note {
     B,
 }
 impl Note {
-    pub const fn from_midi_datum(key: u8) -> Self {
+    /// Identify the note from a key byte.
+    pub const fn from_key_byte(key: u8) -> Self {
         use Note::*;
         let note = key % 12;
 
@@ -170,14 +137,19 @@ impl fmt::Display for Note {
     }
 }
 
+#[doc = r#"
+Identifies the octave for a [`Key`]. Values range from -1 to 9.
+"#]
 pub struct Octave(i8);
 
 impl Octave {
-    pub const fn from_midi_datum(key: u8) -> Self {
+    /// Identify an octave from a key byte.
+    pub const fn from_key_byte(key: u8) -> Self {
         let octave = key / 12;
 
         Self(octave as i8 - 1)
     }
+    /// The octave, from `[-1,9]`
     pub const fn as_number(&self) -> i8 {
         self.0
     }

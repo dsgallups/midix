@@ -9,13 +9,20 @@ use std::borrow::Cow;
 pub struct Velocity<'a>(Cow<'a, u8>);
 
 impl<'a> Velocity<'a> {
+    /// Creates a new velocity from the provided byte
+    ///
+    /// Does not check for correctness
     pub const fn new(velocity: u8) -> Self {
         Self(Cow::Owned(velocity))
     }
-    /// Create a new velocity
+    /// Create a new velocity from the referenced byte
+    ///
+    /// Does not check for correctness
     pub(crate) const fn new_borrowed(velocity: &'a u8) -> Self {
         Self(Cow::Borrowed(velocity))
     }
+
+    /// Get a reference to the underlying byte
     pub fn byte(&self) -> &u8 {
         &self.0
     }

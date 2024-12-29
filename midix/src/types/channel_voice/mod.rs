@@ -172,7 +172,7 @@ impl FromMidiMessage for ChannelVoice<'_> {
                 //Standard Midi Files
                 let lsb = *data.get_byte(0)?;
                 let msb = *data.get_byte(1)?;
-                VoiceEvent::PitchBend(PitchBend::from_byte_pair(lsb, msb)?)
+                VoiceEvent::PitchBend(PitchBend::new_checked(lsb, msb)?)
             }
             _ => panic!("parsed midi message before checking that status is in range"),
         };

@@ -1,12 +1,17 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
+#[doc = r#"
+Messages for receivers of a system. Only found in [`LiveEvent`]s.
+"#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemCommon<'a> {
     /// A system-exclusive event.
     ///
     /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
     /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
+    ///
+    /// Note that `SysEx` is found in both [`LiveEvent`]s and [`FileEvent`]s.
     SystemExclusive(SysEx<'a>),
     /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
     MidiTimeCodeQuarterFrame {

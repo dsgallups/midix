@@ -9,14 +9,20 @@ use std::borrow::Cow;
 pub struct Program<'a>(Cow<'a, u8>);
 
 impl<'a> Program<'a> {
+    /// Creates a new program command.
+    ///
+    /// Does not check for correctness.
     pub const fn new(program: u8) -> Self {
         Self(Cow::Owned(program))
     }
-    /// Create a new program command. Does not check for u7.
+    /// Create a new program command.
+    ///
+    /// Does not check for correctness.
     pub(crate) const fn new_borrowed(program: &'a u8) -> Self {
         Self(Cow::Borrowed(program))
     }
 
+    /// Get a reference to the underlying byte for the program.
     pub fn byte(&self) -> &u8 {
         self.0.as_ref()
     }

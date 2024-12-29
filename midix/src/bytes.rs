@@ -11,6 +11,7 @@ use std::io::{self, ErrorKind};
 
 /// A representation of some type as a part of a longer midi message
 pub trait MidiBits {
+    /// Identifies the bit layout (u8, u16, u32, etc.) of the type
     type BitRepresentation;
 
     /// Return the type as its bit representation
@@ -69,10 +70,12 @@ pub trait FromMidiMessage {
         Self: Sized;
 }
 
+/// todo
 pub trait AsMidiBytes {
     fn as_bytes(&self) -> Vec<u8>;
 }
 
+/// todo
 pub trait AsMidiBytesBorrowed {
     fn borrowed_bytes(&self) -> &[u8];
 }
