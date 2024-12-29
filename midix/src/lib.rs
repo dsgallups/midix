@@ -30,8 +30,6 @@ mod error;
 
 pub mod bytes;
 pub mod channel;
-pub mod events;
-pub mod live;
 pub mod reader;
 pub mod types;
 pub(crate) mod utils;
@@ -40,10 +38,9 @@ pub mod prelude {
     pub use crate::{
         bytes::*,
         channel::Channel,
-        events::*,
-        live::*,
         types::{
             controller::*,
+            events::*,
             file::{format::*, header::*, meta::*, track::*},
             key::*,
             pitch_bend::*,

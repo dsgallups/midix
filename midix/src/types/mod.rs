@@ -11,6 +11,7 @@ TODO
 "#]
 
 pub mod controller;
+pub mod events;
 pub mod file;
 pub mod key;
 pub mod pitch_bend;
