@@ -105,7 +105,7 @@ impl MidiInputConnection {
     }
 }
 
-/// An [`Event`](bevy::ecs::event::Event) for incoming midi data.
+/// An [`Event`] for incoming midi data.
 ///
 /// This event fires from [`CoreStage::PreUpdate`].
 #[derive(Resource, Event, Debug)]
@@ -114,7 +114,7 @@ pub struct MidiData {
     pub message: MidiLiveMessage<'static>,
 }
 
-/// The [`Error`] type for midi input operations, accessible as an [`Event`](bevy::ecs::event::Event).
+/// The [`Error`] type for midi input operations, accessible as an [`Event`].
 #[derive(Clone, Debug, Event)]
 pub enum MidiInputError {
     ConnectionError(ConnectErrorKind),

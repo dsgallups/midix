@@ -1,30 +1,27 @@
 #![cfg_attr(feature = "nightly", feature(const_for))]
 #![warn(missing_docs)]
 #![doc = r#"
-# MIDIx
 
-A crate used to parse MIDI events
+A high performance MIDI parser and management library.
 
-Docs still need to be written. For now, follow the reference of our fork (`midly`).
+# Getting Started
 
-A few differences:
-LiveEvent -> MidiMessage
-MidiMessage types have been divided into three different enumerations.
+`midix` contains tools to read and write MIDI events.
+
+TODO
 
 
-## Acknowledgments
-A lot of the documentation is copied directly from <http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html> .
+# Acknowledgments
+A lot of the documentation is copied directly
+from [this documentation](http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html).
 
+This reference states "This document may be freely copied in whole or in part provided the copy contains this Acknowledgement.":
+```text
 This document was originally distributed in text format by The International MIDI Association.
-
 © Copyright 1999 David Back.
-
 EMail: david@csw2.co.uk
-
 Web: http://www.csw2.co.uk
-
-The documentation states "This document may be freely copied in whole or in part provided the copy contains this Acknowledgement."
-
+```
 Please give it a look for a deeper dive into MIDI!
 "#]
 

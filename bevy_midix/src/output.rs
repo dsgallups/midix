@@ -83,7 +83,7 @@ impl MidiOutput {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for checking whether [`MidiOutput`] is
+/// [`Resource`] for checking whether [`MidiOutput`] is
 /// connected to any ports.
 ///
 /// Change detection fires whenever the connection changes.
@@ -99,7 +99,7 @@ impl MidiOutputConnection {
     }
 }
 
-/// The [`Error`] type for midi output operations, accessible as an [`Event`](bevy::ecs::event::Event)
+/// The [`Error`] type for midi output operations, accessible as an [`Event`]
 #[derive(Clone, Debug, Event)]
 pub enum MidiOutputError {
     ConnectionError(ConnectErrorKind),
