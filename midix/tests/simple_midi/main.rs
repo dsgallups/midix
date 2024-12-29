@@ -16,7 +16,7 @@ fn midi_file_ref() {
     let Ok(FileEvent::Track(track)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(track.length(), 59);
+    assert_eq!(track.len(), 59);
 
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()

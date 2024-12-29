@@ -26,7 +26,7 @@ impl<'a> Channel<'a> {
         Ok(Self(Cow::Borrowed(channel)))
     }
 
-    /// Given a status byte from some [`ChannelVoice`] event, perform bitwise ops
+    /// Given a status byte from some [`ChannelVoice`](crate::prelude::ChannelVoice) event, perform bitwise ops
     /// to get the channel
     #[must_use]
     pub fn from_status(status: u8) -> Self {

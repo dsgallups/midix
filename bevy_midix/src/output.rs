@@ -37,7 +37,7 @@ impl Default for MidiOutputSettings {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for sending midi messages.
+/// [`Resource`] for sending midi messages.
 ///
 /// Change detection will only fire when its input ports are refreshed.
 #[derive(Resource)]

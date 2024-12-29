@@ -16,7 +16,7 @@ pub trait MidiBits {
     /// Return the type as its bit representation
     fn as_bits(&self) -> Self::BitRepresentation;
 
-    /// Attempt to create the type from the allowed [`BitRepresentation`]
+    /// Attempt to create the type from the allowed [`BitRepresentation`](Self::BitRepresentation)
     ///
     /// # Errors
     /// If the bit representation cannot actually represent the type
@@ -25,7 +25,7 @@ pub trait MidiBits {
         Self: Sized;
 }
 
-/// Some data that is parsable from a midi [`ChannelVoice`] message
+/// Some data that is parsable from a midi [`ChannelVoice`](crate::prelude::ChannelVoice) message
 pub trait FromMidiMessage {
     /// The minimum allowed status byte for the type
     const MIN_STATUS_BYTE: u8;
@@ -60,7 +60,7 @@ pub trait FromMidiMessage {
     }
     /// Attempt to create the type from a status and set of data.
     ///
-    /// This is used mainly for comfority in [`ChannelVoice`] events.
+    /// This is used mainly for comfority in [`ChannelVoice`](crate::prelude::ChannelVoice) events.
     ///
     /// # Errors
     /// If the status and data cannot represent the type

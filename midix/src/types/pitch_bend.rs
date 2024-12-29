@@ -96,7 +96,7 @@ impl PitchBend<'_> {
 
     /// Returns an int in the range `[-0x2000, 0x1FFF]`.
     ///
-    /// This is erroneous when writing a raw midi file. Use [`as_u16`](Self::as_u16) instead.
+    /// Do not use this when writing to a midi file.
     #[inline]
     pub fn as_int(self) -> i16 {
         self.as_bits() as i16 - 0x2000

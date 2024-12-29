@@ -44,7 +44,7 @@ impl Default for MidiInputSettings {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for receiving midi messages.
+/// [`Resource`] for receiving midi messages.
 ///
 /// Change detection will only fire when its input ports are refreshed.
 
@@ -89,7 +89,7 @@ impl MidiInput {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for checking whether [`MidiInput`] is
+/// [`Resource`] for checking whether [`MidiInput`] is
 /// connected to any ports.
 ///
 /// Change detection fires whenever the connection changes.

@@ -42,16 +42,17 @@ This structure allows future chunk types to be designed which may be
 easily be ignored if encountered by a program written before the
 chunk type is introduced.
 
-IF an alien chunk is discovered while parsing, the Reader will assume the header
-has a CORRECT length and yield
+Each chunk begins with a 4-character ASCII type. It is followed by a
+32-bit length, most significant byte first (a length of 6 is stored
+as 00 00 00 06). This length refers to the number of bytes of data
+which follow: the eight bytes of type and length are not included.
+Therefore, a chunk with a length of 6 would actually occupy 14 bytes
+in the disk file.
 
-Each chunk begins with a 4-character ASCII type. It is followed by a 32-bit length, most significant byte first (a length of 6 is stored as 00 00 00 06). This length refers to the number of bytes of data which follow: the eight bytes of type and length are not included. Therefore, a chunk with a length of 6 would actually occupy 14 bytes in the disk file.
-
-This chunk architecture is similar to that used by Electronic Arts' IFF format, and the chunks described herein could easily be placed in an IFF file. The MIDI File itself is not an IFF file: it contains no nested chunks, and chunks are not constrained to be an even number of bytes long. Converting it to an IFF file is as easy as padding odd length chunks, and sticking the whole thing inside a FORM chunk.
-
-# Errors
-This parser will error if the file does not begin
-with a MIDI header or MIDI track
+# Common Pitfalls
+This parser will not error if an unknown chunk type is found. It will assume
+the unknown data has a 4-byte name and a proceeding 4-byte length. If this
+is not true, then the cursor will fail on the next read event.
 
 # Examples
 ```rust
@@ -189,7 +190,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             //let chunk
                             let chunk = UnknownChunk::read(bytes, self)?;
 
-                            break FileEvent::UnknownChunk(chunk);
+                            break FileEvent::Unknown(chunk);
                         }
                     }
                 }
