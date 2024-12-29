@@ -2,14 +2,21 @@ use crate::prelude::*;
 use std::io::ErrorKind;
 
 #[doc = r"
-An emittable message by a live MIDI device
+An emittable message to/from a streaming MIDI device.
+
+There is currently no `StreamReader` type, so this type is most often manually constructed.
 "]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LiveEvent<'a> {
     /// A MIDI voice message associated with a channel
     ChannelVoice(ChannelVoice<'a>),
-    SystemCommon(SystemCommonMessage<'a>),
-    SystemRealTime(SystemRealTimeMessage),
+
+    /// A set of common messages that are not meant to be used
+    /// For input/output purposes
+    SystemCommon(SystemCommon<'a>),
+
+    /// Events that are for synchronization purposes.
+    SystemRealTime(SystemRealTime),
 }
 
 impl LiveEvent<'_> {
@@ -27,13 +34,13 @@ impl<'a> From<ChannelVoice<'a>> for LiveEvent<'a> {
         Self::ChannelVoice(value)
     }
 }
-impl<'a> From<SystemCommonMessage<'a>> for LiveEvent<'a> {
-    fn from(value: SystemCommonMessage<'a>) -> Self {
+impl<'a> From<SystemCommon<'a>> for LiveEvent<'a> {
+    fn from(value: SystemCommon<'a>) -> Self {
         Self::SystemCommon(value)
     }
 }
-impl From<SystemRealTimeMessage> for LiveEvent<'_> {
-    fn from(value: SystemRealTimeMessage) -> Self {
+impl From<SystemRealTime> for LiveEvent<'_> {
+    fn from(value: SystemRealTime) -> Self {
         Self::SystemRealTime(value)
     }
 }
@@ -49,12 +56,12 @@ impl FromMidiMessage for LiveEvent<'_> {
             0x80..=0xEF => Ok(Self::ChannelVoice(ChannelVoice::from_status_and_data(
                 status, data,
             )?)),
-            0xF0..=0xF7 => Ok(Self::SystemCommon(
-                SystemCommonMessage::from_status_and_data(status, data)?,
-            )),
-            0xF8..=0xFF => Ok(Self::SystemRealTime(
-                SystemRealTimeMessage::from_status_and_data(status, data)?,
-            )),
+            0xF0..=0xF7 => Ok(Self::SystemCommon(SystemCommon::from_status_and_data(
+                status, data,
+            )?)),
+            0xF8..=0xFF => Ok(Self::SystemRealTime(SystemRealTime::from_status_and_data(
+                status, data,
+            )?)),
             _ => Err(io_error!(
                 ErrorKind::InvalidData,
                 "Received a status that is not a midi message"

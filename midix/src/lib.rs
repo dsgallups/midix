@@ -53,7 +53,7 @@ pub mod prelude {
     };
 
     pub use crate::{
-        reader::{ReadResult, Reader, ReaderState},
+        reader::{ReadResult, Reader},
         *,
     };
 

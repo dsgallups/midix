@@ -5,7 +5,7 @@ use std::io::ErrorKind;
 /// They are usually time-sensitive, get top priority and can even be transmitted in between other
 /// messages.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SystemRealTimeMessage {
+pub enum SystemRealTime {
     /// If sent, they should be sent 24 times per quarter note.
     TimingClock,
     /// Request the device to start playing at position 0.
@@ -24,13 +24,13 @@ pub enum SystemRealTimeMessage {
     Undefined(u8),
 }
 
-impl AsMidiBytes for SystemRealTimeMessage {
+impl AsMidiBytes for SystemRealTime {
     fn as_bytes(&self) -> Vec<u8> {
         vec![self.as_bits()]
     }
 }
 
-impl FromMidiMessage for SystemRealTimeMessage {
+impl FromMidiMessage for SystemRealTime {
     const MIN_STATUS_BYTE: u8 = 0xF8;
     const MAX_STATUS_BYTE: u8 = 0xFF;
 
@@ -45,10 +45,10 @@ impl FromMidiMessage for SystemRealTimeMessage {
         Self::from_bits(status)
     }
 }
-impl MidiBits for SystemRealTimeMessage {
+impl MidiBits for SystemRealTime {
     type BitRepresentation = u8;
     fn as_bits(&self) -> Self::BitRepresentation {
-        use SystemRealTimeMessage::*;
+        use SystemRealTime::*;
         match self {
             TimingClock => 0xF8,
             Undefined(s) => *s,
@@ -63,7 +63,7 @@ impl MidiBits for SystemRealTimeMessage {
     where
         Self: Sized,
     {
-        use SystemRealTimeMessage::*;
+        use SystemRealTime::*;
         Ok(match rep {
             0xF8 => TimingClock,
             0xFA => Start,

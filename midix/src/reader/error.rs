@@ -5,6 +5,10 @@ use std::{
 
 use super::Reader;
 
+/// A result type that is either `T` or an [`io::Error`].
+///
+/// This may change in a future release if `midix`
+/// should support `no-std` environments.
 pub type ReadResult<T> = Result<T, io::Error>;
 
 pub(crate) fn unexp_eof() -> io::Error {

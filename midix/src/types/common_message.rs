@@ -6,7 +6,7 @@ pub trait SystemCommonMessageTrait {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SystemCommonMessage<'a> {
+pub enum SystemCommon<'a> {
     /// A system-exclusive event.
     ///
     /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
@@ -27,9 +27,9 @@ pub enum SystemCommonMessage<'a> {
     /// Request the device to tune itself.
     TuneRequest,
 }
-impl SystemCommonMessage<'_> {
+impl SystemCommon<'_> {
     fn status(&self) -> u8 {
-        use SystemCommonMessage::*;
+        use SystemCommon::*;
         match self {
             SystemExclusive(_) => 0xF0,
             SongPositionPointer { .. } => 0xF2,
@@ -40,9 +40,9 @@ impl SystemCommonMessage<'_> {
     }
 }
 
-impl AsMidiBytes for SystemCommonMessage<'_> {
+impl AsMidiBytes for SystemCommon<'_> {
     fn as_bytes(&self) -> Vec<u8> {
-        use SystemCommonMessage::*;
+        use SystemCommon::*;
         match self {
             SystemExclusive(b) => b.as_bytes(),
             SongPositionPointer { lsb, msb } => {
@@ -54,7 +54,7 @@ impl AsMidiBytes for SystemCommonMessage<'_> {
     }
 }
 
-impl FromMidiMessage for SystemCommonMessage<'_> {
+impl FromMidiMessage for SystemCommon<'_> {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {
@@ -66,7 +66,7 @@ impl FromMidiMessage for SystemCommonMessage<'_> {
                     .copied()
                     .take_while(|byte| byte != &0xF7)
                     .collect::<Vec<_>>();
-                SystemCommonMessage::SystemExclusive(SysEx::new(data))
+                SystemCommon::SystemExclusive(SysEx::new(data))
             }
             /*0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame
@@ -77,22 +77,22 @@ impl FromMidiMessage for SystemCommonMessage<'_> {
             }*/
             0xF2 if data.len() == 2 => {
                 //Song Position
-                SystemCommonMessage::SongPositionPointer {
+                SystemCommon::SongPositionPointer {
                     lsb: data[0],
                     msb: data[1],
                 }
             }
             0xF3 if data.len() == 1 => {
                 //Song Select
-                SystemCommonMessage::SongSelect(data[0])
+                SystemCommon::SongSelect(data[0])
             }
             0xF6 => {
                 //Tune Request
-                SystemCommonMessage::TuneRequest
+                SystemCommon::TuneRequest
             }
             0xF1..=0xF5 if data.is_empty() => {
                 //Unknown system common event
-                SystemCommonMessage::Undefined(status)
+                SystemCommon::Undefined(status)
             }
             _ => {
                 //Invalid/Unknown/Unreachable event

@@ -6,27 +6,14 @@ See the [`Reader`] docs for more information
 # Acknowledgments
 
 Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
-
-
-
-# TO REMOVE
-Parser should have read_event() which will YIELD a type from it.
-Our types should be refactored such that constructors are crate visible only
-and then we can have owned types accordingly. So really reader should have our types
-
-We should probably have a parser that can yield an enum
 "]
 
-mod state;
-pub use state::*;
 mod error;
+mod state;
 pub use error::*;
+use state::{ParseState, ReaderState};
 
-use std::{
-    borrow::Cow,
-    io::{BufRead, BufReader, Read},
-    os::unix::fs::FileExt,
-};
+use std::{borrow::Cow, io::ErrorKind};
 
 use crate::prelude::*;
 
@@ -48,6 +35,13 @@ as 00 00 00 06). This length refers to the number of bytes of data
 which follow: the eight bytes of type and length are not included.
 Therefore, a chunk with a length of 6 would actually occupy 14 bytes
 in the disk file.
+
+# Shortcomings
+
+This reader will be able to yield events from any type
+that is [`Read`](std::io::Read) in a future minor release.
+
+For now, construct a `Reader<&[u8]>` to gain access to [`Reader::read_event`].
 
 # Common Pitfalls
 This parser will not error if an unknown chunk type is found. It will assume
@@ -90,6 +84,7 @@ pub struct Reader<R> {
 }
 
 impl<R> Reader<R> {
+    /// Create a new reader.
     pub const fn new(reader: R) -> Self {
         Self {
             reader,
@@ -102,16 +97,13 @@ impl<R> Reader<R> {
         self.reader
     }
 
-    pub fn set_last_error_offset(&mut self, offset: usize) {
+    pub(crate) fn set_last_error_offset(&mut self, offset: usize) {
         self.state.set_last_error_offset(offset);
     }
 
+    /// Grab the current position of the inner reader "cursor"
     pub const fn buffer_position(&self) -> usize {
         self.state.offset()
-    }
-
-    pub const fn increment_buffer_position(&mut self, amt: usize) {
-        self.state.increment_offset(amt);
     }
 
     /// Gets a reference to the underlying reader
@@ -125,25 +117,9 @@ impl<R> Reader<R> {
     }
 }
 
-impl<R: Read> Reader<BufReader<R>> {
-    pub fn from_reader(reader: R) -> Self {
-        Self {
-            reader: BufReader::new(reader),
-            state: ReaderState::default(),
-        }
-    }
-}
-
-impl<R: BufRead> Reader<R> {
-    pub const fn from_buf_reader(reader: R) -> Self {
-        Self {
-            reader,
-            state: ReaderState::default(),
-        }
-    }
-}
-
 impl<'slc> Reader<&'slc [u8]> {
+    /// Create a new [`Reader`] from a `&[u8]`. Only this type has the
+    /// [`Reader::read_event`] method.
     #[must_use]
     pub const fn from_byte_slice(slice: &'slc [u8]) -> Self {
         Self {
@@ -170,7 +146,19 @@ impl<'slc> Reader<&'slc [u8]> {
                 }
                 ParseState::InsideMidi => {
                     // expect only a header or track chunk
-                    let chunk = self.read_exact(4)?;
+                    let chunk = match self.read_exact(4) {
+                        Ok(c) => c,
+                        Err(e) => match e.kind() {
+                            // Inside Midi + UnexpectedEof should only fire at the end of a file.
+                            ErrorKind::UnexpectedEof => {
+                                self.state.set_parse_state(ParseState::Done);
+                                return Ok(FileEvent::eof());
+                            }
+                            _ => {
+                                return Err(e);
+                            }
+                        },
+                    };
                     match chunk {
                         b"MThd" => {
                             //HeaderChunk should handle us
@@ -223,8 +211,10 @@ impl<'slc> Reader<&'slc [u8]> {
                             //status if the byte has a leading 1, otherwise it's
                             //a running status
                             let status = if byte >> 7 == 1 {
-                                let ParseState::InsideTrack { prev_status, .. } =
-                                    self.state.parse_state_mut()
+                                let ParseState::InsideTrack {
+                                    ref mut prev_status,
+                                    ..
+                                } = self.state.parse_state_mut()
                                 else {
                                     return Err(inv_data(
                                         self,
