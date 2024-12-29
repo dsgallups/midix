@@ -1,6 +1,7 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
+/// Identifies something that can be interpreted from the bytes of a live MIDI stream
 pub trait FromLiveEventBytes {
     /// The minimum allowed status byte for the type
     const MIN_STATUS_BYTE: u8;

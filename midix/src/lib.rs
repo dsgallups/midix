@@ -23,6 +23,15 @@ EMail: david@csw2.co.uk
 Web: http://www.csw2.co.uk
 ```
 Please give it a look for a deeper dive into MIDI!
+
+
+Basic types that are used commonly among parsing and streaming.
+
+# Overview
+
+MIDI can be interpreted in two main ways: through `LiveEvent`s and regular file `Events`.
+
+TODO
 "#]
 
 use std::io::{self, ErrorKind};
@@ -31,8 +40,36 @@ use std::io::{self, ErrorKind};
 mod error;
 
 pub mod reader;
-pub mod types;
 pub(crate) mod utils;
+
+pub mod channel;
+
+pub mod events;
+pub mod file;
+mod pitch_bend;
+pub use pitch_bend::*;
+
+mod program;
+pub use program::*;
+
+mod velocity;
+pub use velocity::*;
+
+mod key;
+pub use key::*;
+
+mod channel_voice;
+pub use channel_voice::*;
+
+mod controller;
+pub use controller::*;
+
+mod common_message;
+pub use common_message::*;
+mod realtime_message;
+pub use realtime_message::*;
+mod sysex;
+pub use sysex::*;
 
 pub(crate) trait ReadDataBytesExt {
     fn get_byte(&self, byte: usize) -> Result<&u8, io::Error>;
@@ -51,17 +88,14 @@ pub mod prelude {
     #![doc = r#"
         Common re-exports when working with `midix`
     "#]
-    pub use crate::types::{
+    pub use crate::{
         channel::*,
         events::*,
         file::{chunk::*, meta::*, track::*, *},
         *,
     };
 
-    pub use crate::{
-        reader::{ReadResult, Reader},
-        *,
-    };
+    pub use crate::reader::{ReadResult, Reader};
 
     #[allow(unused_imports)]
     pub(crate) use crate::reader::{inv_data, inv_input, unexp_eof};
