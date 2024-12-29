@@ -31,8 +31,8 @@ formats, one for metrical time, and one for time-code-based time:
 
 | bit 15 | bits 14 thru 8 | bits 7 thru 0 |
 |--------|----------------|---------------|
-|0       | ticks per quarter-note |
-|1       |negative SMPTE format | ticks per frame
+|0       | ticks per quarter-note | ticks per quarter-note cont. |
+|1       |negative SMPTE format | ticks per frame |
 
 If bit 15 of `<division>` is zero, the bits 14 thru 0 represent the number of delta time "ticks" which make up a quarter-note. For instance, if division is 96, then a time interval of an eighth-note between two events in the file would be 48.
 
@@ -77,18 +77,35 @@ impl<'a> HeaderChunk<'a> {
 
         Ok(Self { format, timing })
     }
-    pub const fn length(&self) -> u32 {
+
+    /// Get the length of the header. This is ALWAYS 6.
+    #[allow(clippy::len_without_is_empty)]
+    pub const fn len(&self) -> u32 {
         6
     }
+
+    /// Get the describing format defined by the header. Includes information about the number
+    /// of tracks identified.
     pub fn format(&self) -> &Format<'a> {
         &self.format
     }
+
+    /// Get the describing format type by the header
+    ///
+    /// identified as `<format>` in the docs
     pub fn format_type(&self) -> FormatType {
         self.format.format_type()
     }
+
+    /// Get the number of tracks identified in the header
+    ///
+    /// identified as `<ntrks>` in the docs
     pub fn num_tracks(&self) -> u16 {
         self.format.num_tracks()
     }
+    /// Get the timing property of the header
+    ///
+    /// identified as `<division>` in the docs
     pub fn timing(&self) -> &Timing {
         &self.timing
     }
@@ -106,7 +123,7 @@ fn read_midi_header_simultaneous() {
 
     let result = HeaderChunk::read(&mut reader).unwrap();
 
-    assert_eq!(result.length(), 6);
+    assert_eq!(result.len(), 6);
     assert_eq!(result.format_type(), FormatType::Simultaneous);
     assert_eq!(result.num_tracks(), 3);
 }
@@ -123,7 +140,7 @@ fn read_midi_header_single_multichannel() {
 
     let result = HeaderChunk::read(&mut reader).unwrap();
 
-    assert_eq!(result.length(), 6);
+    assert_eq!(result.len(), 6);
     assert_eq!(result.format_type(), FormatType::SingleMultiChannel);
     assert_eq!(result.num_tracks(), 1);
 }

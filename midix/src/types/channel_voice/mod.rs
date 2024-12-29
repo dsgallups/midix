@@ -19,6 +19,7 @@ pub struct ChannelVoice<'a> {
 }
 
 impl<'a> ChannelVoice<'a> {
+    /// Create a new channel voice event from the channel and associated event type
     pub fn new(channel: Channel<'_>, message: VoiceEvent<'a>) -> Self {
         let status = *channel.byte() | (message.status_nibble() << 4);
         Self {
@@ -73,6 +74,8 @@ impl<'a> ChannelVoice<'a> {
             message: msg,
         })
     }
+
+    /// Get the channel for the event
     pub fn channel(&self) -> Channel {
         Channel::from_status(*self.status)
     }
@@ -96,6 +99,8 @@ impl<'a> ChannelVoice<'a> {
             _ => None,
         }
     }
+
+    /// Returns the velocity if the type has a velocity
     pub fn velocity(&self) -> Option<&Velocity<'a>> {
         match &self.message {
             VoiceEvent::NoteOn { velocity, .. }
@@ -106,23 +111,19 @@ impl<'a> ChannelVoice<'a> {
         }
     }
 
+    /// References the status byte of the event in big-endian.
+    ///
+    /// the leading (msb) 4 bytes are the voice event
+    /// and the trailing (lsb) 4 bytes are the channel
     pub fn status(&self) -> &u8 {
         //self.message.status_nibble() << 4 | self.channel.bits()
         &self.status
     }
+
+    /// References the voice event for the message.
     pub fn message(&self) -> &VoiceEvent {
         &self.message
     }
-
-    /*/// Get the raw midi packet for this message
-    fn as_bytes(&self) -> Vec<u8> {
-        let mut packet = Vec::with_capacity(3);
-        packet.push(self.status());
-        let data = self.message.to_raw();
-        packet.extend(data);
-
-        packet
-    }*/
 }
 impl AsMidiBytes for ChannelVoice<'_> {
     /// Get the raw midi packet for this message

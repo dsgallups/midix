@@ -2,15 +2,28 @@ use std::borrow::Cow;
 
 use crate::prelude::*;
 
+/// The header timing type.
+///
+/// This is either the number of ticks per quarter note or
+/// the alternative SMTPE format. See the [`HeaderChunk`] docs for more information.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Timing<'a> {
+    /// The midi file's delta times are defined using a tick rate per quarter note
     TicksPerQuarterNote(Cow<'a, [u8; 2]>),
+
+    /// The midi file's delta times are defined using an SMPTE and MIDI Time Code
     NegativeSmpte(Cow<'a, [u8; 2]>),
 }
 
 impl<'a> Timing<'a> {
-    pub fn new_ticks(arr: &'a [u8; 2]) -> Self {
+    /// Create a new timing from a 2 byte array slice.
+    pub fn new_ticks_from_slice(arr: &'a [u8; 2]) -> Self {
         Self::TicksPerQuarterNote(Cow::Borrowed(arr))
+    }
+
+    /// Create a new negative SMPTE division a 2 byte array slice
+    pub fn new_negative_smpte_from_slice(arr: &'a [u8; 2]) -> Self {
+        Self::NegativeSmpte(Cow::Borrowed(arr))
     }
 
     /// Assumes the next two bytes are for a midi division.
