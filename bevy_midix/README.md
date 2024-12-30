@@ -8,13 +8,12 @@ Read from and write to MIDI devices!
 ```rust, no_run
 use bevy::prelude::*;
 use bevy_midix::prelude::*;
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_plugins(MidiInputPlugin)
-        .add_plugins(MidiOutputPlugin)
-        .run();
-}
+
+App::new()
+    .add_plugins(DefaultPlugins)
+    .add_plugins(MidiInputPlugin)
+    .add_plugins(MidiOutputPlugin)
+    .run();
 ```
 
 See `/examples` for details.
