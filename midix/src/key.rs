@@ -14,7 +14,7 @@ Each value corresponds to some [`Note`] and [`Octave`].
 
 # Example
 ```rust
-use midix::prelude::*;
+# use midix::prelude::*;
 
 let key_byte = 63;
 
@@ -39,16 +39,27 @@ impl<'a> Key<'a> {
         rep.try_into().map(Self).map_err(Into::into)
     }
 
+    /// Create a key from a given note and octave
+    pub fn from_note_and_octave(note: Note, octave: Octave) -> Self {
+        let octave_byte = (octave.value() + 1) as u8;
+
+        let key = note.get_mod_12();
+
+        let octave_mult = (octave_byte) * 12;
+
+        Self::new(octave_mult + key).unwrap()
+    }
+
     /// Identifies the note of the key pressed
     #[inline]
     pub fn note(&self) -> Note {
-        Note::from_key_byte(*self.0.byte())
+        Note::from_data_byte(&self.0)
     }
 
     /// Identifies the octave of the key pressed
     #[inline]
     pub fn octave(&self) -> Octave {
-        Octave::from_key_byte(*self.0.byte())
+        Octave::from_data_byte(&self.0)
     }
 
     /// Returns the underlying byte of the key
@@ -85,7 +96,23 @@ fn test_octave() {
 
 #[allow(missing_docs)]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-/// Identifier for the note played
+#[doc = r#"
+Identifies some note for a [`Key`]
+
+# Example
+```rust
+# use midix::prelude::*;
+
+let note = Note::FSharp;
+
+
+let key = note.with_octave(Octave::new(4));
+
+
+assert_eq!(key.octave().value(), 4);
+assert_eq!(key.note(), Note::FSharp);
+```
+"#]
 pub enum Note {
     C,
     CSharp,
@@ -101,10 +128,45 @@ pub enum Note {
     B,
 }
 impl Note {
-    /// Identify the note from a key byte.
-    pub const fn from_key_byte(key: u8) -> Self {
+    /// Returns an array beginning with [`Note::C`] to [`Note::B`]
+    pub fn all() -> [Note; 12] {
         use Note::*;
-        let note = key % 12;
+        [C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B]
+    }
+    /// Create a new note from a byte with a leading 0
+    ///
+    /// # Errors
+    /// if the byte is > 127
+    pub fn new<'a, K, E>(key: K) -> Result<Self, io::Error>
+    where
+        K: TryInto<DataByte<'a>, Error = E>,
+        E: Into<io::Error>,
+    {
+        use Note::*;
+        let key = key.try_into().map_err(Into::into)?;
+        let note = *key.byte() % 12;
+
+        Ok(match note {
+            0 => C,
+            1 => CSharp,
+            2 => D,
+            3 => DSharp,
+            4 => E,
+            5 => F,
+            6 => FSharp,
+            7 => G,
+            8 => GSharp,
+            9 => A,
+            10 => ASharp,
+            11 => B,
+            _ => unreachable!(),
+        })
+    }
+
+    /// Identify the note from a key byte.
+    pub fn from_data_byte(key: &DataByte<'_>) -> Self {
+        use Note::*;
+        let note = *key.byte() % 12;
 
         match note {
             0 => C,
@@ -121,6 +183,28 @@ impl Note {
             11 => B,
             _ => unreachable!(),
         }
+    }
+    fn get_mod_12(&self) -> u8 {
+        use Note::*;
+        match self {
+            C => 0,
+            CSharp => 1,
+            D => 2,
+            DSharp => 3,
+            E => 4,
+            F => 5,
+            FSharp => 6,
+            G => 7,
+            GSharp => 8,
+            A => 9,
+            ASharp => 10,
+            B => 11,
+        }
+    }
+
+    /// Create a [`Key`] given this note and a provided [`Octave`]
+    pub fn with_octave(self, octave: Octave) -> Key<'static> {
+        Key::from_note_and_octave(self, octave)
     }
 }
 impl fmt::Display for Note {
@@ -145,30 +229,67 @@ impl fmt::Display for Note {
 
 #[doc = r#"
 Identifies the octave for a [`Key`]. Values range from -1 to 9.
+
+# Example
+
+```rust
+# use midix::prelude::*;
+
+let octave = Octave::new(12); // clamps to 9
+
+assert_eq!(octave.value(), 9);
+
+let key = octave.with_note(Note::C);
+
+
+assert_eq!(key.octave().value(), 9);
+assert_eq!(key.note(), Note::C);
+```
 "#]
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Octave(i8);
 
 impl Octave {
     /// Identify an octave from a key byte.
-    pub const fn from_key_byte(key: u8) -> Self {
-        let octave = key / 12;
+    pub fn from_data_byte(key: &DataByte<'_>) -> Self {
+        let octave = *key.byte() / 12;
 
         Self(octave as i8 - 1)
     }
-    /// Should be a value between [-1, 9]
-    pub const fn new(octave: i8) -> Self {
-        Self(octave)
+    /// Should be a value between [-1, 9]. Clamps between these two values.
+    pub fn new(octave: i8) -> Self {
+        Self(octave.clamp(-1, 9))
     }
 
     /// The octave, from `[-1,9]`
     pub const fn value(&self) -> i8 {
         self.0
     }
+
+    /// Create a [`Key`] given this octave and a provided [`Note`]
+    pub fn with_note(self, note: Note) -> Key<'static> {
+        Key::from_note_and_octave(note, self)
+    }
 }
 
 impl fmt::Display for Octave {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+#[test]
+fn key_from_note_octave_pairs() {
+    for key_byte in 0..128 {
+        let key = Key::new(key_byte).unwrap();
+
+        let exp_note = key.note();
+        let exp_oct = key.octave();
+
+        let made_key = Key::from_note_and_octave(exp_note, exp_oct);
+
+        assert_eq!(exp_oct, made_key.octave());
+        assert_eq!(exp_note, made_key.note());
+        assert_eq!(key, Key::from_note_and_octave(exp_note, exp_oct));
     }
 }

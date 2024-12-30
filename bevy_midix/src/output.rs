@@ -1,3 +1,7 @@
+#![doc = r#"
+Contains [`MidiOutputPlugin`] and other types to handle output
+"#]
+
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use crossbeam_channel::{Receiver, Sender};
@@ -8,6 +12,11 @@ use std::fmt::Display;
 use std::{error::Error, future::Future};
 use MidiOutputError::{ConnectionError, PortRefreshError, SendDisconnectedError, SendError};
 
+#[doc = r#"
+Inserts [`MidiOutputSettings`] and [`MidiOutputConnection`] as resources.
+
+Output system utilizes the [`PreUpdate`] schedule
+"#]
 pub struct MidiOutputPlugin;
 
 impl Plugin for MidiOutputPlugin {
@@ -25,10 +34,12 @@ impl Plugin for MidiOutputPlugin {
 /// This resource must be added before [`MidiOutputPlugin`] to take effect.
 #[derive(Resource, Clone, Debug)]
 pub struct MidiOutputSettings {
+    /// The name of the port to communicate on
     pub port_name: &'static str,
 }
 
 impl Default for MidiOutputSettings {
+    /// Assigns port name to `bevy_midix`
     fn default() -> Self {
         MidiOutputSettings {
             port_name: "bevy_midi",
@@ -92,6 +103,7 @@ pub struct MidiOutputConnection {
 }
 
 impl MidiOutputConnection {
+    /// Are you connected?
     #[must_use]
     pub fn is_connected(&self) -> bool {
         self.connected
@@ -101,9 +113,16 @@ impl MidiOutputConnection {
 /// The [`Error`] type for midi output operations, accessible as an [`Event`]
 #[derive(Clone, Debug, Event)]
 pub enum MidiOutputError {
+    /// There was something wrong connecting to the output
     ConnectionError(ConnectErrorKind),
+
+    /// Something occured while sending the message to the output
     SendError(midir::SendError),
+
+    /// The output disconnected while we attempted to send a message
     SendDisconnectedError(LiveEvent<'static>),
+
+    /// Something happened when refreshing the port statuses
     PortRefreshError,
 }
 

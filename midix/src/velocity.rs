@@ -17,21 +17,6 @@ impl<'a> Velocity<'a> {
         rep.try_into().map(Self).map_err(Into::into)
     }
 
-    /*
-    /// Creates a new velocity from the provided byte
-    ///
-    /// Does not check for correctness
-    pub const fn new_unchecked(velocity: u8) -> Self {
-        Self(DataByte::new_unchecked(velocity))
-    }
-    /// Create a new velocity from the referenced byte
-    ///
-    /// Does not check for correctness
-    pub const fn new_borrowed_unchecked(velocity: &'a u8) -> Self {
-        Self(DataByte::new_borrowed_unchecked(velocity))
-    }
-    */
-
     /// Get a reference to the underlying byte
     pub fn byte(&self) -> &u8 {
         self.0.byte()

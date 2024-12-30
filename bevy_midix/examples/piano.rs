@@ -3,7 +3,7 @@ use bevy::{
     pbr::AmbientLight,
     prelude::*,
 };
-use bevy_midix::prelude::*;
+use bevy_midix::prelude::{Key as MidiKey, *};
 
 fn main() {
     App::new()
@@ -36,7 +36,7 @@ fn main() {
 
 #[derive(Component, Debug)]
 struct Key {
-    key_val: String,
+    key_val: MidiKey<'static>,
     y_reset: f32,
 }
 
@@ -76,19 +76,20 @@ fn setup(
     //Create keyboard layout
     let pos_black = pos + Vec3::new(0., 0.06, 0.);
 
-    for i in 0..8 {
-        spawn_note(&mut cmds, &w_mat, 0.00, pos, &mut white_key_0, i, "C");
-        spawn_note(&mut cmds, &b_mat, 0.15, pos_black, &mut black_key, i, "C#/Db");
-        spawn_note(&mut cmds, &w_mat, 0.27, pos, &mut white_key_1, i, "D");
-        spawn_note(&mut cmds, &b_mat, 0.39, pos_black, &mut black_key, i, "D#/Eb");
-        spawn_note(&mut cmds, &w_mat, 0.54, pos, &mut white_key_2, i, "E");
-        spawn_note(&mut cmds, &w_mat, 0.69, pos, &mut white_key_0, i, "F");
-        spawn_note(&mut cmds, &b_mat, 0.85, pos_black, &mut black_key, i, "F#/Gb");
-        spawn_note(&mut cmds, &w_mat, 0.96, pos, &mut white_key_1, i, "G");
-        spawn_note(&mut cmds, &b_mat, 1.08, pos_black, &mut black_key, i, "G#/Ab");
-        spawn_note(&mut cmds, &w_mat, 1.19, pos, &mut white_key_1, i, "A");
-        spawn_note(&mut cmds, &b_mat, 1.31, pos_black, &mut black_key, i, "A#/Bb");
-        spawn_note(&mut cmds, &w_mat, 1.46, pos, &mut white_key_2, i, "B");
+    for i in (0..8).map(Octave::new) {
+
+        spawn_note(&mut cmds, &w_mat, 0.00, pos, &mut white_key_0, i, Note::C);
+        spawn_note(&mut cmds, &b_mat, 0.15, pos_black, &mut black_key, i, Note::CSharp);
+        spawn_note(&mut cmds, &w_mat, 0.27, pos, &mut white_key_1, i, Note::D);
+        spawn_note(&mut cmds, &b_mat, 0.39, pos_black, &mut black_key, i, Note::DSharp);
+        spawn_note(&mut cmds, &w_mat, 0.54, pos, &mut white_key_2, i, Note::E);
+        spawn_note(&mut cmds, &w_mat, 0.69, pos, &mut white_key_0, i, Note::F);
+        spawn_note(&mut cmds, &b_mat, 0.85, pos_black, &mut black_key, i, Note::FSharp);
+        spawn_note(&mut cmds, &w_mat, 0.96, pos, &mut white_key_1, i, Note::G);
+        spawn_note(&mut cmds, &b_mat, 1.08, pos_black, &mut black_key, i, Note::GSharp);
+        spawn_note(&mut cmds, &w_mat, 1.19, pos, &mut white_key_1, i, Note::A);
+        spawn_note(&mut cmds, &b_mat, 1.31, pos_black, &mut black_key, i, Note::ASharp);
+        spawn_note(&mut cmds, &w_mat, 1.46, pos, &mut white_key_2, i, Note::B);
     }
 }
 
@@ -98,19 +99,23 @@ fn spawn_note(
     offset_z: f32,
     pos: Vec3,
     asset: &mut Handle<Mesh>,
-    oct: i32,
-    key: &str,
+    octave: Octave,
+    note: Note,
 ) {
     commands.spawn((
         Mesh3d(asset.clone()),
         MeshMaterial3d(mat.clone()),
         Transform {
-            translation: Vec3::new(pos.x, pos.y, pos.z - offset_z - (1.61 * oct as f32)),
+            translation: Vec3::new(
+                pos.x,
+                pos.y,
+                pos.z - offset_z - (1.61 * octave.value() as f32),
+            ),
             scale: Vec3::new(10., 10., 10.),
             ..Default::default()
         },
         Key {
-            key_val: format!("{}{}", key, oct),
+            key_val: MidiKey::from_note_and_octave(note, octave), //TODO
             y_reset: pos.y,
         },
     ));
@@ -138,20 +143,18 @@ fn handle_midi_input(
         let [_, index, _value] = raw.as_slice() else {
             continue;
         };
-        let off = index % 12;
-        let oct = index.overflowing_div(12).0;
-        let key_str = KEY_RANGE[off as usize];
+        let midi_key = MidiKey::new(index).unwrap();
 
         if let LiveEvent::ChannelVoice(message) = &data.message {
             if message.is_note_on() {
                 for (entity, key) in query.iter() {
-                    if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
+                    if key.key_val.eq(&midi_key) {
                         commands.entity(entity).insert(PressedKey);
                     }
                 }
             } else if message.is_note_off() {
                 for (entity, key) in query.iter() {
-                    if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
+                    if key.key_val.eq(&midi_key) {
                         commands.entity(entity).remove::<PressedKey>();
                     }
                 }

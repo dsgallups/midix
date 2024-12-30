@@ -8,7 +8,7 @@ use bevy_egui::{
     },
     EguiContext, EguiPlugin,
 };
-use bevy_midix::prelude::*;
+use bevy_midix::prelude::{Key as MidiKey, Note};
 use strum::{EnumCount, EnumIter, IntoEnumIterator};
 
 //Adapted to bevy_egui from https://github.com/gamercade-io/gamercade_console/blob/audio_editor/gamercade_editor/src/ui/audio/instrument_editor/piano_roll.rs
@@ -194,12 +194,9 @@ impl PianoRoll {
             .zip(next_keys.iter())
             .enumerate()
             .for_each(|(index, (prev, next))| {
+                let note = Note::new(index as u8).unwrap();
                 if prev != next {
-                    println!(
-                        "Pressed {}{}",
-                        KEY_RANGE[index % 12],
-                        (self.bottom_note_index + index) / 12
-                    );
+                    println!("Pressed {}{}", note, (self.bottom_note_index + index) / 12);
                     /*
                     if *next {
 
@@ -276,9 +273,11 @@ impl PianoRoll {
 
                     let button_top =
                         ImageButton::new(SizedTexture::new(texture_id, TOP_KEY_SIZE)).tint(color);
+
+                    let key = MidiKey::new(index as u8).unwrap();
                     if ui.add(button_top).clicked() {
                         //sync.trigger_note(index, selected_instrument);
-                        println!("Pressed {}{}", KEY_RANGE[index % 12], index / 12);
+                        println!("Pressed {}", key);
                     };
                 });
             });
@@ -298,9 +297,11 @@ impl PianoRoll {
                             ImageButton::new(SizedTexture::new(texture_id, BOTTOM_KEY_SIZE))
                                 .tint(tint);
 
+                        let key = MidiKey::new(index as u8).unwrap();
+
                         if ui.add(button_bottom).clicked() {
                             //sync.trigger_note(index, selected_instrument);
-                            println!("Pressed {}{}", KEY_RANGE[index % 12], index / 12);
+                            println!("Pressed {}", key);
                         };
                     }
                 }
