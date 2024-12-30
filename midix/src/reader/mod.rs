@@ -238,11 +238,7 @@ impl<'slc> Reader<&'slc [u8]> {
             }
         };
 
-        if let ParseState::InsideTrack {
-            ref mut prev_status,
-            ..
-        } = self.state.parse_state_mut()
-        {
+        if let ParseState::InsideTrack { prev_status, .. } = self.state.parse_state_mut() {
             *prev_status = running_status;
         };
         Ok(event)

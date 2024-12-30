@@ -2989,7 +2989,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "midix_piano"
+name = "midix_examples"
 version = "0.1.0"
 dependencies = [
  "bevy",
