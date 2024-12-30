@@ -30,7 +30,7 @@ pub enum MetaMessage<'a> {
     /// Arbitrary lyric information associated to an instant.
     Lyric(BytesText<'a>),
     /// Arbitrary marker text associated to an instant.
-    Marker(&'a [u8]),
+    Marker(BytesText<'a>),
     /// Arbitrary cue point text associated to an instant.
     CuePoint(&'a [u8]),
     /// Information about the name of the current program.
@@ -73,7 +73,6 @@ impl<'a> MetaMessage<'a> {
         'slc: 'a,
     {
         let type_byte = reader.read_next()?;
-
         let data = reader.read_varlen_slice()?;
 
         Ok(match type_byte {
@@ -83,7 +82,7 @@ impl<'a> MetaMessage<'a> {
             0x03 => MetaMessage::TrackName(BytesText::new_from_byte_slice(data)?),
             0x04 => MetaMessage::InstrumentName(BytesText::new_from_byte_slice(data)?),
             0x05 => MetaMessage::Lyric(BytesText::new_from_byte_slice(data)?),
-            0x06 => MetaMessage::Marker(data),
+            0x06 => MetaMessage::Marker(BytesText::new_from_byte_slice(data)?),
             0x07 => MetaMessage::CuePoint(data),
             0x08 => MetaMessage::ProgramName(BytesText::new_from_byte_slice(data)?),
             0x09 => MetaMessage::DeviceName(BytesText::new_from_byte_slice(data)?),

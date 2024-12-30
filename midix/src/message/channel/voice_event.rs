@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::prelude::*;
 
 /// Represents a MIDI message, usually associated to a MIDI channel.
@@ -41,7 +39,7 @@ pub enum VoiceEvent<'a> {
         /// See the MIDI spec for the meaning of each index.
         controller: Controller<'a>,
         /// The value to set it to.
-        value: Cow<'a, u8>,
+        value: DataByte<'a>,
     },
     /// Change the program (also known as instrument) for a channel.
     ProgramChange {
@@ -86,8 +84,7 @@ impl VoiceEvent<'_> {
                 vec![*key.byte(), *velocity.byte()]
             }
             VoiceEvent::ControlChange { controller, value } => {
-                let value = **value;
-                vec![*controller.byte(), value]
+                vec![*controller.byte(), *value.byte()]
             }
             VoiceEvent::ProgramChange { program } => vec![*program.byte()],
             VoiceEvent::ChannelPressureAfterTouch { velocity } => vec![*velocity.byte()],

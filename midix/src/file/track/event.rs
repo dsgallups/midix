@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::prelude::*;
 
 #[doc = r#"
@@ -8,7 +10,7 @@ All MIDI track events have an associated `delta_time`. This
 identifies the amount of time since the previous event.
 
 "#]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct TrackEvent<'a> {
     /// Variable length quantity
     /// Delta-time is in some fraction of a beat
@@ -16,6 +18,16 @@ pub struct TrackEvent<'a> {
     /// as specified in the header chunk.
     delta_time: u32,
     event: TrackMessage<'a>,
+}
+
+impl Debug for TrackEvent<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Track Event {{ delta_time: 0x{:02X}, event: {:?} }}",
+            self.delta_time, self.event
+        )
+    }
 }
 
 impl<'a> TrackEvent<'a> {

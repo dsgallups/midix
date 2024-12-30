@@ -1,19 +1,15 @@
-use std::borrow::Cow;
-
 use crate::prelude::*;
-mod event;
-pub use event::*;
 
 /// Represents a MIDI voice message,.
 ///
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct ChannelVoiceMessage<'a> {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel as the status' lsb contains the channel
-    status: Cow<'a, u8>,
+    status: StatusByte<'a>,
     /// The MIDI message type and associated data.
     message: VoiceEvent<'a>,
 }
@@ -23,38 +19,40 @@ impl<'a> ChannelVoiceMessage<'a> {
     pub fn new(channel: Channel<'_>, message: VoiceEvent<'a>) -> Self {
         let status = *channel.byte() | (message.status_nibble() << 4);
         Self {
-            status: Cow::Owned(status),
+            status: StatusByte::new_unchecked(status),
             message,
         }
     }
 
     /// TODO: read functions should take in an iterator that yields u8s
-    pub(crate) fn read(status: Cow<'a, u8>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
-        use crate::reader::check_u7;
-        //bugged
-
-        let msg = match status.as_ref() >> 4 {
+    pub(crate) fn read(status: StatusByte<'a>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
+        let msg = match status.byte() >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::new_borrowed_unchecked(check_u7(reader)?),
-                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
+                key: Key::new(reader.read_next()?)?,
+                velocity: Velocity::new(reader.read_next()?)?,
             },
-            0x9 => VoiceEvent::NoteOn {
-                key: Key::new_borrowed_unchecked(check_u7(reader)?),
-                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
-            },
+            0x9 => {
+                let key = reader.read_next()?;
+                let velocity = reader.read_next()?;
+
+                VoiceEvent::NoteOn {
+                    key: Key::new(key)?,
+                    velocity: Velocity::new(velocity)?,
+                }
+            }
             0xA => VoiceEvent::Aftertouch {
-                key: Key::new_borrowed_unchecked(check_u7(reader)?),
-                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
+                key: Key::new(reader.read_next()?)?,
+                velocity: Velocity::new(reader.read_next()?)?,
             },
             0xB => VoiceEvent::ControlChange {
-                controller: Controller::new_borrowed_unchecked(check_u7(reader)?),
-                value: Cow::Borrowed(check_u7(reader)?),
+                controller: Controller::new(reader.read_next()?)?,
+                value: reader.read_next()?.try_into()?,
             },
             0xC => VoiceEvent::ProgramChange {
-                program: Program::new_borrowed_unchecked(check_u7(reader)?),
+                program: Program::new(reader.read_next()?)?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
-                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
+                velocity: Velocity::new(reader.read_next()?)?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
@@ -77,7 +75,7 @@ impl<'a> ChannelVoiceMessage<'a> {
 
     /// Get the channel for the event
     pub fn channel(&self) -> Channel {
-        Channel::from_status(*self.status)
+        Channel::from_status(*self.status.byte())
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
@@ -117,7 +115,7 @@ impl<'a> ChannelVoiceMessage<'a> {
     /// and the trailing (lsb) 4 bytes are the channel
     pub fn status(&self) -> &u8 {
         //self.message.status_nibble() << 4 | self.channel.bits()
-        &self.status
+        self.status.byte()
     }
 
     /// References the voice event for the message.
@@ -158,10 +156,10 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
             },
             0xB => VoiceEvent::ControlChange {
                 controller: Controller::new(*data.get_byte(0)?)?,
-                value: Cow::Owned(check_u7(*data.get_byte(1)?)?),
+                value: (*data.get_byte(1)?).try_into()?,
             },
             0xC => VoiceEvent::ProgramChange {
-                program: Program::new_checked(*data.get_byte(0)?)?,
+                program: Program::new(*data.get_byte(0)?)?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
                 velocity: Velocity::new(*data.get_byte(0)?)?,
@@ -176,7 +174,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
             _ => panic!("parsed midi message before checking that status is in range"),
         };
         Ok(ChannelVoiceMessage {
-            status: Cow::Owned(status),
+            status: status.try_into()?,
             message: msg,
         })
     }

@@ -92,26 +92,10 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(3).unwrap());
-    let VoiceEvent::NoteOn {
-        key: _,
-        velocity: _,
-    } = cv.event()
-    else {
+    let VoiceEvent::NoteOn { key, velocity } = cv.event() else {
         panic!();
     };
-    //assert_eq!(**program, 70);
-
-    //panic!("next event: {:?}", reader.read_event());
-
-    /*let chunks = midi.chunks();
-
-    assert_eq!(chunks.len(), 2);
-
-    let header = chunks.first().unwrap();
-
-    assert!(matches!(header, MidiChunk::Header(_)));
-
-    let track = chunks.get(1).unwrap();
-
-    assert!(matches!(track, MidiChunk::Track(_)));*/
+    assert_eq!(key.note(), Note::C);
+    assert_eq!(key.octave(), Octave::new(3));
+    assert_eq!(velocity.dynamic(), Dynamic::ff());
 }

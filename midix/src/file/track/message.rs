@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::prelude::*;
 
 #[doc = r#"
@@ -5,10 +7,10 @@ An enumerationg of categories which may be
 
 Track Messages fall into three categories:
 - [`ChannelVoiceMessage`]: Notes, velocities, pedals, channel events.
-- [`SysExMessage`]: Inaudible events communicated between devices
+- [`SystemExclusiveMessage`]: Inaudible events communicated between devices
 - ['MetaMessage']: Identifiers for the track, like name, copyright information, arbitrary text.
 "#]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum TrackMessage<'a> {
     /// A channel voice message.
     ///
@@ -17,12 +19,46 @@ pub enum TrackMessage<'a> {
 
     /// A system exclusive event.
     ///
-    /// See [`SysExMessage`] for details
-    SystemExclusive(SysExMessage<'a>),
+    /// See [`SystemExclusiveMessage`] for details
+    SystemExclusive(SystemExclusiveMessage<'a>),
 
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...
     ///
     /// See [`MetaMessage`] for details
     Meta(MetaMessage<'a>),
+}
+
+impl Debug for TrackMessage<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ChannelVoice(c) => {
+                write!(f, "{:?}", c)
+            }
+            Self::SystemExclusive(s) => {
+                write!(f, "{:?}", s)
+            }
+            Self::Meta(m) => {
+                write!(f, "{:?}", m)
+            }
+        }
+    }
+}
+
+impl<'a> From<ChannelVoiceMessage<'a>> for TrackMessage<'a> {
+    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+        Self::ChannelVoice(value)
+    }
+}
+
+impl<'a> From<SystemExclusiveMessage<'a>> for TrackMessage<'a> {
+    fn from(value: SystemExclusiveMessage<'a>) -> Self {
+        Self::SystemExclusive(value)
+    }
+}
+
+impl<'a> From<MetaMessage<'a>> for TrackMessage<'a> {
+    fn from(value: MetaMessage<'a>) -> Self {
+        Self::Meta(value)
+    }
 }

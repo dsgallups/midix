@@ -64,6 +64,24 @@ pub enum FileEvent<'a> {
     EOF,
 }
 
+impl<'a> From<HeaderChunk<'a>> for FileEvent<'a> {
+    fn from(value: HeaderChunk<'a>) -> Self {
+        Self::Header(value)
+    }
+}
+
+impl From<TrackChunkHeader> for FileEvent<'_> {
+    fn from(value: TrackChunkHeader) -> Self {
+        Self::Track(value)
+    }
+}
+
+impl<'a> From<TrackEvent<'a>> for FileEvent<'a> {
+    fn from(value: TrackEvent<'a>) -> Self {
+        Self::TrackEvent(value)
+    }
+}
+
 impl<'a> FileEvent<'a> {
     /// Create a new [`FileEvent::Header`] from a [`HeaderChunk`]
     pub fn header(h: HeaderChunk<'a>) -> Self {
