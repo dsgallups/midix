@@ -5,7 +5,10 @@
 use core::fmt;
 use std::borrow::Cow;
 
-use crate::utils::check_u4;
+use crate::{
+    message::{ChannelVoiceMessage, VoiceEvent},
+    utils::check_u4,
+};
 
 /// Identifies a channel for MIDI. Constructors check that the value is between 0-15.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -17,6 +20,11 @@ impl<'a> Channel<'a> {
     /// If the channel is greater than a value of 15
     pub fn new(channel: u8) -> Result<Self, std::io::Error> {
         Ok(Self(Cow::Owned(check_u4(channel)?)))
+    }
+
+    /// Send a voice event to this channel
+    pub fn send_event(self, event: VoiceEvent<'a>) -> ChannelVoiceMessage<'a> {
+        ChannelVoiceMessage::new(self, event)
     }
 
     /// Identify a channel (1, 2, 3)

@@ -55,7 +55,21 @@ pub enum VoiceEvent<'a> {
     PitchBend(PitchBend<'a>),
 }
 
-impl VoiceEvent<'_> {
+impl<'a> VoiceEvent<'a> {
+    /// Create a note on voice event
+    pub fn note_on(key: Key<'a>, velocity: Velocity<'a>) -> Self {
+        Self::NoteOn { key, velocity }
+    }
+    /// Create a note off voice event
+    pub fn note_off(key: Key<'a>, velocity: Velocity<'a>) -> Self {
+        Self::NoteOff { key, velocity }
+    }
+
+    /// Turn self into a ChannelVoiceMessage
+    pub fn send_to_channel(self, channel: Channel<'a>) -> ChannelVoiceMessage<'a> {
+        ChannelVoiceMessage::new(channel, self)
+    }
+
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
         use VoiceEvent::*;

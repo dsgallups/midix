@@ -17,6 +17,16 @@ impl<'a> Velocity<'a> {
         rep.try_into().map(Self).map_err(Into::into)
     }
 
+    /// Returns a max velocity
+    pub fn max() -> Self {
+        Self(DataByte::new_unchecked(127))
+    }
+
+    /// Returns a velocity of zero.
+    pub fn zero() -> Self {
+        Self(DataByte::new_unchecked(0))
+    }
+
     /// Get a reference to the underlying byte
     pub fn byte(&self) -> &u8 {
         self.0.byte()

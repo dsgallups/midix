@@ -68,10 +68,17 @@ fn on_mouse_enter(
 fn on_mouse_down(
     trigger: Trigger<Pointer<Down>>,
     mut keys: Query<(&Key<'static>, &mut BackgroundColor)>,
+    output: Res<MidiOutput>,
 ) {
     let (clicked_key, mut bg) = keys.get_mut(trigger.entity()).unwrap();
 
+    //then send to a virtual audio out the message of a key press with some velocity
     bg.0 = Color::linear_rgb(1.0, 1.0, 0.);
+
+    let event = VoiceEvent::note_on(clicked_key.clone(), Velocity::max())
+        .send_to_channel(Channel::new(1).unwrap());
+
+    output.send(event);
 
     println!("clicked {}", clicked_key);
 }
@@ -79,6 +86,7 @@ fn on_mouse_down(
 fn on_mouse_up(
     trigger: Trigger<Pointer<Up>>,
     mut keys: Query<(&Key<'static>, &mut BackgroundColor)>,
+    output: Res<MidiOutput>,
 ) {
     let triggered_entity = trigger.entity();
 
@@ -89,6 +97,11 @@ fn on_mouse_up(
     } else {
         bg.0 = Color::WHITE;
     };
+
+    let event = VoiceEvent::note_on(clicked_key.clone(), Velocity::zero())
+        .send_to_channel(Channel::new(1).unwrap());
+
+    output.send(event);
 
     println!("unclicked {}", clicked_key);
 }
