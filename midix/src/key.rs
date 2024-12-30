@@ -24,7 +24,7 @@ assert_eq!(key.note(), Note::DSharp);
 assert_eq!(key.octave(), Octave::new(4))
 ```
 "#]
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Hash)]
 pub struct Key<'a>(DataByte<'a>);
 
 impl<'a> Key<'a> {
@@ -37,6 +37,11 @@ impl<'a> Key<'a> {
         E: Into<io::Error>,
     {
         rep.try_into().map(Self).map_err(Into::into)
+    }
+
+    /// Create all possible keys (128)
+    pub fn all() -> Vec<Self> {
+        (0..128).map(|v| Key::new(v).unwrap()).collect()
     }
 
     /// Create a key from a given note and octave

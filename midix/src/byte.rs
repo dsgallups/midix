@@ -140,9 +140,21 @@ impl PartialEq for StatusByte<'_> {
     }
 }
 impl Eq for StatusByte<'_> {}
+
 impl fmt::Display for StatusByte<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:02X}", self.0.as_ref())
+    }
+}
+
+impl Ord for StatusByte<'_> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+impl PartialOrd for StatusByte<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -229,6 +241,18 @@ impl PartialEq for DataByte<'_> {
     }
 }
 impl Eq for DataByte<'_> {}
+
+impl Ord for DataByte<'_> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0)
+    }
+}
+impl PartialOrd for DataByte<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 impl fmt::Display for DataByte<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:02X}", self.0.as_ref())
