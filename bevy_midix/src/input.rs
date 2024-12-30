@@ -105,8 +105,6 @@ impl MidiInputConnection {
 }
 
 /// An [`Event`] for incoming midi data.
-///
-/// This event fires from [`CoreStage::PreUpdate`].
 #[derive(Resource, Event, Debug)]
 pub struct MidiData {
     pub stamp: u64,

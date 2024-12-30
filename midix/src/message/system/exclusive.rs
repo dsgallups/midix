@@ -19,14 +19,6 @@ Exclusive message. These messages include a Manufacturer's Identification (ID)
 code. If a receiver does not recognize the ID code, it should ignore the following
 data.
 
-So that other users and third party developers can fully access their instruments,
-manufacturers must publish the format of the System Exclusive data following
-their ID code. Only the manufacturer can define or update the format following
-their ID.
-
-
-System Exclusive Messages are exceptions to the rule: they are not [`MidiByte`]s
-
 # Layout
 System Exclusive.
 ```text

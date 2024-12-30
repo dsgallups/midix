@@ -2,7 +2,7 @@
 Contains all Channel Message types
 
 # Hierarchy
-``text
+```text
                 |-----------------|
                 | Channel Message |
                 |-----------------|

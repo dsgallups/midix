@@ -12,8 +12,6 @@ ignored, after which the receiving process resumes under the previous status.
 
 They are usually time-sensitive, get top priority and can even be transmitted in between other
 messages.
-
-These messages are exceptions to the rule: they are not [`MidiByte`]s
 "#]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemRealTimeMessage {

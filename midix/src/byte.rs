@@ -5,20 +5,6 @@ use std::{
 };
 
 #[doc = r#"
-Identifies a byte that follows the MIDI spec:
-
-Status Byte
-(80H - FFH)
-
-or
-
-Data Byte
-(00H - 7FH)
-"#]
-#[allow(dead_code)]
-pub struct MidiByte<'a>(Cow<'a, u8>);
-
-#[doc = r#"
 There are only three types of midi message bytes:
 
 ```text
@@ -56,10 +42,6 @@ impl MidiMessageBytes<'_> {
             Double(s, d1, d2) => writer.write_all(&[*s.0, *d1.0, *d2.0]),
         }
     }
-}
-
-pub enum MidiBytes<'a> {
-    Message(MidiMessageBytes<'a>),
 }
 
 #[doc = r#"
@@ -228,6 +210,7 @@ impl fmt::Display for DataByte<'_> {
     }
 }
 
+/* TODO: planned
 #[doc = r#"
 Any types that can be represented as a `MidiMessageByte`.
 
@@ -270,3 +253,4 @@ written out to smf format.
 pub trait MidiWriter {
     fn write_midi(&mut self, byte: &[u8]);
 }
+*/
