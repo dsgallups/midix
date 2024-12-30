@@ -16,21 +16,23 @@ Each value corresponds to some [`Note`] and [`Octave`].
 pub struct Key<'a>(Cow<'a, u8>);
 
 impl<'a> Key<'a> {
-    /// Create a new key. Does not check for correctness.
-    pub const fn new(key: u8) -> Self {
-        Self(Cow::Owned(key))
-    }
-    /// Create a new key. Does not check for correctness.
-    pub(crate) const fn new_borrowed(key: &'a u8) -> Self {
-        Self(Cow::Borrowed(key))
-    }
-
-    /// Create a new key. Checks for correctness.
-    pub fn new_checked(rep: u8) -> Result<Self, std::io::Error>
+    /// Create a new key.
+    ///
+    /// Checks for correctness (leading 0 bit).
+    pub fn new(rep: u8) -> Result<Self, std::io::Error>
     where
         Self: Sized,
     {
         Ok(Self(Cow::Owned(check_u7(rep)?)))
+    }
+
+    /// Create a new key. Does not check for correctness.
+    pub const fn new_unchecked(key: u8) -> Self {
+        Self(Cow::Owned(key))
+    }
+    /// Create a new key. Does not check for correctness.
+    pub const fn new_borrowed_unchecked(key: &'a u8) -> Self {
+        Self(Cow::Borrowed(key))
     }
 
     /// Identifies the note of the key pressed
@@ -59,21 +61,21 @@ impl fmt::Display for Key<'_> {
 
 #[test]
 fn test_note() {
-    let c = Key::new(12);
+    let c = Key::new_unchecked(12);
 
     assert_eq!(Note::C, c.note());
 
-    let a_sharp = Key::new(94);
+    let a_sharp = Key::new_unchecked(94);
     assert_eq!(Note::ASharp, a_sharp.note());
 }
 
 #[test]
 fn test_octave() {
-    let c = Key::new(12);
+    let c = Key::new_unchecked(12);
 
     assert_eq!(0, c.octave().as_number());
 
-    let a_sharp = Key::new(94);
+    let a_sharp = Key::new_unchecked(94);
     assert_eq!(6, a_sharp.octave().as_number());
 }
 

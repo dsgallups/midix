@@ -1,5 +1,5 @@
 #![doc = r#"
-Contains types that deal with file [`Meta`] messages
+Contains types that deal with file ['MetaMessage']s
 "#]
 
 mod tempo;
@@ -15,7 +15,7 @@ use crate::prelude::*;
 /// A "meta message", as defined by the SMF spec.
 /// These events carry metadata about the track, such as tempo, time signature, copyright, etc...
 #[derive(Clone, PartialEq, Debug)]
-pub enum Meta<'a> {
+pub enum MetaMessage<'a> {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
     TrackNumber(&'a [u8]),
@@ -67,7 +67,7 @@ pub enum Meta<'a> {
     /// The slice is the actual payload of the meta-message.
     Unknown(&'a u8, &'a [u8]),
 }
-impl<'a> Meta<'a> {
+impl<'a> MetaMessage<'a> {
     pub(crate) fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
@@ -77,16 +77,16 @@ impl<'a> Meta<'a> {
         let data = reader.read_varlen_slice()?;
 
         Ok(match type_byte {
-            0x00 => Meta::TrackNumber(data),
-            0x01 => Meta::Text(BytesText::new_from_byte_slice(data)?),
-            0x02 => Meta::Copyright(BytesText::new_from_byte_slice(data)?),
-            0x03 => Meta::TrackName(BytesText::new_from_byte_slice(data)?),
-            0x04 => Meta::InstrumentName(BytesText::new_from_byte_slice(data)?),
-            0x05 => Meta::Lyric(BytesText::new_from_byte_slice(data)?),
-            0x06 => Meta::Marker(data),
-            0x07 => Meta::CuePoint(data),
-            0x08 => Meta::ProgramName(BytesText::new_from_byte_slice(data)?),
-            0x09 => Meta::DeviceName(BytesText::new_from_byte_slice(data)?),
+            0x00 => MetaMessage::TrackNumber(data),
+            0x01 => MetaMessage::Text(BytesText::new_from_byte_slice(data)?),
+            0x02 => MetaMessage::Copyright(BytesText::new_from_byte_slice(data)?),
+            0x03 => MetaMessage::TrackName(BytesText::new_from_byte_slice(data)?),
+            0x04 => MetaMessage::InstrumentName(BytesText::new_from_byte_slice(data)?),
+            0x05 => MetaMessage::Lyric(BytesText::new_from_byte_slice(data)?),
+            0x06 => MetaMessage::Marker(data),
+            0x07 => MetaMessage::CuePoint(data),
+            0x08 => MetaMessage::ProgramName(BytesText::new_from_byte_slice(data)?),
+            0x09 => MetaMessage::DeviceName(BytesText::new_from_byte_slice(data)?),
             0x20 => {
                 if data.len() != 1 {
                     return Err(inv_data(
@@ -98,7 +98,7 @@ impl<'a> Meta<'a> {
                     ));
                 }
                 let c = data.first().unwrap();
-                Meta::MidiChannel(Channel::new(*c)?)
+                MetaMessage::MidiChannel(Channel::new(*c)?)
             }
             0x21 => {
                 if data.len() != 1 {
@@ -108,9 +108,9 @@ impl<'a> Meta<'a> {
                     ));
                 }
                 let port = *reader.read_next()?;
-                Meta::MidiPort(port)
+                MetaMessage::MidiPort(port)
             }
-            0x2F => Meta::EndOfTrack,
+            0x2F => MetaMessage::EndOfTrack,
             0x51 => {
                 //FF 51 03 tttttt
                 if data.len() != 3 {
@@ -122,7 +122,7 @@ impl<'a> Meta<'a> {
                         ),
                     ));
                 }
-                Meta::Tempo(Tempo::new_from_byte_slice(data.try_into().unwrap()))
+                MetaMessage::Tempo(Tempo::new_from_byte_slice(data.try_into().unwrap()))
             }
             0x54 => {
                 //TODO
@@ -140,7 +140,9 @@ impl<'a> Meta<'a> {
                         ),
                     ));
                 }
-                Meta::TimeSignature(TimeSignature::new_from_byte_slice(data.try_into().unwrap()))
+                MetaMessage::TimeSignature(TimeSignature::new_from_byte_slice(
+                    data.try_into().unwrap(),
+                ))
             }
             0x59 => {
                 if data.len() != 2 {
@@ -152,70 +154,14 @@ impl<'a> Meta<'a> {
                         ),
                     ));
                 }
-                Meta::KeySignature(KeySignature::new_from_byte_slice(data.try_into().unwrap()))
+                MetaMessage::KeySignature(KeySignature::new_from_byte_slice(
+                    data.try_into().unwrap(),
+                ))
             }
-            0x7F => Meta::SequencerSpecific(data),
-            _ => Meta::Unknown(type_byte, data),
+            0x7F => MetaMessage::SequencerSpecific(data),
+            _ => MetaMessage::Unknown(type_byte, data),
         })
     }
-
-    /*pub fn to_owned(self) -> MetaMessage {
-        use Meta::*;
-        match self {
-            TrackNumber(n) => match n.len() {
-                2 => {
-                    let n: [u8; 2] = n.try_into().unwrap();
-                    MetaMessage::TrackNumber(Some(u16::from_be_bytes(n)))
-                }
-                _ => MetaMessage::TrackNumber(None),
-            },
-            Text(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::Text(v)
-            }
-            Copyright(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::Copyright(v)
-            }
-            TrackName(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::TrackName(v)
-            }
-            InstrumentName(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::InstrumentName(v)
-            }
-            Lyric(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::Lyric(v)
-            }
-            Marker(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::Marker(v)
-            }
-            CuePoint(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::CuePoint(v)
-            }
-            ProgramName(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::ProgramName(v)
-            }
-            DeviceName(t) => {
-                let v = String::from_utf8(t.to_vec()).unwrap_or_default();
-                MetaMessage::DeviceName(v)
-            }
-            MidiChannel(c) => MetaMessage::MidiChannel(c),
-            MidiPort(p) => MetaMessage::MidiPort(p),
-            EndOfTrack => MetaMessage::EndOfTrack,
-            Tempo(_) => todo!(),
-            SmpteOffset(_) => todo!(),
-            TimeSignature(_) => todo!(),
-            KeySignature(_) => todo!(),
-            SequencerSpecific(s) => MetaMessage::SequencerSpecific(s.to_vec()),
-            Unknown(r, d) => MetaMessage::Unknown(*r, d.to_vec()),
-        }
-    }*/
 }
 
 /*#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]

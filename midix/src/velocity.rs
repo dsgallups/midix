@@ -12,19 +12,19 @@ impl<'a> Velocity<'a> {
     /// Creates a new velocity from the provided byte
     ///
     /// Does not check for correctness
-    pub const fn new(velocity: u8) -> Self {
+    pub const fn new_unchecked(velocity: u8) -> Self {
         Self(Cow::Owned(velocity))
     }
     /// Create a new velocity from the referenced byte
     ///
     /// Does not check for correctness
-    pub(crate) const fn new_borrowed(velocity: &'a u8) -> Self {
+    pub const fn new_borrowed_unchecked(velocity: &'a u8) -> Self {
         Self(Cow::Borrowed(velocity))
     }
     /// Creates a new velocity from the provided byte
     ///
-    /// Checks for correctness
-    pub fn new_checked(rep: u8) -> Result<Self, std::io::Error>
+    /// Checks for correctness (leading 0 bit)
+    pub fn new(rep: u8) -> Result<Self, std::io::Error>
     where
         Self: Sized,
     {

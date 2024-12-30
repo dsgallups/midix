@@ -53,19 +53,19 @@ There is currently no `StreamReader` type, so this type is most often manually c
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum LiveEvent<'a> {
     /// A MIDI voice message associated with a channel
-    ChannelVoice(ChannelVoice<'a>),
+    ChannelVoice(ChannelVoiceMessage<'a>),
 
     /// A set of common messages that are not meant to be used
     /// For input/output purposes
-    SystemCommon(SystemCommon<'a>),
+    SystemCommon(SystemCommonMessage<'a>),
 
     /// Events that are for synchronization purposes.
-    SystemRealTime(SystemRealTime),
+    SystemRealTime(SystemRealTimeMessage),
 }
 
 impl LiveEvent<'_> {
     /// returns Some if the message contains a [`ChannelVoice`] event.
-    pub fn channel_voice(&self) -> Option<&ChannelVoice<'_>> {
+    pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage<'_>> {
         match self {
             LiveEvent::ChannelVoice(c) => Some(c),
             _ => None,
@@ -82,18 +82,18 @@ impl LiveEvent<'_> {
     }
 }
 
-impl<'a> From<ChannelVoice<'a>> for LiveEvent<'a> {
-    fn from(value: ChannelVoice<'a>) -> Self {
+impl<'a> From<ChannelVoiceMessage<'a>> for LiveEvent<'a> {
+    fn from(value: ChannelVoiceMessage<'a>) -> Self {
         Self::ChannelVoice(value)
     }
 }
-impl<'a> From<SystemCommon<'a>> for LiveEvent<'a> {
-    fn from(value: SystemCommon<'a>) -> Self {
+impl<'a> From<SystemCommonMessage<'a>> for LiveEvent<'a> {
+    fn from(value: SystemCommonMessage<'a>) -> Self {
         Self::SystemCommon(value)
     }
 }
-impl From<SystemRealTime> for LiveEvent<'_> {
-    fn from(value: SystemRealTime) -> Self {
+impl From<SystemRealTimeMessage> for LiveEvent<'_> {
+    fn from(value: SystemRealTimeMessage) -> Self {
         Self::SystemRealTime(value)
     }
 }
@@ -106,15 +106,15 @@ impl FromLiveEventBytes for LiveEvent<'_> {
         Self: Sized,
     {
         match status {
-            0x80..=0xEF => Ok(Self::ChannelVoice(ChannelVoice::from_status_and_data(
-                status, data,
-            )?)),
-            0xF0..=0xF7 => Ok(Self::SystemCommon(SystemCommon::from_status_and_data(
-                status, data,
-            )?)),
-            0xF8..=0xFF => Ok(Self::SystemRealTime(SystemRealTime::from_status_and_data(
-                status, data,
-            )?)),
+            0x80..=0xEF => Ok(Self::ChannelVoice(
+                ChannelVoiceMessage::from_status_and_data(status, data)?,
+            )),
+            0xF0..=0xF7 => Ok(Self::SystemCommon(
+                SystemCommonMessage::from_status_and_data(status, data)?,
+            )),
+            0xF8..=0xFF => Ok(Self::SystemRealTime(
+                SystemRealTimeMessage::from_status_and_data(status, data)?,
+            )),
             _ => Err(io_error!(
                 ErrorKind::InvalidData,
                 "Received a status that is not a midi message"
@@ -132,11 +132,11 @@ fn parse_note_on() {
 
     assert_eq!(
         parsed,
-        LiveEvent::ChannelVoice(ChannelVoice::new(
+        LiveEvent::ChannelVoice(ChannelVoiceMessage::new(
             Channel::new(1).unwrap(),
             VoiceEvent::NoteOn {
-                key: Key::new(72),
-                velocity: Velocity::new(33)
+                key: Key::new_unchecked(72),
+                velocity: Velocity::new_unchecked(33)
             }
         ))
     );

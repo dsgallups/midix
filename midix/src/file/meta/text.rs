@@ -4,7 +4,7 @@ use std::{
     io::{self, ErrorKind},
 };
 
-/// Some text, usually identified by a [`Meta`](super::Meta) message
+/// Some text, usually identified by a ['MetaMessage'](super::MetaMessage)s
 #[derive(Clone, PartialEq, Debug)]
 pub struct BytesText<'a> {
     inner: Cow<'a, str>,

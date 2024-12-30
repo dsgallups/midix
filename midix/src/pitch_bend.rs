@@ -17,8 +17,21 @@ impl<'a> PitchBend<'a> {
     /// Creates a new pitch bend given the
     /// least significant and most significant bytes.
     ///
+    /// Checks for byte correctness (leading 0 bit)
+    pub fn new(lsb: u8, msb: u8) -> Result<Self, std::io::Error> {
+        let lsb = check_u7(lsb)?;
+        let msb = check_u7(msb)?;
+        Ok(Self {
+            lsb: Cow::Owned(lsb),
+            msb: Cow::Owned(msb),
+        })
+    }
+
+    /// Creates a new pitch bend given the
+    /// least significant and most significant bytes.
+    ///
     /// Does not check for correctness
-    pub const fn new(lsb: u8, msb: u8) -> Self {
+    pub const fn new_unchecked(lsb: u8, msb: u8) -> Self {
         Self {
             lsb: Cow::Owned(lsb),
             msb: Cow::Owned(msb),
@@ -29,24 +42,11 @@ impl<'a> PitchBend<'a> {
     /// borrowed least significant and most significant bytes.
     ///
     /// Does not check for correctness
-    pub const fn new_borrowed(lsb: &'a u8, msb: &'a u8) -> Self {
+    pub const fn new_borrowed_unchecked(lsb: &'a u8, msb: &'a u8) -> Self {
         Self {
             lsb: Cow::Borrowed(lsb),
             msb: Cow::Borrowed(msb),
         }
-    }
-
-    /// Creates a new pitch bend given the
-    /// least significant and most significant bytes.
-    ///
-    /// Checks for byte correctness
-    pub fn new_checked(lsb: u8, msb: u8) -> Result<Self, std::io::Error> {
-        let lsb = check_u7(lsb)?;
-        let msb = check_u7(msb)?;
-        Ok(Self {
-            lsb: Cow::Owned(lsb),
-            msb: Cow::Owned(msb),
-        })
     }
 
     /// Returns a reference to the pitch bend's least significant byte.
@@ -71,7 +71,7 @@ impl<'a> PitchBend<'a> {
     pub fn from_bits(rep: u16) -> Result<Self, std::io::Error> {
         let lsb = (rep >> 8) as u8;
         let msb = (rep & 0x00FF) as u8;
-        Self::new_checked(lsb, msb)
+        Self::new(lsb, msb)
     }
 }
 

@@ -134,6 +134,9 @@ pub use system_common::*;
 mod realtime_message;
 pub use realtime_message::*;
 
+mod song_position_pointer;
+pub use song_position_pointer::*;
+
 mod sysex;
 pub use sysex::*;
 

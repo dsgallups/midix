@@ -10,7 +10,7 @@ pub use event::*;
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct ChannelVoice<'a> {
+pub struct ChannelVoiceMessage<'a> {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel as the status' lsb contains the channel
     status: Cow<'a, u8>,
@@ -18,7 +18,7 @@ pub struct ChannelVoice<'a> {
     message: VoiceEvent<'a>,
 }
 
-impl<'a> ChannelVoice<'a> {
+impl<'a> ChannelVoiceMessage<'a> {
     /// Create a new channel voice event from the channel and associated event type
     pub fn new(channel: Channel<'_>, message: VoiceEvent<'a>) -> Self {
         let status = *channel.byte() | (message.status_nibble() << 4);
@@ -35,32 +35,32 @@ impl<'a> ChannelVoice<'a> {
 
         let msg = match status.as_ref() >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::new_borrowed(check_u7(reader)?),
-                velocity: Velocity::new_borrowed(check_u7(reader)?),
+                key: Key::new_borrowed_unchecked(check_u7(reader)?),
+                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
             },
             0x9 => VoiceEvent::NoteOn {
-                key: Key::new_borrowed(check_u7(reader)?),
-                velocity: Velocity::new_borrowed(check_u7(reader)?),
+                key: Key::new_borrowed_unchecked(check_u7(reader)?),
+                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
             },
             0xA => VoiceEvent::Aftertouch {
-                key: Key::new_borrowed(check_u7(reader)?),
-                velocity: Velocity::new_borrowed(check_u7(reader)?),
+                key: Key::new_borrowed_unchecked(check_u7(reader)?),
+                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
             },
             0xB => VoiceEvent::ControlChange {
-                controller: Controller::new_borrowed(check_u7(reader)?),
+                controller: Controller::new_borrowed_unchecked(check_u7(reader)?),
                 value: Cow::Borrowed(check_u7(reader)?),
             },
             0xC => VoiceEvent::ProgramChange {
-                program: Program::new_borrowed(check_u7(reader)?),
+                program: Program::new_borrowed_unchecked(check_u7(reader)?),
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
-                velocity: Velocity::new_borrowed(check_u7(reader)?),
+                velocity: Velocity::new_borrowed_unchecked(check_u7(reader)?),
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
                 let [lsb, msb] = reader.read_exact_size()?;
-                VoiceEvent::PitchBend(PitchBend::new_borrowed(lsb, msb))
+                VoiceEvent::PitchBend(PitchBend::new_borrowed_unchecked(lsb, msb))
             }
             b => {
                 return Err(inv_data(
@@ -69,7 +69,7 @@ impl<'a> ChannelVoice<'a> {
                 ))
             }
         };
-        Ok(ChannelVoice {
+        Ok(ChannelVoiceMessage {
             status,
             message: msg,
         })
@@ -136,7 +136,7 @@ impl<'a> ChannelVoice<'a> {
     }
 }
 
-impl FromLiveEventBytes for ChannelVoice<'_> {
+impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xEF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -145,37 +145,37 @@ impl FromLiveEventBytes for ChannelVoice<'_> {
     {
         let msg = match status >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::new_checked(*data.get_byte(0)?)?,
-                velocity: Velocity::new_checked(*data.get_byte(1)?)?,
+                key: Key::new(*data.get_byte(0)?)?,
+                velocity: Velocity::new(*data.get_byte(1)?)?,
             },
             0x9 => VoiceEvent::NoteOn {
-                key: Key::new_checked(*data.get_byte(0)?)?,
-                velocity: Velocity::new_checked(*data.get_byte(1)?)?,
+                key: Key::new(*data.get_byte(0)?)?,
+                velocity: Velocity::new(*data.get_byte(1)?)?,
             },
             0xA => VoiceEvent::Aftertouch {
-                key: Key::new_checked(*data.get_byte(0)?)?,
-                velocity: Velocity::new_checked(*data.get_byte(1)?)?,
+                key: Key::new(*data.get_byte(0)?)?,
+                velocity: Velocity::new(*data.get_byte(1)?)?,
             },
             0xB => VoiceEvent::ControlChange {
-                controller: Controller::new_checked(*data.get_byte(0)?)?,
+                controller: Controller::new(*data.get_byte(0)?)?,
                 value: Cow::Owned(check_u7(*data.get_byte(1)?)?),
             },
             0xC => VoiceEvent::ProgramChange {
                 program: Program::new_checked(*data.get_byte(0)?)?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
-                velocity: Velocity::new_checked(*data.get_byte(0)?)?,
+                velocity: Velocity::new(*data.get_byte(0)?)?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
                 let lsb = *data.get_byte(0)?;
                 let msb = *data.get_byte(1)?;
-                VoiceEvent::PitchBend(PitchBend::new_checked(lsb, msb)?)
+                VoiceEvent::PitchBend(PitchBend::new(lsb, msb)?)
             }
             _ => panic!("parsed midi message before checking that status is in range"),
         };
-        Ok(ChannelVoice {
+        Ok(ChannelVoiceMessage {
             status: Cow::Owned(status),
             message: msg,
         })

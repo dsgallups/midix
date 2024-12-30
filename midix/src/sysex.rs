@@ -12,9 +12,9 @@ data bytes in a format specified by the
 referenced manufacturer.
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SysEx<'a>(Cow<'a, [u8]>);
+pub struct SysExMessage<'a>(Cow<'a, [u8]>);
 
-impl<'a> SysEx<'a> {
+impl<'a> SysExMessage<'a> {
     /// Create a new owned system exclusive message
     pub const fn new(data: Vec<u8>) -> Self {
         Self(Cow::Owned(data))

@@ -205,9 +205,9 @@ impl<'slc> Reader<&'slc [u8]> {
                                 //discard the last 0xF7
                                 data = &data[..data.len() - 1];
                             }
-                            TrackMessage::SystemExclusive(SysEx::new_borrowed(data))
+                            TrackMessage::SystemExclusive(SysExMessage::new_borrowed(data))
                         }
-                        0xFF => TrackMessage::Meta(Meta::read(self)?),
+                        0xFF => TrackMessage::Meta(MetaMessage::read(self)?),
                         byte => {
                             //status if the byte has a leading 1, otherwise it's
                             //a running status
@@ -232,7 +232,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             };
 
                             //todo
-                            TrackMessage::ChannelVoice(ChannelVoice::read(status, self)?)
+                            TrackMessage::ChannelVoice(ChannelVoiceMessage::read(status, self)?)
                         }
                     };
 

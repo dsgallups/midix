@@ -2,33 +2,35 @@ use crate::prelude::*;
 use core::fmt;
 use std::borrow::Cow;
 
-/// Identifies a controller
-///
-/// TODO docs
+/// Identifies a device
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Controller<'a>(Cow<'a, u8>);
 
 impl<'a> Controller<'a> {
-    pub(crate) const fn new(byte: u8) -> Self {
+    /// Interpret a byte as a type of device
+    ///
+    /// Checks for correctness (leading 0 bit)
+    pub fn new(byte: u8) -> Result<Self, io::Error> {
+        Ok(Self(Cow::Owned(check_u7(byte)?)))
+    }
+
+    /// Interpret a byte as a type of device
+    ///
+    /// Does not check for correctness
+    pub const fn new_unchecked(byte: u8) -> Self {
         Self(Cow::Owned(byte))
     }
-    pub(crate) const fn new_borrowed(byte: &'a u8) -> Self {
+
+    /// Interpret a referenced byte as a type of device
+    ///
+    /// Does not check for correctness
+    pub const fn new_borrowed_unchecked(byte: &'a u8) -> Self {
         Self(Cow::Borrowed(byte))
     }
 
     /// Get a reference to the underlying byte
     pub fn byte(&self) -> &u8 {
         &self.0
-    }
-
-    /// Creates a new controller from the provided byte
-    ///
-    /// Checks for correctness
-    pub fn new_checked(rep: u8) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
-        Ok(Self::new(check_u7(rep)?))
     }
 }
 

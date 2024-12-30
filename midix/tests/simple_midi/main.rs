@@ -22,7 +22,7 @@ fn midi_file_ref() {
         panic!()
     };
     assert_eq!(track_event.delta_time(), 0);
-    let TrackMessage::Meta(Meta::TimeSignature(time_sig)) = track_event.event() else {
+    let TrackMessage::Meta(MetaMessage::TimeSignature(time_sig)) = track_event.event() else {
         panic!();
     };
     assert_eq!(time_sig.num(), 4);
@@ -36,7 +36,7 @@ fn midi_file_ref() {
     assert_eq!(track_event.delta_time(), 0);
 
     // microseconds per quarter note. In this case, it's 120bpm
-    let TrackMessage::Meta(Meta::Tempo(tempo)) = track_event.event() else {
+    let TrackMessage::Meta(MetaMessage::Tempo(tempo)) = track_event.event() else {
         panic!();
     };
     assert_eq!(tempo.micros_per_quarter_note(), 500000);

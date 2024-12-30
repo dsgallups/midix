@@ -7,13 +7,13 @@ A System Common Message, used to relay some data for receivers.
 This message is only found in [`LiveEvent`]s.
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum SystemCommon<'a> {
+pub enum SystemCommonMessage<'a> {
     /// A system-exclusive message.
     ///
     /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte.
     ///
-    /// Note that `SysEx` is found in both [`LiveEvent`]s and [`FileEvent`]s.
-    SystemExclusive(SysEx<'a>),
+    /// Note that `SysExMessage` is found in both [`LiveEvent`]s and [`FileEvent`]s.
+    SystemExclusive(SysExMessage<'a>),
     /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
     MidiTimeCodeQuarterFrame {
         message: MtcQuarterFrameMessage,
@@ -23,15 +23,15 @@ pub enum SystemCommon<'a> {
     Undefined(u8),
     /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
     /// sequence.
-    SongPositionPointer { lsb: u8, msb: u8 },
+    SongPositionPointer(SongPositionPointer),
     /// Select a given song index.
     SongSelect(u8),
     /// Request the device to tune itself.
     TuneRequest,
 }
-impl SystemCommon<'_> {
+impl SystemCommonMessage<'_> {
     fn status(&self) -> u8 {
-        use SystemCommon::*;
+        use SystemCommonMessage::*;
         match self {
             SystemExclusive(_) => 0xF0,
             SongPositionPointer { .. } => 0xF2,
@@ -43,11 +43,11 @@ impl SystemCommon<'_> {
 
     /// Represents the message as an array of bytes for some live MIDI stream
     pub fn to_bytes(&self) -> Vec<u8> {
-        use SystemCommon::*;
+        use SystemCommonMessage::*;
         match self {
             SystemExclusive(b) => b.to_live_bytes(),
-            SongPositionPointer { lsb, msb } => {
-                vec![self.status(), *lsb, *msb]
+            SongPositionPointer(spp) => {
+                vec![self.status(), spp.lsb(), spp.msb()]
             }
             SongSelect(v) => vec![self.status(), *v],
             TuneRequest | Undefined(_) => vec![self.status()],
@@ -55,19 +55,19 @@ impl SystemCommon<'_> {
     }
 }
 
-impl FromLiveEventBytes for SystemCommon<'_> {
+impl FromLiveEventBytes for SystemCommonMessage<'_> {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {
         let ev = match status {
             0xF0 => {
-                //SysEx
+                //SysExMessage
                 let data = data
                     .iter()
                     .copied()
                     .take_while(|byte| byte != &0xF7)
                     .collect::<Vec<_>>();
-                SystemCommon::SystemExclusive(SysEx::new(data))
+                SystemCommonMessage::SystemExclusive(SysExMessage::new(data))
             }
             /*0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame
@@ -78,26 +78,25 @@ impl FromLiveEventBytes for SystemCommon<'_> {
             }*/
             0xF2 if data.len() == 2 => {
                 //Song Position
-                SystemCommon::SongPositionPointer {
-                    lsb: data[0],
-                    msb: data[1],
-                }
+                SystemCommonMessage::SongPositionPointer(SongPositionPointer::new(
+                    data[0], data[1],
+                )?)
             }
             0xF3 if data.len() == 1 => {
                 //Song Select
-                SystemCommon::SongSelect(data[0])
+                SystemCommonMessage::SongSelect(check_u7(data[0])?)
             }
             0xF6 => {
                 //Tune Request
-                SystemCommon::TuneRequest
+                SystemCommonMessage::TuneRequest
             }
             0xF1..=0xF5 if data.is_empty() => {
                 //Unknown system common event
-                SystemCommon::Undefined(status)
+                SystemCommonMessage::Undefined(status)
             }
             _ => {
                 //Invalid/Unknown/Unreachable event
-                //(Including F7 SysEx End Marker)
+                //(Including F7 SysExMessage End Marker)
                 return Err(io_error!(
                     ErrorKind::InvalidInput,
                     "Could not read System Common Message"

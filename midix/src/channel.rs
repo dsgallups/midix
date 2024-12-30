@@ -19,10 +19,17 @@ impl<'a> Channel<'a> {
         Ok(Self(Cow::Owned(check_u4(channel)?)))
     }
 
+    /// Identify a channel (1, 2, 3)
+    ///
+    /// Does not check for correctness
+    pub fn new_unchecked(channel: u8) -> Self {
+        Self(Cow::Owned(channel))
+    }
+
     /// Identify a channel from a borrowed value (&1, &2, &3)
     /// # Errors
     /// If the channel is greater than a value of 15
-    pub fn new_borrowed(channel: &'a u8) -> Result<Self, std::io::Error> {
+    pub fn new_borrowed_unchecked(channel: &'a u8) -> Result<Self, std::io::Error> {
         Ok(Self(Cow::Borrowed(channel)))
     }
 
