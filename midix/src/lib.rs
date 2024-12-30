@@ -1,13 +1,18 @@
 #![cfg_attr(feature = "nightly", feature(const_for))]
-#![warn(missing_docs)]
 #![doc = r#"
-A high performance MIDI reader.
+
+Composable, parsable MIDI structures
+
+
 
 # Overview
 
 `midix` provides a min-copy parser ([`Reader`](crate::prelude::Reader)) to read events from `.mid` files.
 Additionally, `midix` provides the user with [`LiveEvent::from_bytes`](crate::events::LiveEvent), which will parse
 events from a live MIDI source.
+
+There are two types to know about
+Two systems are used to interface between
 
 
 
@@ -91,6 +96,13 @@ This document was originally distributed in text format by The International MID
 EMail: david@csw2.co.uk
 Web: http://www.csw2.co.uk
 ```
+
+
+# TODO
+
+
+We need to have a MIDI source (u8, MidiBytes, or MidiStream)
+and then MidiRep -> u8, MidiBytes, MidiFile, Messages, etc.
 "#]
 
 use std::io::{self, ErrorKind};
@@ -100,6 +112,8 @@ mod error;
 
 pub mod reader;
 pub(crate) mod utils;
+
+pub mod interfaces;
 
 pub mod channel;
 

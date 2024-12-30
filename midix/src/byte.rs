@@ -59,6 +59,12 @@ impl MidiMessageBytes<'_> {
 
 #[doc = r#"
 Status Byte is between [0x80 and 0xFF]
+
+
+Status bytes are eight-bit binary numbers in which the Most Significant Bit (MSB) is set (binary 1).
+Status bytes serve to identify the message type, that is, the purpose of the Data bytes which follow it.
+Except for Real-Time messages, new Status bytes will always command a receiver to adopt a new status,
+even if the last message was not completed.
 "#]
 pub struct StatusByte<'a>(Cow<'a, u8>);
 
@@ -121,12 +127,39 @@ Any types that can be represented as a `MidiMessageByte`.
 Notable, [`SystemExclusiveMessage`] and [`SystemRealTimeMessage`]
 do not implement this trait. They have separate structure types
 "#]
-pub trait MidiMessageByteRep<'a, W: Write + ?Sized> {
+pub trait MidiMessageByteRep<'a> {
     /// Represent oneself as MidiMessageBytes.
     fn as_midi_bytes(&self) -> MidiMessageBytes<'a>;
+}
 
+impl<'a, W, T> MidiWriteable<W> for T
+where
+    W: Write + ?Sized,
+    T: MidiMessageByteRep<'a>,
+{
     /// Writes the byte representation of the type into a writer
     fn write_into(&self, writer: &mut W) -> Result<(), io::Error> {
         self.as_midi_bytes().write(writer)
     }
+}
+
+#[doc = r#"
+Any representation that can be written, as bytes, into some writer
+"#]
+pub trait MidiWriteable<W: Write + ?Sized> {
+    /// Writes the byte representation of the type into a writer
+    fn write_into(&self, writer: &mut W) -> Result<(), io::Error>;
+}
+
+#[doc = r#"
+A trait for things that can write to midi.
+
+# Overview
+Why not use [`Write`](std::io::Write) instead?
+
+Unfortunately, MIDI events have different byte representations depending on whether it's streamed or
+written out to smf format.
+"#]
+pub trait MidiWriter {
+    fn write_midi(&mut self, byte: &[u8]);
 }

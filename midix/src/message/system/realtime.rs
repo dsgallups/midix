@@ -1,12 +1,20 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
-/// One-byte messages that only occur in live MIDI events.
-///
-/// They are usually time-sensitive, get top priority and can even be transmitted in between other
-/// messages.
-///
-/// These messages are exceptions to the rule: they are not [`MidiByte`]s
+#[doc = r#"
+One-byte messages that only occur in live MIDI events.
+
+Real-Time messages are used for synchronization and are intended for all clock-
+based units in a system. They contain Status bytes only — no Data bytes. Real-
+Time messages may be sent at any time — even between bytes of a message which has
+a different status. In such cases the Real-Time message is either acted upon or
+ignored, after which the receiving process resumes under the previous status.
+
+They are usually time-sensitive, get top priority and can even be transmitted in between other
+messages.
+
+These messages are exceptions to the rule: they are not [`MidiByte`]s
+"#]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemRealTimeMessage {
     /// If sent, they should be sent 24 times per quarter note.

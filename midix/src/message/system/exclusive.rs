@@ -5,11 +5,24 @@ A System Exclusive messsage, found in
 both [`LiveEvent`](crate::prelude::LiveEvent)s and [`FileEvent`](crate::prelude::FileEvent)s.
 
 # Overview
+
 System Exclusive messages include a
 Manufacturer's Identification (ID) code,
 and are used to transfer any number of
 data bytes in a format specified by the
 referenced manufacturer.
+
+Exclusive messages can contain any number of Data bytes, and can be
+terminated either by an End of Exclusive (EOX) or any other Status byte (except
+Real Time messages). An EOX should always be sent at the end of a System
+Exclusive message. These messages include a Manufacturer's Identification (ID)
+code. If a receiver does not recognize the ID code, it should ignore the following
+data.
+
+So that other users and third party developers can fully access their instruments,
+manufacturers must publish the format of the System Exclusive data following
+their ID code. Only the manufacturer can define or update the format following
+their ID.
 
 
 System Exclusive Messages are exceptions to the rule: they are not [`MidiByte`]s

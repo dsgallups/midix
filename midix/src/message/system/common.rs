@@ -2,9 +2,7 @@ use crate::prelude::*;
 use std::io::ErrorKind;
 
 #[doc = r#"
-A System Common Message, used to relay some data for receivers.
-
-This message is only found in [`LiveEvent`]s.
+A System Common Message, used to relay data for ALL receivers, regardless of channel.
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemCommonMessage<'a> {
