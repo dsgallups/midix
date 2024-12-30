@@ -1,17 +1,19 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
-pub trait SystemCommonMessageTrait {
-    fn status(&self) -> u8;
-}
+#[doc = r#"
+A System Common Message, used to relay some data for receivers.
 
+This message is only found in [`LiveEvent`]s.
+"#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemCommonMessage<'a> {
-    /// A system-exclusive event.
+    /// A system-exclusive message.
     ///
-    /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
-    /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
-    SystemExclusive(SysEx<'a>),
+    /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte.
+    ///
+    /// Note that `SysExMessage` is found in both [`LiveEvent`]s and [`FileEvent`]s.
+    SystemExclusive(SysExMessage<'a>),
     /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
     MidiTimeCodeQuarterFrame {
         message: MtcQuarterFrameMessage,
@@ -21,7 +23,7 @@ pub enum SystemCommonMessage<'a> {
     Undefined(u8),
     /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
     /// sequence.
-    SongPositionPointer { lsb: u8, msb: u8 },
+    SongPositionPointer(SongPositionPointer),
     /// Select a given song index.
     SongSelect(u8),
     /// Request the device to tune itself.
@@ -38,15 +40,14 @@ impl SystemCommonMessage<'_> {
             Undefined(v) => *v,
         }
     }
-}
 
-impl AsMidiBytes for SystemCommonMessage<'_> {
-    fn as_bytes(&self) -> Vec<u8> {
+    /// Represents the message as an array of bytes for some live MIDI stream
+    pub fn to_bytes(&self) -> Vec<u8> {
         use SystemCommonMessage::*;
         match self {
-            SystemExclusive(b) => b.as_bytes(),
-            SongPositionPointer { lsb, msb } => {
-                vec![self.status(), *lsb, *msb]
+            SystemExclusive(b) => b.to_live_bytes(),
+            SongPositionPointer(spp) => {
+                vec![self.status(), spp.lsb(), spp.msb()]
             }
             SongSelect(v) => vec![self.status(), *v],
             TuneRequest | Undefined(_) => vec![self.status()],
@@ -54,19 +55,19 @@ impl AsMidiBytes for SystemCommonMessage<'_> {
     }
 }
 
-impl FromMidiMessage for SystemCommonMessage<'_> {
+impl FromLiveEventBytes for SystemCommonMessage<'_> {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {
         let ev = match status {
             0xF0 => {
-                //SysEx
+                //SysExMessage
                 let data = data
                     .iter()
                     .copied()
                     .take_while(|byte| byte != &0xF7)
                     .collect::<Vec<_>>();
-                SystemCommonMessage::SystemExclusive(SysEx::new(data))
+                SystemCommonMessage::SystemExclusive(SysExMessage::new(data))
             }
             /*0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame
@@ -77,14 +78,13 @@ impl FromMidiMessage for SystemCommonMessage<'_> {
             }*/
             0xF2 if data.len() == 2 => {
                 //Song Position
-                SystemCommonMessage::SongPositionPointer {
-                    lsb: data[0],
-                    msb: data[1],
-                }
+                SystemCommonMessage::SongPositionPointer(SongPositionPointer::new(
+                    data[0], data[1],
+                )?)
             }
             0xF3 if data.len() == 1 => {
                 //Song Select
-                SystemCommonMessage::SongSelect(data[0])
+                SystemCommonMessage::SongSelect(check_u7(data[0])?)
             }
             0xF6 => {
                 //Tune Request
@@ -96,7 +96,7 @@ impl FromMidiMessage for SystemCommonMessage<'_> {
             }
             _ => {
                 //Invalid/Unknown/Unreachable event
-                //(Including F7 SysEx End Marker)
+                //(Including F7 SysExMessage End Marker)
                 return Err(io_error!(
                     ErrorKind::InvalidInput,
                     "Could not read System Common Message"
@@ -128,9 +128,9 @@ pub enum MtcQuarterFrameMessage {
     HoursHigh,
 }
 
-impl MidiBits for MtcQuarterFrameMessage {
-    type BitRepresentation = u8;
-    fn as_bits(&self) -> u8 {
+impl MtcQuarterFrameMessage {
+    /// Represents the message as a byte
+    pub fn as_byte(&self) -> u8 {
         use MtcQuarterFrameMessage::*;
         match self {
             FramesLow => 0,
@@ -143,7 +143,9 @@ impl MidiBits for MtcQuarterFrameMessage {
             HoursHigh => 7,
         }
     }
-    fn from_bits(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
+
+    /// Creates a new message from a byte. This type always checks for correctness.
+    pub fn new(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
         use MtcQuarterFrameMessage::*;
         Ok(match code {
             0 => FramesLow,
@@ -161,42 +163,5 @@ impl MidiBits for MtcQuarterFrameMessage {
                 ))
             }
         })
-    }
-}
-
-/// Borrowed bytes from some reader. EXPECT THIS TO BREAK IN A FUTURE RELEASE!
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub enum BorrowedSystemCommonMessage<'a> {
-    /// A system-exclusive event.
-    ///
-    /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
-    /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
-    SystemExclusive(&'a [u8]),
-    /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
-    MidiTimeCodeQuarterFrame {
-        message: MtcQuarterFrameMessage,
-        tag: u8,
-    },*/
-    /// An undefined System Common message
-    Undefined(u8),
-    /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
-    /// sequence.
-    SongPositionPointer { lsb: u8, msb: u8 },
-    /// Select a given song index.
-    SongSelect(u8),
-    /// Request the device to tune itself.
-    TuneRequest,
-}
-
-impl SystemCommonMessageTrait for BorrowedSystemCommonMessage<'_> {
-    fn status(&self) -> u8 {
-        use BorrowedSystemCommonMessage::*;
-        match &self {
-            SystemExclusive(_) => 0xF0,
-            SongPositionPointer { .. } => 0xF2,
-            SongSelect(_) => 0xF3,
-            TuneRequest => 0xF6,
-            Undefined(v) => *v,
-        }
     }
 }

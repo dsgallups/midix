@@ -3,8 +3,7 @@ use bevy::tasks::IoTaskPool;
 use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind;
 pub use midir::MidiOutputPort;
-use midix::bytes::AsMidiBytes;
-use midix::live::MidiLiveMessage;
+use midix::events::LiveEvent;
 use std::fmt::Display;
 use std::{error::Error, future::Future};
 use MidiOutputError::{ConnectionError, PortRefreshError, SendDisconnectedError, SendError};
@@ -37,7 +36,7 @@ impl Default for MidiOutputSettings {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for sending midi messages.
+/// [`Resource`] for sending midi messages.
 ///
 /// Change detection will only fire when its input ports are refreshed.
 #[derive(Resource)]
@@ -70,7 +69,7 @@ impl MidiOutput {
     }
 
     /// Send a midi message.
-    pub fn send(&self, msg: impl Into<MidiLiveMessage<'static>>) {
+    pub fn send(&self, msg: impl Into<LiveEvent<'static>>) {
         self.sender
             .send(Message::Midi(msg.into()))
             .expect("Couldn't send MIDI message");
@@ -83,7 +82,7 @@ impl MidiOutput {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for checking whether [`MidiOutput`] is
+/// [`Resource`] for checking whether [`MidiOutput`] is
 /// connected to any ports.
 ///
 /// Change detection fires whenever the connection changes.
@@ -99,12 +98,12 @@ impl MidiOutputConnection {
     }
 }
 
-/// The [`Error`] type for midi output operations, accessible as an [`Event`](bevy::ecs::event::Event)
+/// The [`Error`] type for midi output operations, accessible as an [`Event`]
 #[derive(Clone, Debug, Event)]
 pub enum MidiOutputError {
     ConnectionError(ConnectErrorKind),
     SendError(midir::SendError),
-    SendDisconnectedError(MidiLiveMessage<'static>),
+    SendDisconnectedError(LiveEvent<'static>),
     PortRefreshError,
 }
 
@@ -182,7 +181,7 @@ enum Message {
     RefreshPorts,
     ConnectToPort(MidiOutputPort),
     DisconnectFromPort,
-    Midi(MidiLiveMessage<'static>),
+    Midi(LiveEvent<'static>),
 }
 
 enum Reply {
@@ -279,7 +278,7 @@ impl Future for MidiOutputTask {
                 },
                 Midi(message) => {
                     if let Some((conn, _)) = &mut self.connection {
-                        if let Err(e) = conn.send(&message.as_bytes()) {
+                        if let Err(e) = conn.send(&message.to_bytes()) {
                             self.sender.send(Reply::Error(SendError(e))).unwrap();
                         }
                     } else {

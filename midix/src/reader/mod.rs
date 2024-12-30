@@ -1,32 +1,83 @@
 #![doc = r"
-# Reader for parsing midi
+Contains a high-level interface for a pull-based MIDI file parser
+
+See the [`Reader`] docs for more information
+
+# Acknowledgments
 
 Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
-
-
-## TODO
-- [ ] Config
-
-
-Parser should have read_event() which will YIELD a type from it.
-Our types should be refactored such that constructors are crate visible only
-and then we can have owned types accordingly. So really reader should have our types
-
-We should probably have a parser that can yield an enum
 "]
 
-mod state;
-pub use state::*;
 mod error;
+mod state;
 pub use error::*;
+use state::{ParseState, ReaderState};
 
-use std::{
-    borrow::Cow,
-    io::{BufRead, BufReader, Read},
-};
+use std::{borrow::Cow, io::ErrorKind};
 
 use crate::prelude::*;
 
+#[doc = r#"
+A MIDI event reader.
+
+Consumes bytes and streams MIDI [`FileEvent`]s.
+
+# Overview
+MIDI Files are made up of -chunks-. Each chunk has a 4-character
+type and a 32-bit length, which is the number of bytes in the chunk.
+This structure allows future chunk types to be designed which may be
+easily be ignored if encountered by a program written before the
+chunk type is introduced.
+
+Each chunk begins with a 4-character ASCII type. It is followed by a
+32-bit length, most significant byte first (a length of 6 is stored
+as 00 00 00 06). This length refers to the number of bytes of data
+which follow: the eight bytes of type and length are not included.
+Therefore, a chunk with a length of 6 would actually occupy 14 bytes
+in the disk file.
+
+# Shortcomings
+
+This reader will be able to yield events from any type
+that is [`Read`](std::io::Read) in a future minor release.
+
+For now, construct a `Reader<&[u8]>` to gain access to [`Reader::read_event`].
+
+# Common Pitfalls
+This parser will not error if an unknown chunk type is found. It will assume
+the unknown data has a 4-byte name and a proceeding 4-byte length. If this
+is not true, then the cursor will fail on the next read event.
+
+# Example
+```rust
+use midix::prelude::*;
+
+let midi_header = [
+    /* MIDI Header */
+    0x4D, 0x54, 0x68, 0x64, // "MThdd"
+    0x00, 0x00, 0x00, 0x06, // Chunk length (6)
+    0x00, 0x00, // format 0
+    0x00, 0x01, // one track
+    0x00, 0x60  // 96 per quarter note
+];
+
+let mut reader = Reader::from_byte_slice(&midi_header);
+
+// The first and only event will be the midi header
+let Ok(FileEvent::Header(header)) = reader.read_event() else {
+    panic!("Expected a header event");
+};
+
+// format 0 implies a single multi-channel file (only one track)
+assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
+
+assert_eq!(
+    header.timing().ticks_per_quarter_note(),
+    Some(96)
+);
+```
+
+"#]
 #[derive(Clone)]
 pub struct Reader<R> {
     reader: R,
@@ -34,6 +85,7 @@ pub struct Reader<R> {
 }
 
 impl<R> Reader<R> {
+    /// Create a new reader.
     pub const fn new(reader: R) -> Self {
         Self {
             reader,
@@ -46,16 +98,13 @@ impl<R> Reader<R> {
         self.reader
     }
 
-    pub fn set_last_error_offset(&mut self, offset: usize) {
+    pub(crate) fn set_last_error_offset(&mut self, offset: usize) {
         self.state.set_last_error_offset(offset);
     }
 
+    /// Grab the current position of the inner reader "cursor"
     pub const fn buffer_position(&self) -> usize {
         self.state.offset()
-    }
-
-    pub const fn increment_buffer_position(&mut self, amt: usize) {
-        self.state.increment_offset(amt);
     }
 
     /// Gets a reference to the underlying reader
@@ -69,25 +118,9 @@ impl<R> Reader<R> {
     }
 }
 
-impl<R: Read> Reader<BufReader<R>> {
-    pub fn from_reader(reader: R) -> Self {
-        Self {
-            reader: BufReader::new(reader),
-            state: ReaderState::default(),
-        }
-    }
-}
-
-impl<R: BufRead> Reader<R> {
-    pub const fn from_buf_reader(reader: R) -> Self {
-        Self {
-            reader,
-            state: ReaderState::default(),
-        }
-    }
-}
-
 impl<'slc> Reader<&'slc [u8]> {
+    /// Create a new [`Reader`] from a `&[u8]`. Only this type has the
+    /// [`Reader::read_event`] method.
     #[must_use]
     pub const fn from_byte_slice(slice: &'slc [u8]) -> Self {
         Self {
@@ -101,7 +134,7 @@ impl<'slc> Reader<&'slc [u8]> {
     /// # Errors
     ///
     /// If the next set of bytes are invalid given the current state of the reader
-    pub fn read_event<'a>(&mut self) -> ReadResult<Event<'a>>
+    pub fn read_event<'a>(&mut self) -> ReadResult<FileEvent<'a>>
     where
         'slc: 'a,
     {
@@ -114,30 +147,39 @@ impl<'slc> Reader<&'slc [u8]> {
                 }
                 ParseState::InsideMidi => {
                     // expect only a header or track chunk
-                    let chunk = self.read_exact(4)?;
+                    let chunk = match self.read_exact(4) {
+                        Ok(c) => c,
+                        Err(e) => match e.kind() {
+                            // Inside Midi + UnexpectedEof should only fire at the end of a file.
+                            ErrorKind::UnexpectedEof => {
+                                self.state.set_parse_state(ParseState::Done);
+                                return Ok(FileEvent::eof());
+                            }
+                            _ => {
+                                return Err(e);
+                            }
+                        },
+                    };
                     match chunk {
                         b"MThd" => {
                             //HeaderChunk should handle us
-                            break Event::Header(HeaderChunk::read(self)?);
+                            break FileEvent::Header(HeaderChunk::read(self)?);
                         }
                         b"MTrk" => {
-                            let chunk = TrackChunk::read(self)?;
+                            let chunk = TrackChunkHeader::read(self)?;
                             //todo: set new state
                             self.state.set_parse_state(ParseState::InsideTrack {
                                 start: self.buffer_position(),
-                                length: chunk.length() as usize,
+                                length: chunk.len() as usize,
                                 prev_status: None,
                             });
-                            break Event::Track(chunk);
+                            break FileEvent::Track(chunk);
                         }
                         bytes => {
-                            self.state.set_parse_state(ParseState::Done);
-                            return Err(inv_data(
-                                self,
-                                format!(
-                                    "Expected a MIDI Chunk header. Found unexpected input: {bytes:?}",
-                                ),
-                            ));
+                            //let chunk
+                            let chunk = UnknownChunk::read(bytes, self)?;
+
+                            break FileEvent::Unknown(chunk);
                         }
                     }
                 }
@@ -163,15 +205,17 @@ impl<'slc> Reader<&'slc [u8]> {
                                 //discard the last 0xF7
                                 data = &data[..data.len() - 1];
                             }
-                            TrackMessage::SystemExclusive(SysEx::new_borrowed(data))
+                            TrackMessage::SystemExclusive(SysExMessage::new_borrowed(data))
                         }
-                        0xFF => TrackMessage::Meta(Meta::read(self)?),
+                        0xFF => TrackMessage::Meta(MetaMessage::read(self)?),
                         byte => {
                             //status if the byte has a leading 1, otherwise it's
                             //a running status
                             let status = if byte >> 7 == 1 {
-                                let ParseState::InsideTrack { prev_status, .. } =
-                                    self.state.parse_state_mut()
+                                let ParseState::InsideTrack {
+                                    ref mut prev_status,
+                                    ..
+                                } = self.state.parse_state_mut()
                                 else {
                                     return Err(inv_data(
                                         self,
@@ -188,13 +232,13 @@ impl<'slc> Reader<&'slc [u8]> {
                             };
 
                             //todo
-                            TrackMessage::ChannelVoice(ChannelVoice::read(status, self)?)
+                            TrackMessage::ChannelVoice(ChannelVoiceMessage::read(status, self)?)
                         }
                     };
 
-                    break Event::TrackEvent(TrackEvent::new(delta_time, message));
+                    break FileEvent::TrackEvent(TrackEvent::new(delta_time, message));
                 }
-                ParseState::Done => break Event::EOF,
+                ParseState::Done => break FileEvent::EOF,
             }
         };
         Ok(event)

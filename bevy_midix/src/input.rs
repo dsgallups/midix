@@ -3,8 +3,7 @@ use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender};
 use midir::ConnectErrorKind; // XXX: do we expose this?
 pub use midir::{Ignore, MidiInputPort};
-use midix::bytes::FromMidiMessage;
-use midix::live::MidiLiveMessage;
+use midix::events::{FromLiveEventBytes, LiveEvent};
 use std::error::Error;
 use std::fmt::Display;
 use std::future::Future;
@@ -44,7 +43,7 @@ impl Default for MidiInputSettings {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for receiving midi messages.
+/// [`Resource`] for receiving midi messages.
 ///
 /// Change detection will only fire when its input ports are refreshed.
 
@@ -89,7 +88,7 @@ impl MidiInput {
     }
 }
 
-/// [`Resource`](bevy::ecs::system::Resource) for checking whether [`MidiInput`] is
+/// [`Resource`] for checking whether [`MidiInput`] is
 /// connected to any ports.
 ///
 /// Change detection fires whenever the connection changes.
@@ -105,16 +104,16 @@ impl MidiInputConnection {
     }
 }
 
-/// An [`Event`](bevy::ecs::event::Event) for incoming midi data.
+/// An [`Event`] for incoming midi data.
 ///
 /// This event fires from [`CoreStage::PreUpdate`].
 #[derive(Resource, Event, Debug)]
 pub struct MidiData {
     pub stamp: u64,
-    pub message: MidiLiveMessage<'static>,
+    pub message: LiveEvent<'static>,
 }
 
-/// The [`Error`] type for midi input operations, accessible as an [`Event`](bevy::ecs::event::Event).
+/// The [`Error`] type for midi input operations, accessible as an [`Event`].
 #[derive(Clone, Debug, Event)]
 pub enum MidiInputError {
     ConnectionError(ConnectErrorKind),
@@ -242,7 +241,7 @@ impl Future for MidiInputTask {
                         &port,
                         self.settings.port_name,
                         move |stamp, message, _| {
-                            let Ok(message) = MidiLiveMessage::from_bytes(message) else {
+                            let Ok(message) = LiveEvent::from_bytes(message) else {
                                 return;
                             };
                             let data = MidiData { stamp, message };
@@ -290,7 +289,7 @@ impl Future for MidiInputTask {
                             &port,
                             self.settings.port_name,
                             move |stamp, message, _| {
-                                let Ok(message) = MidiLiveMessage::from_bytes(message) else {
+                                let Ok(message) = LiveEvent::from_bytes(message) else {
                                     return;
                                 };
                                 let data = MidiData { stamp, message };

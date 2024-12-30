@@ -14,19 +14,11 @@ pub struct PitchBend<'a> {
 }
 
 impl<'a> PitchBend<'a> {
-    pub const fn new(lsb: u8, msb: u8) -> Self {
-        Self {
-            lsb: Cow::Owned(lsb),
-            msb: Cow::Owned(msb),
-        }
-    }
-    pub(crate) const fn new_borrowed(lsb: &'a u8, msb: &'a u8) -> Self {
-        Self {
-            lsb: Cow::Borrowed(lsb),
-            msb: Cow::Borrowed(msb),
-        }
-    }
-    pub fn from_byte_pair(lsb: u8, msb: u8) -> Result<Self, std::io::Error> {
+    /// Creates a new pitch bend given the
+    /// least significant and most significant bytes.
+    ///
+    /// Checks for byte correctness (leading 0 bit)
+    pub fn new(lsb: u8, msb: u8) -> Result<Self, std::io::Error> {
         let lsb = check_u7(lsb)?;
         let msb = check_u7(msb)?;
         Ok(Self {
@@ -34,29 +26,52 @@ impl<'a> PitchBend<'a> {
             msb: Cow::Owned(msb),
         })
     }
+
+    /// Creates a new pitch bend given the
+    /// least significant and most significant bytes.
+    ///
+    /// Does not check for correctness
+    pub const fn new_unchecked(lsb: u8, msb: u8) -> Self {
+        Self {
+            lsb: Cow::Owned(lsb),
+            msb: Cow::Owned(msb),
+        }
+    }
+
+    /// Creates a new pitch bend given the
+    /// borrowed least significant and most significant bytes.
+    ///
+    /// Does not check for correctness
+    pub const fn new_borrowed_unchecked(lsb: &'a u8, msb: &'a u8) -> Self {
+        Self {
+            lsb: Cow::Borrowed(lsb),
+            msb: Cow::Borrowed(msb),
+        }
+    }
+
+    /// Returns a reference to the pitch bend's least significant byte.
     pub fn lsb(&self) -> &u8 {
         self.lsb.as_ref()
     }
+
+    /// Returns a reference to the pitch bend's most significant byte.
     pub fn msb(&self) -> &u8 {
         self.msb.as_ref()
     }
-}
 
-impl MidiBits for PitchBend<'_> {
-    type BitRepresentation = u16;
-    fn as_bits(&self) -> Self::BitRepresentation {
+    /// Represents a pitch bend, lsb then msb, as a u16
+    pub fn as_bits(&self) -> u16 {
         let lsb = *self.lsb;
         let msb = *self.msb;
         let combined: u16 = ((msb as u16) << 8) | (lsb as u16);
         combined
     }
-    fn from_bits(rep: Self::BitRepresentation) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
+
+    /// Represents a u16, lsb then msb, as a pitch bend
+    pub fn from_bits(rep: u16) -> Result<Self, std::io::Error> {
         let lsb = (rep >> 8) as u8;
         let msb = (rep & 0x00FF) as u8;
-        Self::from_byte_pair(lsb, msb)
+        Self::new(lsb, msb)
     }
 }
 
@@ -96,7 +111,7 @@ impl PitchBend<'_> {
 
     /// Returns an int in the range `[-0x2000, 0x1FFF]`.
     ///
-    /// This is erroneous when writing a raw midi file. Use [`as_u16`](Self::as_u16) instead.
+    /// Do not use this when writing to a midi file.
     #[inline]
     pub fn as_int(self) -> i16 {
         self.as_bits() as i16 - 0x2000

@@ -1,6 +1,11 @@
+#![doc = r#"
+Contains types exclusive to MIDI files
+"#]
+
 //pub mod builder;
-pub mod format;
-pub mod header;
+mod format;
+pub use format::*;
+pub mod chunk;
 pub mod meta;
 pub mod track;
 

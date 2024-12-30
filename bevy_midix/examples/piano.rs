@@ -134,7 +134,7 @@ fn handle_midi_input(
     query: Query<(Entity, &Key)>,
 ) {
     for data in midi_events.read() {
-        let raw = data.message.as_bytes();
+        let raw = data.message.to_bytes();
         let [_, index, _value] = raw.as_slice() else {
             continue;
         };
@@ -142,7 +142,7 @@ fn handle_midi_input(
         let oct = index.overflowing_div(12).0;
         let key_str = KEY_RANGE[off as usize];
 
-        if let MidiLiveMessage::ChannelVoice(message) = &data.message {
+        if let LiveEvent::ChannelVoice(message) = &data.message {
             if message.is_note_on() {
                 for (entity, key) in query.iter() {
                     if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {

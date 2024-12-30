@@ -80,17 +80,17 @@ impl VoiceEvent<'_> {
     /// Get the raw data bytes for this message
     pub fn to_raw(&self) -> Vec<u8> {
         match self {
-            VoiceEvent::NoteOff { key, velocity } => vec![key.as_bits(), velocity.as_bits()],
-            VoiceEvent::NoteOn { key, velocity } => vec![key.as_bits(), velocity.as_bits()],
+            VoiceEvent::NoteOff { key, velocity } => vec![*key.byte(), *velocity.byte()],
+            VoiceEvent::NoteOn { key, velocity } => vec![*key.byte(), *velocity.byte()],
             VoiceEvent::Aftertouch { key, velocity } => {
-                vec![key.as_bits(), velocity.as_bits()]
+                vec![*key.byte(), *velocity.byte()]
             }
             VoiceEvent::ControlChange { controller, value } => {
                 let value = **value;
-                vec![controller.as_bits(), value]
+                vec![*controller.byte(), value]
             }
-            VoiceEvent::ProgramChange { program } => vec![program.as_bits()],
-            VoiceEvent::ChannelPressureAfterTouch { velocity } => vec![velocity.as_bits()],
+            VoiceEvent::ProgramChange { program } => vec![*program.byte()],
+            VoiceEvent::ChannelPressureAfterTouch { velocity } => vec![*velocity.byte()],
             VoiceEvent::PitchBend(bend) => {
                 vec![*bend.lsb(), *bend.msb()]
             }
