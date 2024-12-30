@@ -5,7 +5,7 @@ A high performance MIDI reader.
 
 # Overview
 
-`midix` provides a min-copy parser ([`Reader`]) to read events from `.mid` files.
+`midix` provides a min-copy parser ([`Reader`](crate::prelude::Reader)) to read events from `.mid` files.
 Additionally, `midix` provides the user with [`LiveEvent::from_bytes`](crate::events::LiveEvent), which will parse
 events from a live MIDI source.
 
@@ -73,10 +73,6 @@ assert_eq!(velocity.value(), 96);
 # Semantic Versioning and Support
 `midix` will adhere to semantic versioning.
 
-`midix` is not feature complete. expect new features in minor changes.
-
-midix will NOT break its interfaces without a major revision, which may happen with some frequency.
-
 ## General feature schedule
 The SUPPORT.md file denotes the length of time major revisions are supported.
 
@@ -131,8 +127,8 @@ pub use controller::*;
 mod system_common;
 pub use system_common::*;
 
-mod realtime_message;
-pub use realtime_message::*;
+mod system_realtime;
+pub use system_realtime::*;
 
 mod song_position_pointer;
 pub use song_position_pointer::*;

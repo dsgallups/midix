@@ -36,7 +36,7 @@ pub trait FromLiveEventBytes {
     }
     /// Attempt to create the type from a status and set of data.
     ///
-    /// This is used mainly for comfority in [`ChannelVoice`](crate::prelude::ChannelVoice) events.
+    /// This is used mainly for comfority in [`ChannelVoiceMessage`](crate::prelude::ChannelVoiceMessage)s.
     ///
     /// # Errors
     /// If the status and data cannot represent the type
@@ -64,7 +64,7 @@ pub enum LiveEvent<'a> {
 }
 
 impl LiveEvent<'_> {
-    /// returns Some if the message contains a [`ChannelVoice`] event.
+    /// returns Some if the message is a [`ChannelVoiceMessage`].
     pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage<'_>> {
         match self {
             LiveEvent::ChannelVoice(c) => Some(c),

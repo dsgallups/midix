@@ -3,8 +3,6 @@ use core::fmt;
 use std::borrow::Cow;
 
 /// Identifies the velocity of a key press, or a key unpress, or an aftertouch.
-///
-/// TODO
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Velocity<'a>(Cow<'a, u8>);
 

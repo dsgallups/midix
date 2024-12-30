@@ -4,7 +4,7 @@ use crate::prelude::*;
 An enumerationg of categories which may be
 
 Track Messages fall into three categories:
-- [`ChannelVoice`]: Notes, velocities, pedals, channel events.
+- [`ChannelVoiceMessage`]: Notes, velocities, pedals, channel events.
 - [`SysExMessage`]: Inaudible events communicated between devices
 - ['MetaMessage']: Identifiers for the track, like name, copyright information, arbitrary text.
 "#]

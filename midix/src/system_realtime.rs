@@ -1,7 +1,8 @@
 use crate::prelude::*;
 use std::io::ErrorKind;
 
-/// System Realtime messages are one-byte messages that only occur within live MIDI streams.
+/// One-byte messages that only occur in live MIDI events.
+///
 /// They are usually time-sensitive, get top priority and can even be transmitted in between other
 /// messages.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
@@ -39,7 +40,7 @@ impl SystemRealTimeMessage {
         }
     }
 
-    /// Interpret a byte as a [`SystemRealTime`] message
+    /// Interpret a byte as a [`SystemRealTimeMessage`]
     pub fn from_byte(rep: u8) -> Result<Self, std::io::Error> {
         use SystemRealTimeMessage::*;
         Ok(match rep {
