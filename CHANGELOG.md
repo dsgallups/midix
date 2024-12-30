@@ -19,4 +19,4 @@ in the future.
 ## Chores
 - Updated `bevy_midix` examples
 
-**Full Changelog**: https://github.com/dsgallups/wasm-tracing/compare/1.0.0...2.0.0
+**Full Changelog**: https://github.com/dsgallups/midix/compare/1.0...2.0.0
