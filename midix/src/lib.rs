@@ -1,4 +1,3 @@
-#![cfg_attr(feature = "nightly", feature(const_for))]
 #![warn(missing_docs)]
 #![warn(clippy::print_stdout)]
 #![doc = include_str!("../README.md")]

@@ -13,9 +13,6 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 
-[features]
-nightly = []
-
 [dev-dependencies]
 pretty_assertions = { default-features = false, features = [
     "alloc",
