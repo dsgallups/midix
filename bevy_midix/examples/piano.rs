@@ -3,7 +3,7 @@ use bevy::{
     pbr::AmbientLight,
     prelude::*,
 };
-use bevy_midix::prelude::*;
+use bevy_midix::prelude::{Key as MidiKey, *};
 
 fn main() {
     App::new()
@@ -36,7 +36,7 @@ fn main() {
 
 #[derive(Component, Debug)]
 struct Key {
-    key_val: String,
+    key_val: MidiKey<'static>,
     y_reset: f32,
 }
 
@@ -110,7 +110,7 @@ fn spawn_note(
             ..Default::default()
         },
         Key {
-            key_val: format!("{}{}", key, oct),
+            key_val: MidiKey::new(5).unwrap(), //TODO
             y_reset: pos.y,
         },
     ));
@@ -138,20 +138,18 @@ fn handle_midi_input(
         let [_, index, _value] = raw.as_slice() else {
             continue;
         };
-        let off = index % 12;
-        let oct = index.overflowing_div(12).0;
-        let key_str = KEY_RANGE[off as usize];
+        let midi_key = MidiKey::new(index).unwrap();
 
         if let LiveEvent::ChannelVoice(message) = &data.message {
             if message.is_note_on() {
                 for (entity, key) in query.iter() {
-                    if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
+                    if key.key_val.eq(&midi_key) {
                         commands.entity(entity).insert(PressedKey);
                     }
                 }
             } else if message.is_note_off() {
                 for (entity, key) in query.iter() {
-                    if key.key_val.eq(&format!("{}{}", key_str, oct).to_string()) {
+                    if key.key_val.eq(&midi_key) {
                         commands.entity(entity).remove::<PressedKey>();
                     }
                 }

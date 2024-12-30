@@ -39,6 +39,17 @@ impl<'a> Key<'a> {
         rep.try_into().map(Self).map_err(Into::into)
     }
 
+    /// Create a key from a given note and octave
+    pub fn from_note_and_octave(note: Note, octave: Octave) -> Self {
+        let octave_byte = (octave.value() + 1) as u8;
+
+        let key = note.get_mod_12();
+
+        let octave_mult = (octave_byte) * 12;
+
+        Self::new(octave_mult + key).unwrap()
+    }
+
     /// Identifies the note of the key pressed
     #[inline]
     pub fn note(&self) -> Note {
@@ -122,6 +133,23 @@ impl Note {
             _ => unreachable!(),
         }
     }
+    fn get_mod_12(&self) -> u8 {
+        use Note::*;
+        match self {
+            C => 0,
+            CSharp => 1,
+            D => 2,
+            DSharp => 3,
+            E => 4,
+            F => 5,
+            FSharp => 6,
+            G => 7,
+            GSharp => 8,
+            A => 9,
+            ASharp => 10,
+            B => 11,
+        }
+    }
 }
 impl fmt::Display for Note {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -170,5 +198,21 @@ impl Octave {
 impl fmt::Display for Octave {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+#[test]
+fn key_from_note_octave_pairs() {
+    for key_byte in 0..128 {
+        let key = Key::new(key_byte).unwrap();
+
+        let exp_note = key.note();
+        let exp_oct = key.octave();
+
+        let made_key = Key::from_note_and_octave(exp_note, exp_oct);
+
+        assert_eq!(exp_oct, made_key.octave());
+        assert_eq!(exp_note, made_key.note());
+        assert_eq!(key, Key::from_note_and_octave(exp_note, exp_oct));
     }
 }
