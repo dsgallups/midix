@@ -1,7 +1,8 @@
 [package]
-name = "midix_piano"
+name = "midix_examples"
 version = "0.1.0"
 edition = "2024"
+publish = false
 
 [dependencies]
 bevy = "0.15.0"
