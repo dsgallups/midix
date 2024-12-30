@@ -219,16 +219,12 @@ pub struct Octave(i8);
 
 impl Octave {
     /// Identify an octave from a key byte.
-    ///
-    /// Program MAY panic if this byte has a leading 1.
     pub fn from_data_byte(key: &DataByte<'_>) -> Self {
         let octave = *key.byte() / 12;
 
         Self(octave as i8 - 1)
     }
-    /// Should be a value between [-1, 9].
-    ///
-    /// Program MAY panic if this is not true.
+    /// Should be a value between [-1, 9]. Clamps between these two values.
     pub fn new(octave: i8) -> Self {
         Self(octave.clamp(-1, 9))
     }
