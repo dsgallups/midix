@@ -205,7 +205,9 @@ impl<'slc> Reader<&'slc [u8]> {
                                 //discard the last 0xF7
                                 data = &data[..data.len() - 1];
                             }
-                            TrackMessage::SystemExclusive(SysExMessage::new_borrowed(data))
+                            TrackMessage::SystemExclusive(SystemExclusiveMessage::new_borrowed(
+                                data,
+                            ))
                         }
                         0xFF => TrackMessage::Meta(MetaMessage::read(self)?),
                         byte => {

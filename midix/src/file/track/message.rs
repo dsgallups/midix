@@ -5,7 +5,7 @@ An enumerationg of categories which may be
 
 Track Messages fall into three categories:
 - [`ChannelVoiceMessage`]: Notes, velocities, pedals, channel events.
-- [`SysExMessage`]: Inaudible events communicated between devices
+- [`SystemExclusiveMessage`]: Inaudible events communicated between devices
 - ['MetaMessage']: Identifiers for the track, like name, copyright information, arbitrary text.
 "#]
 #[derive(Clone, Debug, PartialEq)]
@@ -17,8 +17,8 @@ pub enum TrackMessage<'a> {
 
     /// A system exclusive event.
     ///
-    /// See [`SysExMessage`] for details
-    SystemExclusive(SysExMessage<'a>),
+    /// See [`SystemExclusiveMessage`] for details
+    SystemExclusive(SystemExclusiveMessage<'a>),
 
     /// A meta-message, giving extra information for correct playback, like tempo, song name,
     /// lyrics, etc...

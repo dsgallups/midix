@@ -10,11 +10,33 @@ Manufacturer's Identification (ID) code,
 and are used to transfer any number of
 data bytes in a format specified by the
 referenced manufacturer.
+
+# Layout
+System Exclusive.
+```text
+0iiiiiii
+0ddddddd
+..
+..
+0ddddddd
+11110111
+
+This message makes up for all that MIDI doesn't support.
+(iiiiiii) is usually a seven-bit Manufacturer's I.D. code.
+If the synthesiser recognises the I.D. code as its own, it
+will listen to the rest of the message (ddddddd).
+
+Otherwise, the message will be ignored. System Exclusive
+is used to send bulk dumps such as patch parameters and
+other non-spec data. (Note: Real-Time messages ONLY may
+be interleaved with a System Exclusive.) This message also
+is used for extensions called Universal Exclusive Messages.
+```
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SysExMessage<'a>(Cow<'a, [u8]>);
+pub struct SystemExclusiveMessage<'a>(Cow<'a, [u8]>);
 
-impl<'a> SysExMessage<'a> {
+impl<'a> SystemExclusiveMessage<'a> {
     /// Create a new owned system exclusive message
     pub const fn new(data: Vec<u8>) -> Self {
         Self(Cow::Owned(data))

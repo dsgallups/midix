@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 
 use crate::prelude::*;
-mod event;
-pub use event::*;
 
 /// Represents a MIDI voice message,.
 ///

@@ -117,23 +117,16 @@ pub use velocity::*;
 mod key;
 pub use key::*;
 
-mod channel_voice;
-pub use channel_voice::*;
-
 mod controller;
 pub use controller::*;
 
-mod system_common;
-pub use system_common::*;
+mod byte;
+pub use byte::*;
 
-mod system_realtime;
-pub use system_realtime::*;
+pub mod message;
 
 mod song_position_pointer;
 pub use song_position_pointer::*;
-
-mod sysex;
-pub use sysex::*;
 
 pub(crate) trait ReadDataBytesExt {
     fn get_byte(&self, byte: usize) -> Result<&u8, io::Error>;
@@ -156,6 +149,7 @@ pub mod prelude {
         channel::*,
         events::*,
         file::{chunk::*, meta::*, track::*, *},
+        message::{channel::*, system::*, MidiMessage},
         *,
     };
 
