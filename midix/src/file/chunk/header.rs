@@ -125,12 +125,12 @@ pub enum Timing<'a> {
 
 impl<'a> Timing<'a> {
     /// Create a new timing from a 2 byte array slice.
-    pub fn new_ticks_from_slice(arr: &'a [u8; 2]) -> Self {
+    pub fn new_ticks_from_byte_slice(arr: &'a [u8; 2]) -> Self {
         Self::TicksPerQuarterNote(Cow::Borrowed(arr))
     }
 
     /// Create a new negative SMPTE division a 2 byte array slice
-    pub fn new_negative_smpte_from_slice(arr: &'a [u8; 2]) -> Self {
+    pub fn new_negative_smpte_from_byte_slice(arr: &'a [u8; 2]) -> Self {
         Self::NegativeSmpte(Cow::Borrowed(arr))
     }
 

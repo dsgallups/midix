@@ -134,7 +134,7 @@ fn handle_midi_input(
     query: Query<(Entity, &Key)>,
 ) {
     for data in midi_events.read() {
-        let raw = data.message.as_bytes();
+        let raw = data.message.to_bytes();
         let [_, index, _value] = raw.as_slice() else {
             continue;
         };

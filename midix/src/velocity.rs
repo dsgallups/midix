@@ -35,6 +35,11 @@ impl<'a> Velocity<'a> {
     pub fn byte(&self) -> &u8 {
         &self.0
     }
+
+    /// Get a reference to the underlying byte
+    pub fn value(&self) -> u8 {
+        *self.0
+    }
 }
 
 impl fmt::Display for Velocity<'_> {

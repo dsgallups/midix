@@ -2,14 +2,15 @@ use crate::prelude::*;
 use std::io::ErrorKind;
 
 #[doc = r#"
-Messages for receivers of a system. Only found in [`LiveEvent`]s.
+A System Common Message, used to relay some data for receivers.
+
+This message is only found in [`LiveEvent`]s.
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemCommon<'a> {
-    /// A system-exclusive event.
+    /// A system-exclusive message.
     ///
-    /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte, but this
-    /// vector does not include either: it only includes data bytes in the `0x00..=0x7F` range.
+    /// System Exclusive events start with a `0xF0` byte and finish with a `0xF7` byte.
     ///
     /// Note that `SysEx` is found in both [`LiveEvent`]s and [`FileEvent`]s.
     SystemExclusive(SysEx<'a>),
@@ -41,7 +42,7 @@ impl SystemCommon<'_> {
     }
 
     /// Represents the message as an array of bytes for some live MIDI stream
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self) -> Vec<u8> {
         use SystemCommon::*;
         match self {
             SystemExclusive(b) => b.to_live_bytes(),

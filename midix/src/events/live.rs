@@ -73,10 +73,10 @@ impl LiveEvent<'_> {
     }
 
     /// Returns the event as a set of bytes. These bytes are to be interpreted by a MIDI live stream
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self) -> Vec<u8> {
         match self {
-            LiveEvent::ChannelVoice(c) => c.as_bytes(),
-            LiveEvent::SystemCommon(s) => s.as_bytes(),
+            LiveEvent::ChannelVoice(c) => c.to_bytes(),
+            LiveEvent::SystemCommon(s) => s.to_bytes(),
             LiveEvent::SystemRealTime(r) => vec![r.byte()],
         }
     }
@@ -126,7 +126,7 @@ impl FromLiveEventBytes for LiveEvent<'_> {
 #[test]
 fn parse_note_on() {
     use crate::prelude::*;
-    let message = [0b1001_0001, 0b010_01000, 0b001_00001];
+    let message = [0b1001_0001, 0b0100_1000, 0b001_00001];
     let parsed = LiveEvent::from_bytes(&message).unwrap();
     //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
 

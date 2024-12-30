@@ -48,7 +48,7 @@ This parser will not error if an unknown chunk type is found. It will assume
 the unknown data has a 4-byte name and a proceeding 4-byte length. If this
 is not true, then the cursor will fail on the next read event.
 
-# Examples
+# Example
 ```rust
 use midix::prelude::*;
 
@@ -73,8 +73,9 @@ assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
 
 assert_eq!(
     header.timing().ticks_per_quarter_note(),
-    Timing::new_ticks(&[0, 96]).ticks_per_quarter_note()
+    Timing::new_ticks_from_byte_slice(&[0, 96]).ticks_per_quarter_note()
 );
+```
 
 "#]
 #[derive(Clone)]

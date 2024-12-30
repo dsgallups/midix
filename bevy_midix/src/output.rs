@@ -278,7 +278,7 @@ impl Future for MidiOutputTask {
                 },
                 Midi(message) => {
                     if let Some((conn, _)) = &mut self.connection {
-                        if let Err(e) = conn.send(&message.as_bytes()) {
+                        if let Err(e) = conn.send(&message.to_bytes()) {
                             self.sender.send(Reply::Error(SendError(e))).unwrap();
                         }
                     } else {

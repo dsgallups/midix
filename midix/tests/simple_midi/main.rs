@@ -10,7 +10,7 @@ fn midi_file_ref() {
     assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
     assert_eq!(
         header.timing().ticks_per_quarter_note(),
-        Timing::new_ticks_from_slice(&[0, 96]).ticks_per_quarter_note()
+        Timing::new_ticks_from_byte_slice(&[0, 96]).ticks_per_quarter_note()
     );
 
     let Ok(FileEvent::Track(track)) = reader.read_event() else {
@@ -50,7 +50,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(1).unwrap());
-    let VoiceEvent::ProgramChange { program } = cv.message() else {
+    let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
     assert_eq!(*program.byte(), 5);
@@ -65,7 +65,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(2).unwrap());
-    let VoiceEvent::ProgramChange { program } = cv.message() else {
+    let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
     assert_eq!(*program.byte(), 46);
@@ -80,7 +80,7 @@ fn midi_file_ref() {
         panic!();
     };
     assert_eq!(cv.channel(), Channel::new(3).unwrap());
-    let VoiceEvent::ProgramChange { program } = cv.message() else {
+    let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
     assert_eq!(*program.byte(), 70);
@@ -98,7 +98,7 @@ fn midi_file_ref() {
     let VoiceEvent::NoteOn {
         key: _,
         velocity: _,
-    } = cv.message()
+    } = cv.event()
     else {
         panic!();
     };

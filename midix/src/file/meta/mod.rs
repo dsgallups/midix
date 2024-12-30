@@ -20,23 +20,23 @@ pub enum Meta<'a> {
     /// the track index.
     TrackNumber(&'a [u8]),
     /// Arbitrary text associated to an instant.
-    Text(Text<'a>),
+    Text(BytesText<'a>),
     /// A copyright notice.
-    Copyright(Text<'a>),
+    Copyright(BytesText<'a>),
     /// Information about the name of the track.
-    TrackName(Text<'a>),
+    TrackName(BytesText<'a>),
     /// Information about the name of the current instrument.
-    InstrumentName(Text<'a>),
+    InstrumentName(BytesText<'a>),
     /// Arbitrary lyric information associated to an instant.
-    Lyric(Text<'a>),
+    Lyric(BytesText<'a>),
     /// Arbitrary marker text associated to an instant.
     Marker(&'a [u8]),
     /// Arbitrary cue point text associated to an instant.
     CuePoint(&'a [u8]),
     /// Information about the name of the current program.
-    ProgramName(Text<'a>),
+    ProgramName(BytesText<'a>),
     /// Name of the device that this file was intended to be played with.
-    DeviceName(Text<'a>),
+    DeviceName(BytesText<'a>),
     /// Number of the MIDI channel that this file was intended to be played with.
     MidiChannel(Channel<'a>),
     /// Number of the MIDI port that this file was intended to be played with.
@@ -78,15 +78,15 @@ impl<'a> Meta<'a> {
 
         Ok(match type_byte {
             0x00 => Meta::TrackNumber(data),
-            0x01 => Meta::Text(Text::new_from_byte_slice(data)?),
-            0x02 => Meta::Copyright(Text::new_from_byte_slice(data)?),
-            0x03 => Meta::TrackName(Text::new_from_byte_slice(data)?),
-            0x04 => Meta::InstrumentName(Text::new_from_byte_slice(data)?),
-            0x05 => Meta::Lyric(Text::new_from_byte_slice(data)?),
+            0x01 => Meta::Text(BytesText::new_from_byte_slice(data)?),
+            0x02 => Meta::Copyright(BytesText::new_from_byte_slice(data)?),
+            0x03 => Meta::TrackName(BytesText::new_from_byte_slice(data)?),
+            0x04 => Meta::InstrumentName(BytesText::new_from_byte_slice(data)?),
+            0x05 => Meta::Lyric(BytesText::new_from_byte_slice(data)?),
             0x06 => Meta::Marker(data),
             0x07 => Meta::CuePoint(data),
-            0x08 => Meta::ProgramName(Text::new_from_byte_slice(data)?),
-            0x09 => Meta::DeviceName(Text::new_from_byte_slice(data)?),
+            0x08 => Meta::ProgramName(BytesText::new_from_byte_slice(data)?),
+            0x09 => Meta::DeviceName(BytesText::new_from_byte_slice(data)?),
             0x20 => {
                 if data.len() != 1 {
                     return Err(inv_data(

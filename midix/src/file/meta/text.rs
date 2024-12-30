@@ -6,11 +6,11 @@ use std::{
 
 /// Some text, usually identified by a [`Meta`](super::Meta) message
 #[derive(Clone, PartialEq, Debug)]
-pub struct Text<'a> {
+pub struct BytesText<'a> {
     inner: Cow<'a, str>,
 }
 
-impl<'a> Text<'a> {
+impl<'a> BytesText<'a> {
     /// Interpret a byte slice as some text.
     pub fn new_from_byte_slice(bytes: &'a [u8]) -> Result<Self, io::Error> {
         let text = std::str::from_utf8(bytes).map_err(|e| {
@@ -37,7 +37,7 @@ impl<'a> Text<'a> {
     }
 }
 
-impl fmt::Display for Text<'_> {
+impl fmt::Display for BytesText<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.inner.fmt(f)
     }

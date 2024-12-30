@@ -121,12 +121,12 @@ impl<'a> ChannelVoice<'a> {
     }
 
     /// References the voice event for the message.
-    pub fn message(&self) -> &VoiceEvent {
+    pub fn event(&self) -> &VoiceEvent {
         &self.message
     }
 
     /// Get the raw midi packet for this message
-    pub fn as_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
         packet.push(*self.status());
         let data = self.message.to_raw();
