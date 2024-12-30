@@ -194,7 +194,7 @@ impl PianoRoll {
             .zip(next_keys.iter())
             .enumerate()
             .for_each(|(index, (prev, next))| {
-                let note = Note::from_key_byte(index as u8);
+                let note = Note::new(index as u8).unwrap();
                 if prev != next {
                     println!("Pressed {}{}", note, (self.bottom_note_index + index) / 12);
                     /*

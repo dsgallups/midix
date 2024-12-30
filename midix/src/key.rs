@@ -53,13 +53,13 @@ impl<'a> Key<'a> {
     /// Identifies the note of the key pressed
     #[inline]
     pub fn note(&self) -> Note {
-        Note::from_key_byte(*self.0.byte())
+        Note::from_data_byte(&self.0)
     }
 
     /// Identifies the octave of the key pressed
     #[inline]
     pub fn octave(&self) -> Octave {
-        Octave::from_key_byte(*self.0.byte())
+        Octave::from_data_byte(&self.0)
     }
 
     /// Returns the underlying byte of the key
@@ -112,10 +112,45 @@ pub enum Note {
     B,
 }
 impl Note {
-    /// Identify the note from a key byte.
-    pub const fn from_key_byte(key: u8) -> Self {
+    /// Returns an array beginning with [`Note::C`] to [`Note::B`]
+    pub fn all() -> [Note; 12] {
         use Note::*;
-        let note = key % 12;
+        [C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B]
+    }
+    /// Create a new note from a byte with a leading 0
+    ///
+    /// # Errors
+    /// if the byte is > 127
+    pub fn new<'a, K, E>(key: K) -> Result<Self, io::Error>
+    where
+        K: TryInto<DataByte<'a>, Error = E>,
+        E: Into<io::Error>,
+    {
+        use Note::*;
+        let key = key.try_into().map_err(Into::into)?;
+        let note = *key.byte() % 12;
+
+        Ok(match note {
+            0 => C,
+            1 => CSharp,
+            2 => D,
+            3 => DSharp,
+            4 => E,
+            5 => F,
+            6 => FSharp,
+            7 => G,
+            8 => GSharp,
+            9 => A,
+            10 => ASharp,
+            11 => B,
+            _ => unreachable!(),
+        })
+    }
+
+    /// Identify the note from a key byte.
+    pub fn from_data_byte(key: &DataByte<'_>) -> Self {
+        use Note::*;
+        let note = *key.byte() % 12;
 
         match note {
             0 => C,
@@ -150,6 +185,11 @@ impl Note {
             B => 11,
         }
     }
+
+    /// Create a [`Key`] given this note and a provided [`Octave`]
+    pub fn with_octave(self, octave: Octave) -> Key<'static> {
+        Key::from_note_and_octave(self, octave)
+    }
 }
 impl fmt::Display for Note {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -179,19 +219,28 @@ pub struct Octave(i8);
 
 impl Octave {
     /// Identify an octave from a key byte.
-    pub const fn from_key_byte(key: u8) -> Self {
-        let octave = key / 12;
+    ///
+    /// Program MAY panic if this byte has a leading 1.
+    pub fn from_data_byte(key: &DataByte<'_>) -> Self {
+        let octave = *key.byte() / 12;
 
         Self(octave as i8 - 1)
     }
-    /// Should be a value between [-1, 9]
-    pub const fn new(octave: i8) -> Self {
-        Self(octave)
+    /// Should be a value between [-1, 9].
+    ///
+    /// Program MAY panic if this is not true.
+    pub fn new(octave: i8) -> Self {
+        Self(octave.clamp(-1, 9))
     }
 
     /// The octave, from `[-1,9]`
     pub const fn value(&self) -> i8 {
         self.0
+    }
+
+    /// Create a [`Key`] given this octave and a provided [`Note`]
+    pub fn with_note(self, note: Note) -> Key<'static> {
+        Key::from_note_and_octave(note, self)
     }
 }
 

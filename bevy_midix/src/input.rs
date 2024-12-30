@@ -1,3 +1,7 @@
+#![doc = r#"
+Contains [`MidiInputPlugin`] and other types to handle input
+"#]
+
 use bevy::prelude::Plugin;
 use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender};
@@ -9,6 +13,11 @@ use std::fmt::Display;
 use std::future::Future;
 use MidiInputError::{ConnectionError, PortRefreshError};
 
+#[doc = r#"
+Inserts [`MidiInputSettings`] and [`MidiInputConnection`] as resource
+
+Input system utilizes the [`PreUpdate`] schedule
+"#]
 pub struct MidiInputPlugin;
 
 impl Plugin for MidiInputPlugin {
@@ -28,16 +37,28 @@ impl Plugin for MidiInputPlugin {
 /// This resource must be added before [`MidiInputPlugin`] to take effect.
 #[derive(Resource, Clone, Debug)]
 pub struct MidiInputSettings {
+    /// The name of the listening client
     pub client_name: &'static str,
+
+    /// The port name of the listening client
     pub port_name: &'static str,
+
+    /// Describe what events you want to ignore.
+    ///
+    /// If you don't care about System Exclusive messages
+    /// (manufacturer specific messages to their proprietary devices),
+    /// set this value to [`Ignore::Sysex`].
     pub ignore: Ignore,
 }
 
 impl Default for MidiInputSettings {
+    /// Assigns client name and port name to `bevy_midix`
+    ///
+    /// ignore is set to [`Ignore::None`]
     fn default() -> Self {
         Self {
-            client_name: "bevy_midi", // XXX: change client name? Test examples?
-            port_name: "bevy_midi",
+            client_name: "bevy_midix",
+            port_name: "bevy_midix",
             ignore: Ignore::None,
         }
     }
@@ -98,6 +119,7 @@ pub struct MidiInputConnection {
 }
 
 impl MidiInputConnection {
+    /// Are you connected?
     #[must_use]
     pub fn is_connected(&self) -> bool {
         self.connected
@@ -107,14 +129,20 @@ impl MidiInputConnection {
 /// An [`Event`] for incoming midi data.
 #[derive(Resource, Event, Debug)]
 pub struct MidiData {
+    /// Returns the timestamp of the data
     pub stamp: u64,
+
+    /// The underlyign message of the event
     pub message: LiveEvent<'static>,
 }
 
 /// The [`Error`] type for midi input operations, accessible as an [`Event`].
 #[derive(Clone, Debug, Event)]
 pub enum MidiInputError {
+    /// There was something wrong connecting to the input
     ConnectionError(ConnectErrorKind),
+
+    /// Something happened when refreshing the port statuses
     PortRefreshError,
 }
 
