@@ -4,7 +4,6 @@ Bevy plugin that uses [`midix`](https://crates.io/crates/midix),
 
 Read from and write to MIDI devices!
 
-
 # Example
 ```rust, no_run
 use bevy::prelude::*;
