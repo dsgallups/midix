@@ -29,8 +29,3 @@ features = ["multi_threaded"]
 [dev-dependencies.bevy]
 version = "0.15"
 default-features = true
-
-[target.'cfg(target_os = "linux")'.dev-dependencies.bevy]
-version = "0.15"
-features = ["x11", "wayland"]
-default-features = false
