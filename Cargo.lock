@@ -2986,6 +2986,7 @@ version = "2.0.0"
 dependencies = [
  "bevy",
  "pretty_assertions",
+ "rustysynth",
 ]
 
 [[package]]
@@ -2995,6 +2996,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "bevy_midix",
+ "rustysynth",
  "strum",
 ]
 
@@ -3936,6 +3938,12 @@ dependencies = [
  "unicode-properties",
  "unicode-script",
 ]
+
+[[package]]
+name = "rustysynth"
+version = "1.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "823453b5c67fe77ffaa8cfea959270bf1aa187d9402905741f87fd4b81b55ea1"
 
 [[package]]
 name = "ruzstd"

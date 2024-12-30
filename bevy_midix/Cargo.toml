@@ -12,6 +12,10 @@ keywords = ["gamedev", "bevy", "midi", "encoding", "control"]
 categories = ["game-development", "game-engines", "encoding"]
 exclude = ["assets/*"]
 
+
+[features]
+virtual-output = []
+
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.8"
