@@ -36,7 +36,7 @@ fn spawn_piano(mut commands: Commands) {
                     .spawn((
                         key,
                         Node {
-                            width: Val::Px(20.),
+                            width: Val::Px(1000.),
                             height: Val::Percent(100.),
                             ..Default::default()
                         },
@@ -65,18 +65,30 @@ fn on_mouse_enter(
     hover_node.0 = format!("Last Hovered Key: {}", key);
 }
 
-fn on_mouse_down(trigger: Trigger<Pointer<Down>>, keys: Query<&Key<'static>>) {
-    let triggered_entity = trigger.entity();
+fn on_mouse_down(
+    trigger: Trigger<Pointer<Down>>,
+    mut keys: Query<(&Key<'static>, &mut BackgroundColor)>,
+) {
+    let (clicked_key, mut bg) = keys.get_mut(trigger.entity()).unwrap();
 
-    let clicked_key = keys.get(triggered_entity).unwrap();
+    bg.0 = Color::linear_rgb(1.0, 1.0, 0.);
 
     println!("clicked {}", clicked_key);
 }
 
-fn on_mouse_up(trigger: Trigger<Pointer<Up>>, keys: Query<&Key<'static>>) {
+fn on_mouse_up(
+    trigger: Trigger<Pointer<Up>>,
+    mut keys: Query<(&Key<'static>, &mut BackgroundColor)>,
+) {
     let triggered_entity = trigger.entity();
 
-    let clicked_key = keys.get(triggered_entity).unwrap();
+    let (clicked_key, mut bg) = keys.get_mut(triggered_entity).unwrap();
+
+    if clicked_key.is_sharp() {
+        bg.0 = Color::BLACK;
+    } else {
+        bg.0 = Color::WHITE;
+    };
 
     println!("unclicked {}", clicked_key);
 }
