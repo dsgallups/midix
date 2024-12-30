@@ -5,6 +5,8 @@ use std::io::ErrorKind;
 ///
 /// They are usually time-sensitive, get top priority and can even be transmitted in between other
 /// messages.
+///
+/// These messages are exceptions to the rule: they are not [`MidiByte`]s
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
 pub enum SystemRealTimeMessage {
     /// If sent, they should be sent 24 times per quarter note.

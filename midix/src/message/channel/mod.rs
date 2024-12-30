@@ -1,7 +1,8 @@
 #![doc = r#"
 Contains all Channel Message types
 
-```text
+# Hierarchy
+``text
                 |-----------------|
                 | Channel Message |
                 |-----------------|
@@ -27,4 +28,16 @@ pub enum ChannelMessage<'a> {
     Voice(ChannelVoiceMessage<'a>),
     /// A channel mode message
     Mode(ChannelModeMessage<'a>),
+}
+
+impl<'a> From<ChannelVoiceMessage<'a>> for ChannelMessage<'a> {
+    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+        Self::Voice(value)
+    }
+}
+
+impl<'a> From<ChannelModeMessage<'a>> for ChannelMessage<'a> {
+    fn from(value: ChannelModeMessage<'a>) -> Self {
+        Self::Mode(value)
+    }
 }

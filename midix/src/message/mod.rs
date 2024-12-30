@@ -87,3 +87,32 @@ impl<'a> From<ChannelMessage<'a>> for MidiMessage<'a> {
         }
     }
 }
+impl<'a> From<SystemCommonMessage<'a>> for MidiMessage<'a> {
+    fn from(value: SystemCommonMessage<'a>) -> Self {
+        Self::SysCommon(value)
+    }
+}
+
+impl From<SystemRealTimeMessage> for MidiMessage<'_> {
+    fn from(value: SystemRealTimeMessage) -> Self {
+        Self::SysRealTime(value)
+    }
+}
+
+impl<'a> From<SystemExclusiveMessage<'a>> for MidiMessage<'a> {
+    fn from(value: SystemExclusiveMessage<'a>) -> Self {
+        Self::SysExclusive(value)
+    }
+}
+
+impl<'a> From<ChannelVoiceMessage<'a>> for MidiMessage<'a> {
+    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+        Self::ChannelVoice(value)
+    }
+}
+
+impl<'a> From<ChannelModeMessage<'a>> for MidiMessage<'a> {
+    fn from(value: ChannelModeMessage<'a>) -> Self {
+        Self::ChannelMode(value)
+    }
+}

@@ -1,5 +1,5 @@
 #![doc = r#"
-A list of system common messages
+Contains all system common message types
 
 # Hierarchy
 ```text
@@ -36,4 +36,22 @@ pub enum SystemMessage<'a> {
     /// The catch-all System Exclusive Message. Found
     /// both in files and in live events.
     Exclusive(SystemExclusiveMessage<'a>),
+}
+
+impl<'a> From<SystemCommonMessage<'a>> for SystemMessage<'a> {
+    fn from(value: SystemCommonMessage<'a>) -> Self {
+        SystemMessage::Common(value)
+    }
+}
+
+impl From<SystemRealTimeMessage> for SystemMessage<'_> {
+    fn from(value: SystemRealTimeMessage) -> Self {
+        SystemMessage::RealTime(value)
+    }
+}
+
+impl<'a> From<SystemExclusiveMessage<'a>> for SystemMessage<'a> {
+    fn from(value: SystemExclusiveMessage<'a>) -> Self {
+        SystemMessage::Exclusive(value)
+    }
 }

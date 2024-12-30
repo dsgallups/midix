@@ -11,6 +11,9 @@ and are used to transfer any number of
 data bytes in a format specified by the
 referenced manufacturer.
 
+
+System Exclusive Messages are exceptions to the rule: they are not [`MidiByte`]s
+
 # Layout
 System Exclusive.
 ```text
