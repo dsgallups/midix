@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "nightly", feature(const_for))]
+#![warn(missing_docs)]
 #![warn(clippy::print_stdout)]
 #![doc = r#"
 
@@ -9,13 +10,10 @@ Composable, parsable MIDI structures
 # Overview
 
 `midix` provides a min-copy parser ([`Reader`](crate::prelude::Reader)) to read events from `.mid` files.
+calling [`Reader::read_event`](crate::prelude::Reader::read_event) will yield a [`FileEvent`](crate::prelude::FileEvent).
+
 Additionally, `midix` provides the user with [`LiveEvent::from_bytes`](crate::events::LiveEvent), which will parse
 events from a live MIDI source.
-
-There are two types to know about
-Two systems are used to interface between
-
-
 
 # Getting Started
 
@@ -51,7 +49,7 @@ assert_eq!(
 );
 
 ```
-To parse a live event
+To parse a [`LiveEvent`](crate::prelude::LiveEvent)
 
 ```rust
 use midix::prelude::*;

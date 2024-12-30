@@ -43,6 +43,7 @@ impl<'a> MidiMessageBytes<'a> {
         }
     }
 
+    /// Create a MidiMessageByte from a single status byte. Errors if leading 1 is not found.
     pub fn from_status<B, E>(status: B) -> Result<Self, io::Error>
     where
         B: TryInto<StatusByte<'a>, Error = E>,
@@ -88,6 +89,7 @@ impl<'a> StatusByte<'a> {
         byte.try_into()
     }
 
+    /// Get the underlying byte of the status
     pub fn byte(&self) -> &u8 {
         &self.0
     }
@@ -166,14 +168,17 @@ impl<'a> DataByte<'a> {
         byte.try_into()
     }
 
+    /// Create a data byte without checking for the leading 0.
     pub const fn new_unchecked(byte: u8) -> Self {
         Self(Cow::Owned(byte))
     }
 
+    /// Create a referenced data byte without checking for the leading 0.
     pub const fn new_borrowed_unchecked(byte: &'a u8) -> Self {
         Self(Cow::Borrowed(byte))
     }
 
+    /// Get the underlying byte of the data
     pub fn byte(&self) -> &u8 {
         &self.0
     }
