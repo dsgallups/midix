@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use bevy_midix::prelude::*;
 
+use crate::ui::HoverNode;
+
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_piano);
 }
@@ -46,15 +48,35 @@ fn spawn_piano(mut commands: Commands) {
                         BorderColor(Color::BLACK),
                         BackgroundColor(background_color),
                     ))
-                    .observe(on_click_key);
+                    .observe(on_mouse_down)
+                    .observe(on_mouse_up)
+                    .observe(on_mouse_enter);
             }
         });
 }
 
-fn on_click_key(trigger: Trigger<Pointer<Click>>, keys: Query<&Key<'static>>) {
+fn on_mouse_enter(
+    trigger: Trigger<Pointer<Over>>,
+    keys: Query<&Key<'static>>,
+    mut hover_node: Query<&mut Text, With<HoverNode>>,
+) {
+    let key = keys.get(trigger.entity()).unwrap();
+    let mut hover_node = hover_node.get_single_mut().unwrap();
+    hover_node.0 = format!("Last Hovered Key: {}", key);
+}
+
+fn on_mouse_down(trigger: Trigger<Pointer<Down>>, keys: Query<&Key<'static>>) {
     let triggered_entity = trigger.entity();
 
     let clicked_key = keys.get(triggered_entity).unwrap();
 
     println!("clicked {}", clicked_key);
+}
+
+fn on_mouse_up(trigger: Trigger<Pointer<Up>>, keys: Query<&Key<'static>>) {
+    let triggered_entity = trigger.entity();
+
+    let clicked_key = keys.get(triggered_entity).unwrap();
+
+    println!("unclicked {}", clicked_key);
 }
