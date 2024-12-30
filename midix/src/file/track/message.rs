@@ -26,3 +26,21 @@ pub enum TrackMessage<'a> {
     /// See [`MetaMessage`] for details
     Meta(MetaMessage<'a>),
 }
+
+impl<'a> From<ChannelVoiceMessage<'a>> for TrackMessage<'a> {
+    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+        Self::ChannelVoice(value)
+    }
+}
+
+impl<'a> From<SystemExclusiveMessage<'a>> for TrackMessage<'a> {
+    fn from(value: SystemExclusiveMessage<'a>) -> Self {
+        Self::SystemExclusive(value)
+    }
+}
+
+impl<'a> From<MetaMessage<'a>> for TrackMessage<'a> {
+    fn from(value: MetaMessage<'a>) -> Self {
+        Self::Meta(value)
+    }
+}
