@@ -14,7 +14,7 @@ Each value corresponds to some [`Note`] and [`Octave`].
 
 # Example
 ```rust
-use midix::prelude::*;
+# use midix::prelude::*;
 
 let key_byte = 63;
 
@@ -96,7 +96,23 @@ fn test_octave() {
 
 #[allow(missing_docs)]
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
-/// Identifier for the note played
+#[doc = r#"
+Identifies some note for a [`Key`]
+
+# Example
+```rust
+# use midix::prelude::*;
+
+let note = Note::FSharp;
+
+
+let key = note.with_octave(Octave::new(4));
+
+
+assert_eq!(key.octave().value(), 4);
+assert_eq!(key.note(), Note::FSharp);
+```
+"#]
 pub enum Note {
     C,
     CSharp,
@@ -213,6 +229,22 @@ impl fmt::Display for Note {
 
 #[doc = r#"
 Identifies the octave for a [`Key`]. Values range from -1 to 9.
+
+# Example
+
+```rust
+# use midix::prelude::*;
+
+let octave = Octave::new(12); // clamps to 9
+
+assert_eq!(octave.value(), 9);
+
+let key = octave.with_note(Note::C);
+
+
+assert_eq!(key.octave().value(), 9);
+assert_eq!(key.note(), Note::C);
+```
 "#]
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Octave(i8);

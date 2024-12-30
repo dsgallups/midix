@@ -27,10 +27,8 @@ impl<'a> Channel<'a> {
     }
 
     /// Identify a channel from a borrowed value (&1, &2, &3)
-    /// # Errors
-    /// If the channel is greater than a value of 15
-    pub fn new_borrowed_unchecked(channel: &'a u8) -> Result<Self, std::io::Error> {
-        Ok(Self(Cow::Borrowed(channel)))
+    pub fn new_borrowed_unchecked(channel: &'a u8) -> Self {
+        Self(Cow::Borrowed(channel))
     }
 
     /// Given a status byte from some [`ChannelVoiceMessage`](crate::prelude::ChannelVoiceMessage), perform bitwise ops

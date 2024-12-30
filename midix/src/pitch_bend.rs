@@ -7,6 +7,8 @@ use crate::prelude::*;
 /// A value of `0x0000` indicates full bend downwards.
 /// A value of `0x2000` indicates no bend.
 /// A value of `0x3FFF` indicates full bend upwards.
+///
+/// This value is available via [`PitchBend::value`]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct PitchBend<'a> {
     lsb: Cow<'a, u8>,
@@ -59,8 +61,8 @@ impl<'a> PitchBend<'a> {
         self.msb.as_ref()
     }
 
-    /// Represents a pitch bend, lsb then msb, as a u16
-    pub fn as_bits(&self) -> u16 {
+    /// Represents a pitch bend
+    pub fn value(&self) -> u16 {
         let lsb = *self.lsb;
         let msb = *self.msb;
         let combined: u16 = ((msb as u16) << 8) | (lsb as u16);
@@ -114,7 +116,7 @@ impl PitchBend<'_> {
     /// Do not use this when writing to a midi file.
     #[inline]
     pub fn as_int(self) -> i16 {
-        self.as_bits() as i16 - 0x2000
+        self.value() as i16 - 0x2000
     }
 
     /// Returns an `f32` in the range `[-1.0, 1.0)`.
