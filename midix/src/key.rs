@@ -1,7 +1,7 @@
 use core::fmt;
-use std::borrow::Cow;
+use std::io;
 
-use crate::utils::check_u7;
+use crate::DataByte;
 
 #[doc = r#"
 Identifies a key for some message.
@@ -25,43 +25,35 @@ assert_eq!(key.octave(), Octave::new(4))
 ```
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Key<'a>(Cow<'a, u8>);
+pub struct Key<'a>(DataByte<'a>);
 
 impl<'a> Key<'a> {
     /// Create a new key.
     ///
     /// Checks for correctness (leading 0 bit).
-    pub fn new(rep: u8) -> Result<Self, std::io::Error>
+    pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
     where
-        Self: Sized,
+        B: TryInto<DataByte<'a>, Error = E>,
+        E: Into<io::Error>,
     {
-        Ok(Self(Cow::Owned(check_u7(rep)?)))
-    }
-
-    /// Create a new key. Does not check for correctness.
-    pub const fn new_unchecked(key: u8) -> Self {
-        Self(Cow::Owned(key))
-    }
-    /// Create a new key. Does not check for correctness.
-    pub const fn new_borrowed_unchecked(key: &'a u8) -> Self {
-        Self(Cow::Borrowed(key))
+        rep.try_into().map(Self).map_err(Into::into)
     }
 
     /// Identifies the note of the key pressed
     #[inline]
     pub fn note(&self) -> Note {
-        Note::from_key_byte(*self.0)
+        Note::from_key_byte(*self.0.byte())
     }
 
     /// Identifies the octave of the key pressed
     #[inline]
     pub fn octave(&self) -> Octave {
-        Octave::from_key_byte(*self.0)
+        Octave::from_key_byte(*self.0.byte())
     }
 
     /// Returns the underlying byte of the key
     pub fn byte(&self) -> &u8 {
-        &self.0
+        self.0.byte()
     }
 }
 
@@ -73,21 +65,21 @@ impl fmt::Display for Key<'_> {
 
 #[test]
 fn test_note() {
-    let c = Key::new_unchecked(12);
+    let c = Key::new(12).unwrap();
 
     assert_eq!(Note::C, c.note());
 
-    let a_sharp = Key::new_unchecked(94);
+    let a_sharp = Key::new(94).unwrap();
     assert_eq!(Note::ASharp, a_sharp.note());
 }
 
 #[test]
 fn test_octave() {
-    let c = Key::new_unchecked(12);
+    let c = Key::new(12).unwrap();
 
     assert_eq!(0, c.octave().value());
 
-    let a_sharp = Key::new_unchecked(94);
+    let a_sharp = Key::new(94).unwrap();
     assert_eq!(6, a_sharp.octave().value());
 }
 

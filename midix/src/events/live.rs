@@ -50,17 +50,17 @@ An emittable message to/from a streaming MIDI device.
 
 There is currently no `StreamReader` type, so this type is most often manually constructed.
 "]
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LiveEvent<'a> {
     /// A MIDI voice message associated with a channel
     ChannelVoice(ChannelVoiceMessage<'a>),
 
     /// A set of common messages that are not meant to be used
     /// For input/output purposes
-    SystemCommon(SystemCommonMessage<'a>),
+    SysCommon(SystemCommonMessage<'a>),
 
     /// Events that are for synchronization purposes.
-    SystemRealTime(SystemRealTimeMessage),
+    SysRealTime(SystemRealTimeMessage),
 }
 
 impl LiveEvent<'_> {
@@ -76,8 +76,8 @@ impl LiveEvent<'_> {
     pub fn to_bytes(&self) -> Vec<u8> {
         match self {
             LiveEvent::ChannelVoice(c) => c.to_bytes(),
-            LiveEvent::SystemCommon(s) => s.to_bytes(),
-            LiveEvent::SystemRealTime(r) => vec![r.byte()],
+            LiveEvent::SysCommon(s) => s.to_bytes(),
+            LiveEvent::SysRealTime(r) => vec![r.byte()],
         }
     }
 }
@@ -89,12 +89,12 @@ impl<'a> From<ChannelVoiceMessage<'a>> for LiveEvent<'a> {
 }
 impl<'a> From<SystemCommonMessage<'a>> for LiveEvent<'a> {
     fn from(value: SystemCommonMessage<'a>) -> Self {
-        Self::SystemCommon(value)
+        Self::SysCommon(value)
     }
 }
 impl From<SystemRealTimeMessage> for LiveEvent<'_> {
     fn from(value: SystemRealTimeMessage) -> Self {
-        Self::SystemRealTime(value)
+        Self::SysRealTime(value)
     }
 }
 
@@ -109,10 +109,10 @@ impl FromLiveEventBytes for LiveEvent<'_> {
             0x80..=0xEF => Ok(Self::ChannelVoice(
                 ChannelVoiceMessage::from_status_and_data(status, data)?,
             )),
-            0xF0..=0xF7 => Ok(Self::SystemCommon(
-                SystemCommonMessage::from_status_and_data(status, data)?,
-            )),
-            0xF8..=0xFF => Ok(Self::SystemRealTime(
+            0xF0..=0xF7 => Ok(Self::SysCommon(SystemCommonMessage::from_status_and_data(
+                status, data,
+            )?)),
+            0xF8..=0xFF => Ok(Self::SysRealTime(
                 SystemRealTimeMessage::from_status_and_data(status, data)?,
             )),
             _ => Err(io_error!(
@@ -135,8 +135,8 @@ fn parse_note_on() {
         LiveEvent::ChannelVoice(ChannelVoiceMessage::new(
             Channel::new(1).unwrap(),
             VoiceEvent::NoteOn {
-                key: Key::new_unchecked(72),
-                velocity: Velocity::new_unchecked(33)
+                key: Key::new(72).unwrap(),
+                velocity: Velocity::new(33).unwrap()
             }
         ))
     );

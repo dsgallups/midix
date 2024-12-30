@@ -332,14 +332,6 @@ pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
     Ok(dec)
 }
 
-/// grabs the next byte from the reader and checks it's a u7
-pub(crate) fn check_u7<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
-    let byte = reader.read_next()?;
-    (byte & 0b1000_0000 == 0)
-        .then_some(byte)
-        .ok_or(inv_data(reader, "Leading bit found"))
-}
-
 /// grabs the next byte from the reader and checks it's a u4
 #[allow(dead_code)]
 pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {

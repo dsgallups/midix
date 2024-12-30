@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::prelude::*;
 
 #[doc = r#"
@@ -44,7 +42,8 @@ the number of channels (Omni Off) or 0 (Omni On)
 c = 127, v = 0: Poly Mode On (Mono Off) (Note:
 These four messages also cause All Notes Off)
 "#]
+#[allow(dead_code)]
 pub struct ChannelModeMessage<'a> {
     controller: Controller<'a>,
-    value: Cow<'a, u8>,
+    value: DataByte<'a>,
 }

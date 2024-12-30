@@ -4,7 +4,7 @@ use std::io::ErrorKind;
 #[doc = r#"
 A System Common Message, used to relay data for ALL receivers, regardless of channel.
 "#]
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum SystemCommonMessage<'a> {
     /// A system-exclusive message.
     ///
@@ -12,16 +12,12 @@ pub enum SystemCommonMessage<'a> {
     ///
     /// Note that `SystemExclusiveMessage` is found in both [`LiveEvent`]s and [`FileEvent`]s.
     SystemExclusive(SystemExclusiveMessage<'a>),
-    /*/// A MIDI Time Code Quarter Frame message, carrying a tag type and a 4-bit tag value.
-    MidiTimeCodeQuarterFrame {
-        message: MtcQuarterFrameMessage,
-        tag: u8,
-    },*/
+
     /// An undefined System Common message
-    Undefined(u8),
+    Undefined(StatusByte<'a>),
     /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
     /// sequence.
-    SongPositionPointer(SongPositionPointer),
+    SongPositionPointer(SongPositionPointer<'a>),
     /// Select a given song index.
     SongSelect(u8),
     /// Request the device to tune itself.
@@ -35,7 +31,7 @@ impl SystemCommonMessage<'_> {
             SongPositionPointer { .. } => 0xF2,
             SongSelect(_) => 0xF3,
             TuneRequest => 0xF6,
-            Undefined(v) => *v,
+            Undefined(v) => *v.byte(),
         }
     }
 
@@ -45,7 +41,7 @@ impl SystemCommonMessage<'_> {
         match self {
             SystemExclusive(b) => b.to_live_bytes(),
             SongPositionPointer(spp) => {
-                vec![self.status(), spp.lsb(), spp.msb()]
+                vec![self.status(), *spp.lsb(), *spp.msb()]
             }
             SongSelect(v) => vec![self.status(), *v],
             TuneRequest | Undefined(_) => vec![self.status()],
@@ -90,7 +86,7 @@ impl FromLiveEventBytes for SystemCommonMessage<'_> {
             }
             0xF1..=0xF5 if data.is_empty() => {
                 //Unknown system common event
-                SystemCommonMessage::Undefined(status)
+                SystemCommonMessage::Undefined(StatusByte::new(status)?)
             }
             _ => {
                 //Invalid/Unknown/Unreachable event

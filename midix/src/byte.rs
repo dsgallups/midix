@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    fmt,
     io::{self, ErrorKind, Write},
 };
 
@@ -57,6 +58,10 @@ impl MidiMessageBytes<'_> {
     }
 }
 
+pub enum MidiBytes<'a> {
+    Message(MidiMessageBytes<'a>),
+}
+
 #[doc = r#"
 Status Byte is between [0x80 and 0xFF]
 
@@ -66,11 +71,34 @@ Status bytes serve to identify the message type, that is, the purpose of the Dat
 Except for Real-Time messages, new Status bytes will always command a receiver to adopt a new status,
 even if the last message was not completed.
 "#]
+#[derive(Debug, Clone)]
 pub struct StatusByte<'a>(Cow<'a, u8>);
 
 impl<'a> StatusByte<'a> {
     /// Check a new status byte
     pub fn new(byte: u8) -> Result<Self, io::Error> {
+        byte.try_into()
+    }
+
+    /// Only use if the value is already been checked or
+    /// constructed such that it cannot have a leading 0 bit
+    pub(crate) fn new_unchecked(byte: u8) -> Self {
+        Self(Cow::Owned(byte))
+    }
+
+    /// Check a reference to a status byte
+    pub fn new_borrowed(byte: &'a u8) -> Result<Self, io::Error> {
+        byte.try_into()
+    }
+
+    pub fn byte(&self) -> &u8 {
+        &self.0
+    }
+}
+
+impl TryFrom<u8> for StatusByte<'_> {
+    type Error = io::Error;
+    fn try_from(byte: u8) -> Result<Self, Self::Error> {
         (0x80..=0xFF)
             .contains(&byte)
             .then_some(Self(Cow::Owned(byte)))
@@ -79,9 +107,24 @@ impl<'a> StatusByte<'a> {
                 "Expected Status byte",
             ))
     }
+}
 
-    /// Check a reference to a status byte
-    pub fn new_borrowed(byte: &'a u8) -> Result<Self, io::Error> {
+impl<'a> TryFrom<Cow<'a, u8>> for StatusByte<'a> {
+    type Error = io::Error;
+    fn try_from(byte: Cow<'a, u8>) -> Result<Self, Self::Error> {
+        (0x80..=0xFF)
+            .contains(byte.as_ref())
+            .then_some(Self(byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
+    }
+}
+
+impl<'a> TryFrom<&'a u8> for StatusByte<'a> {
+    type Error = io::Error;
+    fn try_from(byte: &'a u8) -> Result<Self, Self::Error> {
         (0x80..=0xFF)
             .contains(byte)
             .then_some(Self(Cow::Borrowed(byte)))
@@ -92,15 +135,52 @@ impl<'a> StatusByte<'a> {
     }
 }
 
+impl PartialEq for StatusByte<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_ref() == other.0.as_ref()
+    }
+}
+impl Eq for StatusByte<'_> {}
+impl fmt::Display for StatusByte<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02X}", self.0.as_ref())
+    }
+}
+
 #[doc = r#"
 Data Byte is between [0x00 and 0x7F]
 "#]
+#[derive(Clone, Debug, Hash)]
 pub struct DataByte<'a>(Cow<'a, u8>);
 
 impl<'a> DataByte<'a> {
     /// Check a new status byte
     pub fn new(byte: u8) -> Result<Self, io::Error> {
-        (0x80..=0xFF)
+        byte.try_into()
+    }
+
+    /// Check a reference to a status byte
+    pub fn new_borrowed(byte: &'a u8) -> Result<Self, io::Error> {
+        byte.try_into()
+    }
+
+    pub const fn new_unchecked(byte: u8) -> Self {
+        Self(Cow::Owned(byte))
+    }
+
+    pub const fn new_borrowed_unchecked(byte: &'a u8) -> Self {
+        Self(Cow::Borrowed(byte))
+    }
+
+    pub fn byte(&self) -> &u8 {
+        &self.0
+    }
+}
+
+impl TryFrom<u8> for DataByte<'_> {
+    type Error = io::Error;
+    fn try_from(byte: u8) -> Result<Self, Self::Error> {
+        (0x00..=0x7F)
             .contains(&byte)
             .then_some(Self(Cow::Owned(byte)))
             .ok_or(io::Error::new(
@@ -108,9 +188,11 @@ impl<'a> DataByte<'a> {
                 "Expected Status byte",
             ))
     }
+}
 
-    /// Check a reference to a status byte
-    pub fn new_borrowed(byte: &'a u8) -> Result<Self, io::Error> {
+impl<'a> TryFrom<&'a u8> for DataByte<'a> {
+    type Error = io::Error;
+    fn try_from(byte: &'a u8) -> Result<Self, Self::Error> {
         (0x00..=0x7F)
             .contains(byte)
             .then_some(Self(Cow::Borrowed(byte)))
@@ -118,6 +200,31 @@ impl<'a> DataByte<'a> {
                 ErrorKind::InvalidData,
                 "Expected Status byte",
             ))
+    }
+}
+
+impl<'a> TryFrom<Cow<'a, u8>> for DataByte<'a> {
+    type Error = io::Error;
+    fn try_from(byte: Cow<'a, u8>) -> Result<Self, Self::Error> {
+        (0x00..=0x7F)
+            .contains(byte.as_ref())
+            .then_some(Self(byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
+    }
+}
+
+impl PartialEq for DataByte<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_ref() == other.0.as_ref()
+    }
+}
+impl Eq for DataByte<'_> {}
+impl fmt::Display for DataByte<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02X}", self.0.as_ref())
     }
 }
 

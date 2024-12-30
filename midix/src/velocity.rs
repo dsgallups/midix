@@ -1,48 +1,52 @@
 use crate::prelude::*;
 use core::fmt;
-use std::borrow::Cow;
 
 /// Identifies the velocity of a key press, or a key unpress, or an aftertouch.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Velocity<'a>(Cow<'a, u8>);
+pub struct Velocity<'a>(DataByte<'a>);
 
 impl<'a> Velocity<'a> {
     /// Creates a new velocity from the provided byte
     ///
+    /// Checks for correctness (leading 0 bit)
+    pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
+    where
+        B: TryInto<DataByte<'a>, Error = E>,
+        E: Into<io::Error>,
+    {
+        rep.try_into().map(Self).map_err(Into::into)
+    }
+
+    /*
+    /// Creates a new velocity from the provided byte
+    ///
     /// Does not check for correctness
     pub const fn new_unchecked(velocity: u8) -> Self {
-        Self(Cow::Owned(velocity))
+        Self(DataByte::new_unchecked(velocity))
     }
     /// Create a new velocity from the referenced byte
     ///
     /// Does not check for correctness
     pub const fn new_borrowed_unchecked(velocity: &'a u8) -> Self {
-        Self(Cow::Borrowed(velocity))
+        Self(DataByte::new_borrowed_unchecked(velocity))
     }
-    /// Creates a new velocity from the provided byte
-    ///
-    /// Checks for correctness (leading 0 bit)
-    pub fn new(rep: u8) -> Result<Self, std::io::Error>
-    where
-        Self: Sized,
-    {
-        Ok(Self(Cow::Owned(check_u7(rep)?)))
-    }
+    */
 
     /// Get a reference to the underlying byte
     pub fn byte(&self) -> &u8 {
-        &self.0
+        self.0.byte()
     }
 
     /// Get a reference to the underlying byte
     pub fn value(&self) -> u8 {
-        *self.0
+        *self.0.byte()
     }
 
     /// Get the dynamic of the velocity...fortississississimo
     pub fn dynamic(&self) -> Dynamic {
         match self.value() {
-            0..16 => Dynamic::ppp(),
+            0 => Dynamic::off(),
+            1..16 => Dynamic::ppp(),
             16..32 => Dynamic::pp(),
             32..48 => Dynamic::p(),
             48..64 => Dynamic::mp(),
@@ -63,6 +67,8 @@ impl fmt::Display for Velocity<'_> {
 /// The musical analog of the digital velocity
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Dynamic {
+    /// no sound
+    Off,
     /// very quiet
     Pianississimo,
     /// pretty quiet
@@ -82,28 +88,48 @@ pub enum Dynamic {
 }
 
 impl Dynamic {
-    fn ppp() -> Self {
+    /// No sound
+    pub fn off() -> Self {
+        Self::Off
+    }
+
+    /// very quiet
+    pub fn ppp() -> Self {
         Self::Pianississimo
     }
-    fn pp() -> Self {
+
+    /// pretty quiet
+    pub fn pp() -> Self {
         Self::Pianissimo
     }
-    fn p() -> Self {
+
+    /// quiet
+    pub fn p() -> Self {
         Self::Piano
     }
-    fn mp() -> Self {
+
+    /// kinda quiet
+    pub fn mp() -> Self {
         Self::MezzoPiano
     }
-    fn mf() -> Self {
+
+    /// kinda loud
+    pub fn mf() -> Self {
         Self::MezzoForte
     }
-    fn f() -> Self {
+
+    /// loud
+    pub fn f() -> Self {
         Self::Forte
     }
-    fn ff() -> Self {
+
+    /// pretty loud
+    pub fn ff() -> Self {
         Self::Fortissimo
     }
-    fn fff() -> Self {
+
+    /// very loud
+    pub fn fff() -> Self {
         Self::Fortississimo
     }
 }
