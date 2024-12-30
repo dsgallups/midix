@@ -25,6 +25,7 @@ assert_eq!(key.octave(), Octave::new(4))
 ```
 "#]
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Hash)]
+#[cfg_attr(feature = "bevy", derive(bevy::prelude::Component))]
 pub struct Key<'a>(DataByte<'a>);
 
 impl<'a> Key<'a> {
@@ -59,6 +60,21 @@ impl<'a> Key<'a> {
     #[inline]
     pub fn note(&self) -> Note {
         Note::from_data_byte(&self.0)
+    }
+
+    /// Returns true if the note of the key is sharp. Same as `is_flat`
+    ///
+    /// See [`Note::is_sharp`] for an example
+    #[inline]
+    pub fn is_sharp(&self) -> bool {
+        self.note().is_sharp()
+    }
+
+    /// Returns true if the note of the key is flat. Same as `is_sharp`
+    /// See [`Note::is_flat`] for an example
+    #[inline]
+    pub fn is_flat(&self) -> bool {
+        self.note().is_flat()
     }
 
     /// Identifies the octave of the key pressed
@@ -168,7 +184,39 @@ impl Note {
         })
     }
 
+    /// Returns true if the note type is sharp. Same as `is_flat`
+    ///
+    /// # Example
+    /// ```rust
+    /// # use midix::prelude::*;
+    /// let note = Note::C;
+    /// assert!(!note.is_sharp());
+    /// let note = Note::FSharp;
+    /// assert!(note.is_sharp());
+    /// ```
+    #[inline]
+    pub fn is_sharp(&self) -> bool {
+        use Note::*;
+        matches!(self, CSharp | DSharp | FSharp | GSharp | ASharp)
+    }
+
+    /// Returns true if the note type is flat. Same as `is_sharp`
+    ///
+    /// # Example
+    /// ```rust
+    /// # use midix::prelude::*;
+    /// let note = Note::A;
+    /// assert!(!note.is_flat());
+    /// let note = Note::CSharp;
+    /// assert!(note.is_flat());
+    /// ```
+    #[inline]
+    pub fn is_flat(&self) -> bool {
+        self.is_sharp()
+    }
+
     /// Identify the note from a key byte.
+    #[inline]
     pub fn from_data_byte(key: &DataByte<'_>) -> Self {
         use Note::*;
         let note = *key.byte() % 12;

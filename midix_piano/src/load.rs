@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, load);
+    app.add_systems(Startup, spawn_camera);
 }
 
-fn load(mut commands: Commands) {
+fn spawn_camera(mut commands: Commands) {
     commands.spawn(Camera2d);
 
     //commands.spawn()

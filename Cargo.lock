@@ -2984,6 +2984,7 @@ dependencies = [
 name = "midix"
 version = "2.0.0"
 dependencies = [
+ "bevy",
  "pretty_assertions",
 ]
 
