@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "nightly", feature(const_for))]
+#![warn(clippy::print_stdout)]
 #![doc = r#"
 
 Composable, parsable MIDI structures
@@ -112,8 +113,6 @@ mod error;
 
 pub mod reader;
 pub(crate) mod utils;
-
-pub mod interfaces;
 
 pub mod channel;
 

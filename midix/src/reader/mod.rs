@@ -138,8 +138,8 @@ impl<'slc> Reader<&'slc [u8]> {
     where
         'slc: 'a,
     {
+        let mut running_status = None;
         let event = loop {
-            println!("state: {:?}", self.state.parse_state());
             match self.state.parse_state() {
                 ParseState::Init => {
                     self.state.set_parse_state(ParseState::InsideMidi);
@@ -160,6 +160,7 @@ impl<'slc> Reader<&'slc [u8]> {
                             }
                         },
                     };
+
                     match chunk {
                         b"MThd" => {
                             //HeaderChunk should handle us
@@ -213,27 +214,20 @@ impl<'slc> Reader<&'slc [u8]> {
                         byte => {
                             //status if the byte has a leading 1, otherwise it's
                             //a running status
-                            let status = if byte >> 7 == 1 {
-                                let ParseState::InsideTrack {
-                                    ref mut prev_status,
-                                    ..
-                                } = self.state.parse_state_mut()
-                                else {
-                                    return Err(inv_data(
-                                        self,
-                                        "Encountered midi event outside of track",
-                                    ));
-                                };
-                                *prev_status = Some(*byte);
 
+                            let status = if byte >> 7 == 1 {
+                                running_status = Some(*byte);
                                 Cow::Borrowed(byte)
                             } else if let Some(prev_status) = prev_status {
+                                //Hack: decrementing the buffer position should not be done
+                                self.state.decrement_offset(1);
+                                running_status = Some(prev_status);
                                 Cow::Owned(prev_status)
                             } else {
                                 return Err(inv_data(self, "Invalid MIDI event triggered"));
                             };
+                            let status = StatusByte::try_from(status).unwrap();
 
-                            //todo
                             TrackMessage::ChannelVoice(ChannelVoiceMessage::read(status, self)?)
                         }
                     };
@@ -242,6 +236,14 @@ impl<'slc> Reader<&'slc [u8]> {
                 }
                 ParseState::Done => break FileEvent::EOF,
             }
+        };
+
+        if let ParseState::InsideTrack {
+            ref mut prev_status,
+            ..
+        } = self.state.parse_state_mut()
+        {
+            *prev_status = running_status;
         };
         Ok(event)
     }
@@ -254,7 +256,7 @@ impl<'slc> Reader<&'slc [u8]> {
     where
         'slc: 'slf,
     {
-        if self.buffer_position() >= self.reader.len() {
+        if self.buffer_position() > self.reader.len() {
             return Err(unexp_eof());
         }
         let start = self.buffer_position();

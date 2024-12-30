@@ -73,7 +73,6 @@ impl<'a> MetaMessage<'a> {
         'slc: 'a,
     {
         let type_byte = reader.read_next()?;
-
         let data = reader.read_varlen_slice()?;
 
         Ok(match type_byte {

@@ -65,7 +65,7 @@ impl fmt::Display for Velocity<'_> {
 }
 
 /// The musical analog of the digital velocity
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Dynamic {
     /// no sound
     Off,

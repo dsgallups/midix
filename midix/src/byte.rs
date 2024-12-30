@@ -1,6 +1,6 @@
 use std::{
     borrow::Cow,
-    fmt,
+    fmt::{self, Debug},
     io::{self, ErrorKind, Write},
 };
 
@@ -32,7 +32,7 @@ pub enum MidiMessageBytes<'a> {
     Double(StatusByte<'a>, DataByte<'a>, DataByte<'a>),
 }
 
-impl MidiMessageBytes<'_> {
+impl<'a> MidiMessageBytes<'a> {
     /// Write the contents of self into some writer as MIDI bytes
     pub fn write<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
         use MidiMessageBytes::*;
@@ -41,6 +41,15 @@ impl MidiMessageBytes<'_> {
             Single(s, d) => writer.write_all(&[*s.0, *d.0]),
             Double(s, d1, d2) => writer.write_all(&[*s.0, *d1.0, *d2.0]),
         }
+    }
+
+    pub fn from_status<B, E>(status: B) -> Result<Self, io::Error>
+    where
+        B: TryInto<StatusByte<'a>, Error = E>,
+        E: Into<io::Error>,
+    {
+        let status = status.try_into().map_err(Into::into)?;
+        Ok(Self::Status(status))
     }
 }
 
@@ -53,8 +62,14 @@ Status bytes serve to identify the message type, that is, the purpose of the Dat
 Except for Real-Time messages, new Status bytes will always command a receiver to adopt a new status,
 even if the last message was not completed.
 "#]
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct StatusByte<'a>(Cow<'a, u8>);
+
+impl Debug for StatusByte<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "StatusByte(0x{:0X})", *self.0)
+    }
+}
 
 impl<'a> StatusByte<'a> {
     /// Check a new status byte
@@ -132,8 +147,13 @@ impl fmt::Display for StatusByte<'_> {
 #[doc = r#"
 Data Byte is between [0x00 and 0x7F]
 "#]
-#[derive(Clone, Debug, Hash)]
+#[derive(Clone, Hash)]
 pub struct DataByte<'a>(Cow<'a, u8>);
+impl Debug for DataByte<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Debug(0x{:0X}", *self.0)
+    }
+}
 
 impl<'a> DataByte<'a> {
     /// Check a new status byte

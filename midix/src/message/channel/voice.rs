@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::prelude::*;
 
 /// Represents a MIDI voice message,.
@@ -27,16 +25,21 @@ impl<'a> ChannelVoiceMessage<'a> {
     }
 
     /// TODO: read functions should take in an iterator that yields u8s
-    pub(crate) fn read(status: Cow<'a, u8>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
-        let msg = match status.as_ref() >> 4 {
+    pub(crate) fn read(status: StatusByte<'a>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
+        let msg = match status.byte() >> 4 {
             0x8 => VoiceEvent::NoteOff {
                 key: Key::new(reader.read_next()?)?,
                 velocity: Velocity::new(reader.read_next()?)?,
             },
-            0x9 => VoiceEvent::NoteOn {
-                key: Key::new(reader.read_next()?)?,
-                velocity: Velocity::new(reader.read_next()?)?,
-            },
+            0x9 => {
+                let key = reader.read_next()?;
+                let velocity = reader.read_next()?;
+
+                VoiceEvent::NoteOn {
+                    key: Key::new(key)?,
+                    velocity: Velocity::new(velocity)?,
+                }
+            }
             0xA => VoiceEvent::Aftertouch {
                 key: Key::new(reader.read_next()?)?,
                 velocity: Velocity::new(reader.read_next()?)?,
@@ -65,7 +68,7 @@ impl<'a> ChannelVoiceMessage<'a> {
             }
         };
         Ok(ChannelVoiceMessage {
-            status: status.try_into()?,
+            status,
             message: msg,
         })
     }

@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::prelude::*;
 
 #[doc = r#"
@@ -8,7 +10,7 @@ Track Messages fall into three categories:
 - [`SystemExclusiveMessage`]: Inaudible events communicated between devices
 - ['MetaMessage']: Identifiers for the track, like name, copyright information, arbitrary text.
 "#]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum TrackMessage<'a> {
     /// A channel voice message.
     ///
@@ -25,6 +27,22 @@ pub enum TrackMessage<'a> {
     ///
     /// See [`MetaMessage`] for details
     Meta(MetaMessage<'a>),
+}
+
+impl Debug for TrackMessage<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ChannelVoice(c) => {
+                write!(f, "{:?}", c)
+            }
+            Self::SystemExclusive(s) => {
+                write!(f, "{:?}", s)
+            }
+            Self::Meta(m) => {
+                write!(f, "{:?}", m)
+            }
+        }
+    }
 }
 
 impl<'a> From<ChannelVoiceMessage<'a>> for TrackMessage<'a> {

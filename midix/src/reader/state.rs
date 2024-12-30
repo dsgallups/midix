@@ -58,6 +58,9 @@ impl ReaderState {
     pub const fn increment_offset(&mut self, amt: usize) {
         self.offset += amt;
     }
+    pub const fn decrement_offset(&mut self, amt: usize) {
+        self.offset -= amt;
+    }
     pub const fn set_last_error_offset(&mut self, offset: usize) {
         self.last_error_offset = offset;
     }
