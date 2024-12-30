@@ -45,7 +45,7 @@ pub struct HeaderChunk<'a> {
 
 impl<'a> HeaderChunk<'a> {
     /// Assumes that the chunk type bytes ("MThd") have ALREADY been read
-    pub fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub(crate) fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
     {
@@ -124,18 +124,16 @@ pub enum Timing<'a> {
 }
 
 impl<'a> Timing<'a> {
-    /// Create a new timing from a 2 byte array slice.
-    pub fn new_ticks_from_byte_slice(arr: &'a [u8; 2]) -> Self {
-        Self::TicksPerQuarterNote(Cow::Borrowed(arr))
+    /// The tickrate per quarter note defines what a "quarter note" means.
+    ///
+    /// The leading bit of the u16 is disregarded, so 1-32767
+    pub fn new_ticks_per_quarter_note(tpqn: u16) -> Self {
+        let msb = (tpqn >> 8) as u8;
+        let lsb = (tpqn & 0x00FF) as u8;
+        Self::TicksPerQuarterNote(Cow::Owned([msb, lsb]))
     }
 
-    /// Create a new negative SMPTE division a 2 byte array slice
-    pub fn new_negative_smpte_from_byte_slice(arr: &'a [u8; 2]) -> Self {
-        Self::NegativeSmpte(Cow::Borrowed(arr))
-    }
-
-    /// Assumes the next two bytes are for a midi division.
-    pub fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub(crate) fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
         'slc: 'a,
     {
@@ -149,7 +147,8 @@ impl<'a> Timing<'a> {
             t => Err(inv_data(reader, format!("Invalid MIDI Timing type {}", t))),
         }
     }
-    /// Returns Some if the midi timing is a tick per quarter note
+    /// Returns Some if the midi timing is defined
+    /// as ticks per quarter note
     pub fn ticks_per_quarter_note(&self) -> Option<u16> {
         match self {
             Self::TicksPerQuarterNote(t) => {
@@ -159,6 +158,14 @@ impl<'a> Timing<'a> {
             _ => todo!(),
         }
     }
+}
+
+#[test]
+fn ensure_timing_encoding_of_tpqn() {
+    assert_eq!(
+        Some(71),
+        Timing::new_ticks_per_quarter_note(71).ticks_per_quarter_note()
+    )
 }
 
 #[test]

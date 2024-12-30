@@ -11,6 +11,18 @@ Keys are interpeted as a 7-bit number.
 Each value corresponds to some [`Note`] and [`Octave`].
 
 [`Key`] `0` is `C(-1)`, and [`Key`] `127` is `G9`.
+
+# Example
+```rust
+use midix::prelude::*;
+
+let key_byte = 63;
+
+let key = Key::new(key_byte).unwrap(); // 63 is between 0-127
+
+assert_eq!(key.note(), Note::DSharp);
+assert_eq!(key.octave(), Octave::new(4))
+```
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Key<'a>(Cow<'a, u8>);
@@ -73,10 +85,10 @@ fn test_note() {
 fn test_octave() {
     let c = Key::new_unchecked(12);
 
-    assert_eq!(0, c.octave().as_number());
+    assert_eq!(0, c.octave().value());
 
     let a_sharp = Key::new_unchecked(94);
-    assert_eq!(6, a_sharp.octave().as_number());
+    assert_eq!(6, a_sharp.octave().value());
 }
 
 #[allow(missing_docs)]
@@ -142,6 +154,7 @@ impl fmt::Display for Note {
 #[doc = r#"
 Identifies the octave for a [`Key`]. Values range from -1 to 9.
 "#]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Octave(i8);
 
 impl Octave {
@@ -151,8 +164,13 @@ impl Octave {
 
         Self(octave as i8 - 1)
     }
+    /// Should be a value between [-1, 9]
+    pub const fn new(octave: i8) -> Self {
+        Self(octave)
+    }
+
     /// The octave, from `[-1,9]`
-    pub const fn as_number(&self) -> i8 {
+    pub const fn value(&self) -> i8 {
         self.0
     }
 }

@@ -41,7 +41,7 @@ assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
 
 assert_eq!(
     header.timing().ticks_per_quarter_note(),
-    Timing::new_ticks_from_byte_slice(&[0, 96]).ticks_per_quarter_note()
+    Some(96)
 );
 
 ```
@@ -65,7 +65,7 @@ let VoiceEvent::NoteOn { key, velocity } = channel_voice_msg.event() else {
 
 assert_eq!(channel_voice_msg.channel(), Channel::new(3).unwrap());
 assert_eq!(key.note(), Note::C);
-assert_eq!(key.octave().as_number(), 4);
+assert_eq!(key.octave(), Octave::new(4));
 assert_eq!(velocity.value(), 96);
 ```
 
@@ -91,7 +91,6 @@ This document was originally distributed in text format by The International MID
 EMail: david@csw2.co.uk
 Web: http://www.csw2.co.uk
 ```
-Please give it a look for a deeper dive into MIDI!
 "#]
 
 use std::io::{self, ErrorKind};

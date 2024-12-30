@@ -73,7 +73,7 @@ assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
 
 assert_eq!(
     header.timing().ticks_per_quarter_note(),
-    Timing::new_ticks_from_byte_slice(&[0, 96]).ticks_per_quarter_note()
+    Some(96)
 );
 ```
 

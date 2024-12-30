@@ -15,7 +15,7 @@ pub struct TrackChunkHeader {
 
 impl TrackChunkHeader {
     /// Assumes that the chunk type bytes (`"MTrk"`) have ALREADY been read
-    pub fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
+    pub(crate) fn read(reader: &mut Reader<&[u8]>) -> ReadResult<Self> {
         let length: &[u8; 4] = reader.read_exact_size()?;
 
         let length = u32::from_be_bytes(*length);

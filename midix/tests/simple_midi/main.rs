@@ -8,10 +8,7 @@ fn midi_file_ref() {
         panic!()
     };
     assert_eq!(header.format_type(), FormatType::SingleMultiChannel);
-    assert_eq!(
-        header.timing().ticks_per_quarter_note(),
-        Timing::new_ticks_from_byte_slice(&[0, 96]).ticks_per_quarter_note()
-    );
+    assert_eq!(header.timing().ticks_per_quarter_note(), Some(96));
 
     let Ok(FileEvent::Track(track)) = reader.read_event() else {
         panic!()
