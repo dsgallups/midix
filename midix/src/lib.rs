@@ -1,5 +1,5 @@
 #![warn(missing_docs)]
-#![warn(clippy::print_stdout)]
+#![cfg_attr(not(feature = "debug"), warn(clippy::print_stdout))]
 #![doc = include_str!("../README.md")]
 
 use std::io::{self, ErrorKind};
@@ -40,6 +40,12 @@ pub mod synth;
 mod song_position_pointer;
 pub use song_position_pointer::*;
 
+mod target;
+pub use target::*;
+
+#[cfg(feature = "debug")]
+pub mod debug;
+
 pub(crate) trait ReadDataBytesExt {
     fn get_byte(&self, byte: usize) -> Result<&u8, io::Error>;
 }
@@ -66,6 +72,7 @@ pub mod prelude {
     };
 
     #[cfg(feature = "synth")]
+    #[allow(unused_imports)]
     pub use crate::synth::*;
 
     pub use crate::reader::{ReadResult, Reader};

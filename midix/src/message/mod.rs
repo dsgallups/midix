@@ -52,6 +52,7 @@ pub use system::*;
 #[doc = r#"
 An enumeration of all possible midi messages
 "#]
+#[derive(Debug)]
 pub enum MidiMessage<'a> {
     /// A system common message
     SysCommon(SystemCommonMessage<'a>),

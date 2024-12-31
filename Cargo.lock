@@ -3,6 +3,25 @@
 version = 4
 
 [[package]]
+name = "aaudio"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "746e7ba6563301e3b2efeba053433c66969f343cd85b3167aa4e6ec7990688a8"
+dependencies = [
+ "aaudio-sys",
+ "libc",
+]
+
+[[package]]
+name = "aaudio-sys"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c073abf866886bf14e3b76d736af5e96498c39ba2f9af21b68908e30463a4596"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "ab_glyph"
 version = "0.2.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2985,8 +3004,10 @@ name = "midix"
 version = "2.0.0"
 dependencies = [
  "bevy",
+ "itertools",
  "pretty_assertions",
  "rustysynth",
+ "tinyaudio",
 ]
 
 [[package]]
@@ -4338,6 +4359,23 @@ dependencies = [
  "arrayref",
  "bytemuck",
  "strict-num",
+]
+
+[[package]]
+name = "tinyaudio"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f533b678fc2b30d27b1a602852921779492125a48fe3ca591165d676dea923d2"
+dependencies = [
+ "aaudio",
+ "alsa-sys",
+ "core-foundation-sys",
+ "coreaudio-sys",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "winapi",
 ]
 
 [[package]]
