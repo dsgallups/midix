@@ -13,7 +13,8 @@ pub(crate) mod utils;
 pub mod channel;
 
 pub mod events;
-pub mod file;
+pub mod file_repr;
+
 mod pitch_bend;
 pub use pitch_bend::*;
 
@@ -63,7 +64,7 @@ pub mod prelude {
     pub use crate::{
         channel::*,
         events::*,
-        file::{chunk::*, meta::*, track::*, *},
+        file_repr::{chunk::*, meta::*, track::*, *},
         message::{MidiMessage, channel::*, system::*},
         *,
     };

@@ -1,5 +1,5 @@
 #![doc = r#"
-Contains types exclusive to MIDI files
+Contains byte-analogous representations to raw MIDI files
 "#]
 
 //pub mod builder;
