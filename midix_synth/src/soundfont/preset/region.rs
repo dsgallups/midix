@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 
-use crate::prelude::*;
+use generator::GeneratorType;
+
+use crate::{prelude::*, soundfont::math::SoundFontMath};
 
 fn set_parameter(gs: &mut [i16; GeneratorType::COUNT], generator: &Generator) {
     let index = generator.generator_type as usize;

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use super::LoopMode;
+
 use crate::prelude::*;
 
 // In this class, fixed-point numbers are used for speed-up.

@@ -1,7 +1,13 @@
 #![allow(dead_code)]
 
+pub mod voice;
+
 mod chorus;
-pub use chorus::*;
+use chorus::*;
+
+mod reverb;
+use math::SoundFontMath;
+use reverb::*;
 
 mod settings;
 pub use settings::*;
@@ -10,7 +16,11 @@ mod error;
 pub use error::*;
 
 mod array_math;
-pub use array_math::*;
+use array_math::*;
+
+mod channel;
+use channel::*;
+use voice::{RegionPair, VoiceCollection};
 
 use std::cmp;
 use std::collections::HashMap;

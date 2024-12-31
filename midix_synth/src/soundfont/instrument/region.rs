@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 
-use crate::prelude::*;
+use generator::GeneratorType;
+
+use crate::{prelude::*, soundfont::math::SoundFontMath};
 
 fn set_parameter(gs: &mut [i16; GeneratorType::COUNT], generator: &Generator) {
     let index = generator.generator_type as usize;
@@ -358,7 +360,8 @@ impl InstrumentRegion {
         if self.gs[GeneratorType::SAMPLE_MODES as usize] != 2 {
             self.gs[GeneratorType::SAMPLE_MODES as usize] as i32
         } else {
-            LoopMode::NO_LOOP
+            // was LoopMode::NO_LOOP
+            0
         }
     }
 

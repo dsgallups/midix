@@ -2,8 +2,6 @@ use std::{error, io};
 
 use std::fmt::{self, Debug, Display, Formatter, Result, Write};
 
-use crate::prelude::*;
-
 /// Represents an error when loading a SoundFont.
 #[derive(Debug)]
 #[non_exhaustive]

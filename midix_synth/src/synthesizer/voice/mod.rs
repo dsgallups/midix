@@ -2,22 +2,27 @@
 
 use std::f32::consts;
 
+mod envelope;
+use envelope::*;
+mod region;
+use math::SoundFontMath;
+pub(super) use region::*;
+
 mod oscillator;
-pub use oscillator::*;
+use oscillator::*;
 
 mod collection;
-pub use collection::*;
+pub(super) use collection::*;
 
 mod bi_quad_filter;
-pub use bi_quad_filter::*;
-
-mod channel;
-pub use channel::*;
+use bi_quad_filter::*;
 
 mod loop_mode;
-pub use loop_mode::*;
+use loop_mode::*;
 
 use crate::prelude::*;
+
+use super::Channel;
 
 #[non_exhaustive]
 pub(crate) struct Voice {

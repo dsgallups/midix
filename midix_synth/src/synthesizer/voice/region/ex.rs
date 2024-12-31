@@ -1,13 +1,18 @@
 #![allow(dead_code)]
 
-use crate::prelude::*;
+use math::SoundFontMath;
+use voice::{ModulationEnvelope, VolumeEnvelope};
+
+use crate::{prelude::*, synthesizer::voice::Oscillator};
+
+use super::{Lfo, RegionPair};
 
 #[allow(unused)]
 #[non_exhaustive]
-pub(crate) struct RegionEx {}
+pub struct RegionEx {}
 
 impl RegionEx {
-    pub(crate) fn start_oscillator(oscillator: &mut Oscillator, region: &RegionPair) {
+    pub fn start_oscillator(oscillator: &mut Oscillator, region: &RegionPair) {
         let sample_rate = region.instrument.sample_sample_rate;
         let loop_mode = region.get_sample_modes();
         let start = region.get_sample_start();
@@ -33,7 +38,7 @@ impl RegionEx {
         );
     }
 
-    pub(crate) fn start_volume_envelope(
+    pub fn start_volume_envelope(
         envelope: &mut VolumeEnvelope,
         region: &RegionPair,
         key: i32,
@@ -59,7 +64,7 @@ impl RegionEx {
         envelope.start(delay, attack, hold, decay, sustain, release);
     }
 
-    pub(crate) fn start_modulation_envelope(
+    pub fn start_modulation_envelope(
         envelope: &mut ModulationEnvelope,
         region: &RegionPair,
         key: i32,
@@ -85,14 +90,14 @@ impl RegionEx {
         envelope.start(delay, attack, hold, decay, sustain, release);
     }
 
-    pub(crate) fn start_vibrato(lfo: &mut Lfo, region: &RegionPair, _key: i32, _velocity: i32) {
+    pub fn start_vibrato(lfo: &mut Lfo, region: &RegionPair, _key: i32, _velocity: i32) {
         lfo.start(
             region.get_delay_vibrato_lfo(),
             region.get_frequency_vibrato_lfo(),
         );
     }
 
-    pub(crate) fn start_modulation(lfo: &mut Lfo, region: &RegionPair, _key: i32, _velocity: i32) {
+    pub fn start_modulation(lfo: &mut Lfo, region: &RegionPair, _key: i32, _velocity: i32) {
         lfo.start(
             region.get_delay_modulation_lfo(),
             region.get_frequency_modulation_lfo(),

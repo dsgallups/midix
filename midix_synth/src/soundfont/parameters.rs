@@ -2,6 +2,10 @@
 
 use std::io::Read;
 
+use instrument::info::InstrumentInfo;
+use preset::info::PresetInfo;
+use zone::ZoneInfo;
+
 use crate::prelude::*;
 
 #[non_exhaustive]

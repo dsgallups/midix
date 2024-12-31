@@ -3,7 +3,7 @@
 use crate::prelude::*;
 
 #[non_exhaustive]
-pub(crate) struct Lfo {
+pub struct Lfo {
     sample_rate: i32,
     block_size: usize,
 
@@ -17,7 +17,7 @@ pub(crate) struct Lfo {
 }
 
 impl Lfo {
-    pub(crate) fn new(settings: &SynthesizerSettings) -> Self {
+    pub fn new(settings: &SynthesizerSettings) -> Self {
         Self {
             sample_rate: settings.sample_rate,
             block_size: settings.block_size,
@@ -29,7 +29,7 @@ impl Lfo {
         }
     }
 
-    pub(crate) fn start(&mut self, delay: f32, frequency: f32) {
+    pub fn start(&mut self, delay: f32, frequency: f32) {
         if frequency > 1.0E-3_f32 {
             self.active = true;
 
@@ -44,7 +44,7 @@ impl Lfo {
         }
     }
 
-    pub(crate) fn process(&mut self) {
+    pub fn process(&mut self) {
         if !self.active {
             return;
         }
@@ -67,7 +67,7 @@ impl Lfo {
         }
     }
 
-    pub(crate) fn get_value(&self) -> f32 {
+    pub fn get_value(&self) -> f32 {
         self.value
     }
 }

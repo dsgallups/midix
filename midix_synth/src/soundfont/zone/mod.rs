@@ -1,5 +1,6 @@
 mod info;
-pub use info::*;
+
+pub(super) use info::ZoneInfo;
 
 use crate::prelude::*;
 

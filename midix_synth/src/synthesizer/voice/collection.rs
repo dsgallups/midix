@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use super::{Channel, Voice};
+
 use crate::prelude::*;
 
 #[non_exhaustive]

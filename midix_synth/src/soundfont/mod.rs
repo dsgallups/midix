@@ -3,13 +3,17 @@
 use std::io::Read;
 use std::sync::Arc;
 
+pub mod generator;
+pub mod instrument;
+pub mod preset;
+pub mod zone;
+
 mod info;
 pub use info::*;
-mod math;
-pub use math::*;
+pub(super) mod math;
 mod parameters;
-pub use parameters::*;
 mod sampledata;
+use parameters::SoundFontParameters;
 pub use sampledata::*;
 mod version;
 pub use version::*;

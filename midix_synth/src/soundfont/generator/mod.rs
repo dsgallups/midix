@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 mod r#type;
-pub use r#type::*;
+pub(crate) use r#type::*;
 
 use std::io::Read;
 

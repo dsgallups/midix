@@ -1,16 +1,16 @@
 use std::io::Read;
 
-pub(crate) struct ReadCounter<'a, R: Read> {
+pub struct ReadCounter<'a, R: Read> {
     reader: &'a mut R,
     count: usize,
 }
 
 impl<'a, R: Read> ReadCounter<'a, R> {
-    pub(crate) fn new(reader: &'a mut R) -> Self {
+    pub fn new(reader: &'a mut R) -> Self {
         Self { reader, count: 0 }
     }
 
-    pub(crate) fn bytes_read(&self) -> usize {
+    pub fn bytes_read(&self) -> usize {
         self.count
     }
 }

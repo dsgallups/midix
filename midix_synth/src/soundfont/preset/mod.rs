@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
-mod info;
-pub use info::*;
+pub(super) mod info;
 
 mod region;
+use info::PresetInfo;
 pub use region::*;
 
 use crate::prelude::*;
