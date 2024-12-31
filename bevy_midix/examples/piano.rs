@@ -36,7 +36,7 @@ fn main() {
 
 #[derive(Component, Debug)]
 struct Key {
-    key_val: MidiKey<'static>,
+    key_val: MidiKey,
     y_reset: f32,
 }
 
