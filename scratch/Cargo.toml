@@ -1,0 +1,10 @@
+[package]
+name = "scratch"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tinyaudio = "1.0.0"
+itertools = "0.13.0"
+# rustysynth = { version = "1.3.3" }
+midix_synth = { path = "../midix_synth" }

@@ -3004,10 +3004,7 @@ name = "midix"
 version = "2.0.0"
 dependencies = [
  "bevy",
- "itertools",
  "pretty_assertions",
- "rustysynth",
- "tinyaudio",
 ]
 
 [[package]]
@@ -4008,6 +4005,15 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "scratch"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "midix_synth",
+ "tinyaudio",
+]
 
 [[package]]
 name = "sctk-adwaita"

@@ -14,16 +14,12 @@ license = "MIT OR Apache-2.0"
 
 [features]
 bevy = ["dep:bevy"]
-synth = ["dep:rustysynth"]
-debug = ["bevy", "synth"]
+debug = ["bevy"]
 
 [dependencies]
 bevy = { version = "0.15", optional = true, default-features = false }
-rustysynth = { version = "1.3.3", optional = true }
 
 [dev-dependencies]
 pretty_assertions = { default-features = false, features = [
     "alloc",
 ], version = "1.4.1" }
-tinyaudio = "1.0.0"
-itertools = "0.13.0"

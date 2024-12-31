@@ -34,9 +34,6 @@ pub use byte::*;
 
 pub mod message;
 
-#[cfg(feature = "synth")]
-pub mod synth;
-
 mod song_position_pointer;
 pub use song_position_pointer::*;
 
@@ -70,10 +67,6 @@ pub mod prelude {
         message::{MidiMessage, channel::*, system::*},
         *,
     };
-
-    #[cfg(feature = "synth")]
-    #[allow(unused_imports)]
-    pub use crate::synth::*;
 
     pub use crate::reader::{ReadResult, Reader};
 
