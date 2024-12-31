@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+use reader::MidiSource;
+
 use crate::prelude::*;
 
 #[doc = r#"
@@ -45,8 +47,9 @@ pub struct RawHeaderChunk<'a> {
 
 impl<'a> RawHeaderChunk<'a> {
     /// Assumes that the chunk type bytes ("MThd") have ALREADY been read
-    pub(crate) fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
     where
+        R: MidiSource<'slc>,
         'slc: 'a,
     {
         let length = u32::from_be_bytes(*reader.read_exact_size()?);
@@ -133,8 +136,9 @@ impl<'a> Timing<'a> {
         Self::TicksPerQuarterNote(Cow::Owned([msb, lsb]))
     }
 
-    pub(crate) fn read<'r, 'slc>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
     where
+        R: MidiSource<'slc>,
         'slc: 'a,
     {
         let bytes: &[u8; 2] = reader.read_exact_size()?;

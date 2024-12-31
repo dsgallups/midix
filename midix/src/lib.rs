@@ -2,7 +2,7 @@
 #![cfg_attr(not(feature = "debug"), warn(clippy::print_stdout))]
 #![doc = include_str!("../README.md")]
 
-use std::io::{self, ErrorKind};
+use std::io::{self};
 
 #[macro_use]
 mod error;
@@ -46,19 +46,6 @@ pub use target::*;
 #[cfg(feature = "debug")]
 pub mod debug;
 
-pub(crate) trait ReadDataBytesExt {
-    fn get_byte(&self, byte: usize) -> Result<&u8, io::Error>;
-}
-
-impl ReadDataBytesExt for &[u8] {
-    fn get_byte(&self, byte: usize) -> Result<&u8, io::Error> {
-        self.get(byte).ok_or(io_error!(
-            ErrorKind::InvalidInput,
-            "Data not accessible for message!"
-        ))
-    }
-}
-
 pub mod prelude {
     #![doc = r#"
         Common re-exports when working with `midix`
@@ -72,7 +59,7 @@ pub mod prelude {
         *,
     };
 
-    pub use crate::reader::{ReadResult, Reader};
+    pub use crate::reader::{MidiSource, ReadResult, Reader};
 
     #[allow(unused_imports)]
     pub(crate) use crate::reader::{inv_data, inv_input, unexp_eof};

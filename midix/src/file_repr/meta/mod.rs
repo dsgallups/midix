@@ -68,8 +68,9 @@ pub enum MetaMessage<'a> {
     Unknown(&'a u8, &'a [u8]),
 }
 impl<'a> MetaMessage<'a> {
-    pub(crate) fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
     where
+        R: MidiSource<'slc>,
         'slc: 'a,
     {
         let type_byte = reader.read_next()?;

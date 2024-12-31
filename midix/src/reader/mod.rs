@@ -9,8 +9,10 @@ Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 "]
 
 mod error;
+mod source;
 mod state;
 pub use error::*;
+pub use source::*;
 use state::{ParseState, ReaderState};
 
 use std::{borrow::Cow, io::ErrorKind};
@@ -128,7 +130,109 @@ impl<'slc> Reader<&'slc [u8]> {
             state: ReaderState::default(),
         }
     }
+}
 
+//internal implementations
+impl<'slc, R: MidiSource<'slc>> Reader<R> {
+    // Returns None if there's no bytes left to read
+    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    where
+        'slc: 'slf,
+    {
+        if self.buffer_position() > self.reader.max_len() {
+            return Err(unexp_eof());
+        }
+        let start = self.buffer_position();
+
+        let end = start + bytes;
+
+        if end > self.reader.max_len() {
+            return Err(unexp_eof());
+        }
+
+        self.state.increment_offset(bytes);
+
+        let slice = &self.reader.get_slice(start, end);
+
+        Ok(slice)
+    }
+    /// Returns a statically sized array
+    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
+        &'slf mut self,
+    ) -> ReadResult<&'slc [u8; SIZE]>
+    where
+        'slc: 'slf,
+    {
+        let slice = self.read_exact(SIZE)?;
+
+        slice
+            .try_into()
+            .map_err(|e| inv_data(self, format!("{e:?}")))
+    }
+
+    /// Get the next byte without incrementing
+    #[allow(dead_code)]
+    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get_byte(self.buffer_position())
+            .ok_or(unexp_eof())?;
+        Ok(res)
+    }
+    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get_byte(self.buffer_position())
+            .ok_or(unexp_eof())?;
+        self.state.increment_offset(1);
+
+        Ok(res)
+    }
+    /// ASSUMING that the offset is pointing at the length of a varlen,
+    /// it will read that length and return the resulting slice.
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    where
+        'slc: 'slf,
+    {
+        let size = decode_varlen(self)?;
+        self.read_exact(size as usize)
+    }
+}
+
+pub(super) fn decode_varlen<'slc, R: MidiSource<'slc>>(reader: &mut Reader<R>) -> ReadResult<u32> {
+    let mut dec: u32 = 0;
+
+    for _ in 0..4 {
+        let next = reader.read_next()?;
+        dec <<= 7;
+        let add = u32::from(next & 0x7F);
+        dec |= add;
+
+        //need to continue
+        if next & 0x80 != 0x80 {
+            break;
+        }
+    }
+
+    Ok(dec)
+}
+
+/// grabs the next byte from the reader and checks it's a u4
+#[allow(dead_code)]
+pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+    let byte = reader.read_next()?;
+    (byte & 0b1111_0000 == 0)
+        .then_some(byte)
+        .ok_or(inv_data(reader, "Leading bit found"))
+}
+
+impl<'slc, R: MidiSource<'slc>> Reader<R> {
     /// Read the buffer and return an event
     ///
     /// # Errors
@@ -311,98 +415,4 @@ impl<'slc> Reader<&'slc [u8]> {
 
         Ok(event)
     }
-}
-
-//internal implementations
-impl<'slc> Reader<&'slc [u8]> {
-    // Returns None if there's no bytes left to read
-    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
-    where
-        'slc: 'slf,
-    {
-        if self.buffer_position() > self.reader.len() {
-            return Err(unexp_eof());
-        }
-        let start = self.buffer_position();
-
-        let end = start + bytes;
-
-        if end > self.reader.len() {
-            return Err(unexp_eof());
-        }
-
-        self.state.increment_offset(bytes);
-
-        let slice = &self.reader[start..end];
-
-        Ok(slice)
-    }
-    /// Returns a statically sized array
-    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
-        &'slf mut self,
-    ) -> ReadResult<&'slc [u8; SIZE]>
-    where
-        'slc: 'slf,
-    {
-        let slice = self.read_exact(SIZE)?;
-
-        slice
-            .try_into()
-            .map_err(|e| inv_data(self, format!("{e:?}")))
-    }
-
-    /// Get the next byte without incrementing
-    #[allow(dead_code)]
-    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
-    where
-        'slc: 'slf,
-    {
-        let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
-        Ok(res)
-    }
-    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
-    where
-        'slc: 'slf,
-    {
-        let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
-        self.state.increment_offset(1);
-
-        Ok(res)
-    }
-    /// ASSUMING that the offset is pointing at the length of a varlen,
-    /// it will read that length and return the resulting slice.
-    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
-    where
-        'slc: 'slf,
-    {
-        let size = decode_varlen(self)?;
-        self.read_exact(size as usize)
-    }
-}
-
-pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
-    let mut dec: u32 = 0;
-
-    for _ in 0..4 {
-        let next = reader.read_next()?;
-        dec <<= 7;
-        let add = u32::from(next & 0x7F);
-        dec |= add;
-
-        //need to continue
-        if next & 0x80 != 0x80 {
-            break;
-        }
-    }
-
-    Ok(dec)
-}
-
-/// grabs the next byte from the reader and checks it's a u4
-#[allow(dead_code)]
-pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
-    let byte = reader.read_next()?;
-    (byte & 0b1111_0000 == 0)
-        .then_some(byte)
-        .ok_or(inv_data(reader, "Leading bit found"))
 }

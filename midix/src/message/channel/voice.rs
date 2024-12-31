@@ -1,3 +1,5 @@
+use io::ErrorKind;
+
 use crate::prelude::*;
 
 /// Represents a MIDI voice message,.
@@ -25,7 +27,10 @@ impl<'a> ChannelVoiceMessage<'a> {
     }
 
     /// TODO: read functions should take in an iterator that yields u8s
-    pub(crate) fn read(status: StatusByte<'a>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
+    pub(crate) fn read<R>(status: StatusByte<'a>, reader: &mut Reader<R>) -> ReadResult<Self>
+    where
+        R: MidiSource<'a>,
+    {
         let msg = match status.byte() >> 4 {
             0x8 => VoiceEvent::NoteOff {
                 key: Key::new(reader.read_next()?)?,
@@ -171,32 +176,75 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
     {
         let msg = match status >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::new(*data.get_byte(0)?)?,
-                velocity: Velocity::new(*data.get_byte(1)?)?,
+                key: Key::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                velocity: Velocity::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0x9 => VoiceEvent::NoteOn {
-                key: Key::new(*data.get_byte(0)?)?,
-                velocity: Velocity::new(*data.get_byte(1)?)?,
+                key: Key::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                velocity: Velocity::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xA => VoiceEvent::Aftertouch {
-                key: Key::new(*data.get_byte(0)?)?,
-                velocity: Velocity::new(*data.get_byte(1)?)?,
+                key: Key::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                velocity: Velocity::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xB => VoiceEvent::ControlChange {
-                controller: Controller::new(*data.get_byte(0)?)?,
-                value: (*data.get_byte(1)?).try_into()?,
+                controller: Controller::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                value: (*data
+                    .get_byte(0)
+                    .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?)
+                .try_into()?,
             },
             0xC => VoiceEvent::ProgramChange {
-                program: Program::new(*data.get_byte(0)?)?,
+                program: Program::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
-                velocity: Velocity::new(*data.get_byte(0)?)?,
+                velocity: Velocity::new(
+                    *data
+                        .get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
-                let lsb = *data.get_byte(0)?;
-                let msb = *data.get_byte(1)?;
+                let lsb = *data
+                    .get_byte(0)
+                    .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
+                let msb = *data
+                    .get_byte(0)
+                    .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
                 VoiceEvent::PitchBend(PitchBend::new(lsb, msb)?)
             }
             _ => panic!("parsed midi message before checking that status is in range"),
