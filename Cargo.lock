@@ -3010,19 +3010,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "midix_examples"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_egui",
- "bevy_midix",
- "itertools",
- "midix_synth",
- "strum",
- "tinyaudio",
-]
-
-[[package]]
 name = "midix_synth"
 version = "0.0.0"
 dependencies = [
@@ -3570,6 +3557,19 @@ dependencies = [
  "indexmap",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "piano_ex"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+ "bevy_midix",
+ "itertools",
+ "midix_synth",
+ "strum",
+ "tinyaudio",
 ]
 
 [[package]]
