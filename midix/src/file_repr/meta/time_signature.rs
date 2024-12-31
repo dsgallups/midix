@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use super::BytesConst;
 
 #[doc = r#"
 FF 58 04 nn dd cc bb Time Signature
@@ -28,12 +28,12 @@ That is, 6/8 time (8 is 2 to the 3rd power, so this is 06 03),
 eight notated 32nd-notes per quarter-note.
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct TimeSignature<'a>(Cow<'a, [u8; 4]>);
+pub struct TimeSignature<'a>(BytesConst<'a, 4>);
 
 impl<'a> TimeSignature<'a> {
     /// Interpret a byte slice as a time signature
-    pub fn new_from_byte_slice(v: &'a [u8; 4]) -> Self {
-        Self(Cow::Borrowed(v))
+    pub fn new_from_bytes(v: BytesConst<'a, 4>) -> Self {
+        Self(v)
     }
     /// numerator of the time signature
     pub fn num(&self) -> u8 {

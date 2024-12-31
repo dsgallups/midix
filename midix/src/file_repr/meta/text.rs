@@ -1,8 +1,10 @@
 use core::fmt;
 use std::{
     borrow::Cow,
-    io::{self, ErrorKind},
+    io::{self},
 };
+
+use super::Bytes;
 
 /// Some text, usually identified by a ['MetaMessage'](super::MetaMessage)s
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -12,12 +14,9 @@ pub struct BytesText<'a> {
 
 impl<'a> BytesText<'a> {
     /// Interpret a byte slice as some text.
-    pub fn new_from_byte_slice(bytes: &'a [u8]) -> Result<Self, io::Error> {
-        let text = std::str::from_utf8(bytes).map_err(|e| {
-            io::Error::new(ErrorKind::InvalidData, format!("Invalid string: {:?}", e))
-        })?;
+    pub fn new_from_bytes<'b: 'a>(bytes: Bytes<'b>) -> Result<Self, io::Error> {
         Ok(Self {
-            inner: Cow::Borrowed(text),
+            inner: bytes.try_into()?,
         })
     }
 

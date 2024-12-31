@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use crate::BytesConst;
 
 #[doc = r#"
 
@@ -20,9 +20,9 @@ pub enum RawFormat<'a> {
     /// Format 0
     SingleMultiChannel,
     /// Format 1
-    Simultaneous(Cow<'a, [u8; 2]>),
+    Simultaneous(BytesConst<'a, 2>),
     /// Format 2
-    SequentiallyIndependent(Cow<'a, [u8; 2]>),
+    SequentiallyIndependent(BytesConst<'a, 2>),
 }
 impl<'a> RawFormat<'a> {
     /// Create a [`RawFormat::SingleMultiChannel`]
@@ -31,13 +31,13 @@ impl<'a> RawFormat<'a> {
     }
 
     /// Create a [`Format::Simultaneous`]
-    pub(crate) const fn simultaneous_from_byte_slice(bytes: &'a [u8; 2]) -> Self {
-        Self::Simultaneous(Cow::Borrowed(bytes))
+    pub(crate) const fn simultaneous_from_byte_slice(bytes: BytesConst<'a, 2>) -> Self {
+        Self::Simultaneous(bytes)
     }
 
     /// Create a [`Format::SequentiallyIndependent`]
-    pub(crate) const fn sequentially_independent_from_byte_slice(bytes: &'a [u8; 2]) -> Self {
-        Self::SequentiallyIndependent(Cow::Borrowed(bytes))
+    pub(crate) const fn sequentially_independent_from_byte_slice(bytes: BytesConst<'a, 2>) -> Self {
+        Self::SequentiallyIndependent(bytes)
     }
 
     /// Returns the number of tracks identified by the format.

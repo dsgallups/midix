@@ -1,6 +1,7 @@
-use std::borrow::Cow;
-
-use crate::reader::{MidiSource, ReadResult, Reader};
+use crate::{
+    Bytes,
+    reader::{MidiSource, ReadResult, Reader},
+};
 
 #[doc = r#"
 Identifies a chunk of a MIDI file that cannot be parsed.
@@ -11,23 +12,20 @@ non-standard chunk types. We leave the option up to you.
 "#]
 #[derive(Clone, Debug, PartialEq)]
 pub struct UnknownChunk<'a> {
-    name: Cow<'a, [u8]>,
-    inner: Cow<'a, [u8]>,
+    name: Bytes<'a>,
+    inner: Bytes<'a>,
 }
 
 impl<'a> UnknownChunk<'a> {
     /// Place the bytes of an unknown chunk
-    pub(crate) fn read<'slc, 'r, R>(name: &'a [u8], reader: &'r mut Reader<R>) -> ReadResult<Self>
+    pub(crate) fn read<'slc, 'r, R>(name: Bytes<'a>, reader: &'r mut Reader<R>) -> ReadResult<Self>
     where
         R: MidiSource<'slc>,
         'slc: 'a,
     {
         let length = u32::from_be_bytes(*reader.read_exact_size()?);
         let data = reader.read_exact(length as usize)?;
-        Ok(Self {
-            name: Cow::Borrowed(name),
-            inner: Cow::Borrowed(data),
-        })
+        Ok(Self { name, inner: data })
     }
 
     /// Get the length of the unknown chunk

@@ -21,7 +21,7 @@ impl TrackChunkHeader {
     where
         R: MidiSource<'slc>,
     {
-        let length: &[u8; 4] = reader.read_exact_size()?;
+        let length: BytesConst<'_, 4> = reader.read_exact_size()?;
 
         let length = u32::from_be_bytes(*length);
 
@@ -35,6 +35,7 @@ impl TrackChunkHeader {
     }
 }
 
+#[allow(dead_code)]
 pub struct RawTrackChunk<'a>(Cow<'a, [u8]>);
 
 impl<'a> RawTrackChunk<'a> {

@@ -18,7 +18,7 @@ use crate::prelude::*;
 pub enum MetaMessage<'a> {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
-    TrackNumber(&'a [u8]),
+    TrackNumber(Bytes<'a>),
     /// Arbitrary text associated to an instant.
     Text(BytesText<'a>),
     /// A copyright notice.
@@ -32,7 +32,7 @@ pub enum MetaMessage<'a> {
     /// Arbitrary marker text associated to an instant.
     Marker(BytesText<'a>),
     /// Arbitrary cue point text associated to an instant.
-    CuePoint(&'a [u8]),
+    CuePoint(Bytes<'a>),
     /// Information about the name of the current program.
     ProgramName(BytesText<'a>),
     /// Name of the device that this file was intended to be played with.
@@ -60,12 +60,12 @@ pub enum MetaMessage<'a> {
     KeySignature(KeySignature<'a>),
     /// Arbitrary data intended for the sequencer.
     /// This data is never sent to a device.
-    SequencerSpecific(&'a [u8]),
+    SequencerSpecific(Bytes<'a>),
     /// An unknown or malformed meta-message.
     ///
     /// The first `u8` is the raw meta-message identifier byte.
     /// The slice is the actual payload of the meta-message.
-    Unknown(&'a u8, &'a [u8]),
+    Unknown(u8, Bytes<'a>),
 }
 impl<'a> MetaMessage<'a> {
     pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
@@ -78,15 +78,15 @@ impl<'a> MetaMessage<'a> {
 
         Ok(match type_byte {
             0x00 => MetaMessage::TrackNumber(data),
-            0x01 => MetaMessage::Text(BytesText::new_from_byte_slice(data)?),
-            0x02 => MetaMessage::Copyright(BytesText::new_from_byte_slice(data)?),
-            0x03 => MetaMessage::TrackName(BytesText::new_from_byte_slice(data)?),
-            0x04 => MetaMessage::InstrumentName(BytesText::new_from_byte_slice(data)?),
-            0x05 => MetaMessage::Lyric(BytesText::new_from_byte_slice(data)?),
-            0x06 => MetaMessage::Marker(BytesText::new_from_byte_slice(data)?),
+            0x01 => MetaMessage::Text(BytesText::new_from_bytes(data)?),
+            0x02 => MetaMessage::Copyright(BytesText::new_from_bytes(data)?),
+            0x03 => MetaMessage::TrackName(BytesText::new_from_bytes(data)?),
+            0x04 => MetaMessage::InstrumentName(BytesText::new_from_bytes(data)?),
+            0x05 => MetaMessage::Lyric(BytesText::new_from_bytes(data)?),
+            0x06 => MetaMessage::Marker(BytesText::new_from_bytes(data)?),
             0x07 => MetaMessage::CuePoint(data),
-            0x08 => MetaMessage::ProgramName(BytesText::new_from_byte_slice(data)?),
-            0x09 => MetaMessage::DeviceName(BytesText::new_from_byte_slice(data)?),
+            0x08 => MetaMessage::ProgramName(BytesText::new_from_bytes(data)?),
+            0x09 => MetaMessage::DeviceName(BytesText::new_from_bytes(data)?),
             0x20 => {
                 if data.len() != 1 {
                     return Err(inv_data(
@@ -107,7 +107,7 @@ impl<'a> MetaMessage<'a> {
                         format!("Varlen is invalid for port (should be 1, is {}", data.len()),
                     ));
                 }
-                let port = *reader.read_next()?;
+                let port = reader.read_next()?;
                 MetaMessage::MidiPort(port)
             }
             0x2F => MetaMessage::EndOfTrack,
@@ -122,7 +122,7 @@ impl<'a> MetaMessage<'a> {
                         ),
                     ));
                 }
-                MetaMessage::Tempo(Tempo::new_from_byte_slice(data.try_into().unwrap()))
+                MetaMessage::Tempo(Tempo::new_from_bytes(data.try_into().unwrap()))
             }
             0x54 => {
                 //TODO
@@ -140,9 +140,7 @@ impl<'a> MetaMessage<'a> {
                         ),
                     ));
                 }
-                MetaMessage::TimeSignature(TimeSignature::new_from_byte_slice(
-                    data.try_into().unwrap(),
-                ))
+                MetaMessage::TimeSignature(TimeSignature::new_from_bytes(data.try_into().unwrap()))
             }
             0x59 => {
                 if data.len() != 2 {
@@ -154,9 +152,7 @@ impl<'a> MetaMessage<'a> {
                         ),
                     ));
                 }
-                MetaMessage::KeySignature(KeySignature::new_from_byte_slice(
-                    data.try_into().unwrap(),
-                ))
+                MetaMessage::KeySignature(KeySignature::new_from_bytes(data.try_into().unwrap()))
             }
             0x7F => MetaMessage::SequencerSpecific(data),
             _ => MetaMessage::Unknown(type_byte, data),

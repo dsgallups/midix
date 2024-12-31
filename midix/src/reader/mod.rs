@@ -15,7 +15,7 @@ pub use error::*;
 pub use source::*;
 use state::{ParseState, ReaderState};
 
-use std::{borrow::Cow, io::ErrorKind};
+use std::io::ErrorKind;
 
 use crate::prelude::*;
 
@@ -135,7 +135,7 @@ impl<'slc> Reader<&'slc [u8]> {
 //internal implementations
 impl<'slc, R: MidiSource<'slc>> Reader<R> {
     // Returns None if there's no bytes left to read
-    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<Bytes<'slc>>
     where
         'slc: 'slf,
     {
@@ -152,14 +152,15 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
 
         self.state.increment_offset(bytes);
 
-        let slice = &self.reader.get_slice(start, end);
+        let slice = self.reader.get_slice(start, end);
 
         Ok(slice)
     }
+
     /// Returns a statically sized array
     pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
         &'slf mut self,
-    ) -> ReadResult<&'slc [u8; SIZE]>
+    ) -> ReadResult<BytesConst<'slc, SIZE>>
     where
         'slc: 'slf,
     {
@@ -172,7 +173,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
 
     /// Get the next byte without incrementing
     #[allow(dead_code)]
-    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<u8>
     where
         'slc: 'slf,
     {
@@ -182,7 +183,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
             .ok_or(unexp_eof())?;
         Ok(res)
     }
-    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
+    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<u8>
     where
         'slc: 'slf,
     {
@@ -196,7 +197,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
     }
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
-    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<Bytes<'slc>>
     where
         'slc: 'slf,
     {
@@ -225,7 +226,7 @@ pub(super) fn decode_varlen<'slc, R: MidiSource<'slc>>(reader: &mut Reader<R>) -
 
 /// grabs the next byte from the reader and checks it's a u4
 #[allow(dead_code)]
-pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
+pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<u8> {
     let byte = reader.read_next()?;
     (byte & 0b1111_0000 == 0)
         .then_some(byte)
@@ -265,7 +266,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                         },
                     };
 
-                    match chunk {
+                    match chunk.as_ref() {
                         b"MThd" => {
                             //HeaderChunk should handle us
                             break FileEvent::Header(RawHeaderChunk::read(self)?);
@@ -280,9 +281,9 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                             });
                             break FileEvent::Track(chunk);
                         }
-                        bytes => {
+                        _ => {
                             //let chunk
-                            let chunk = UnknownChunk::read(bytes, self)?;
+                            let chunk = UnknownChunk::read(chunk, self)?;
 
                             break FileEvent::Unknown(chunk);
                         }
@@ -308,11 +309,9 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                             let mut data = self.read_varlen_slice()?;
                             if !data.is_empty() {
                                 //discard the last 0xF7
-                                data = &data[..data.len() - 1];
+                                data.truncate(1);
                             }
-                            TrackMessage::SystemExclusive(SystemExclusiveMessage::new_borrowed(
-                                data,
-                            ))
+                            TrackMessage::SystemExclusive(SystemExclusiveMessage::new(data))
                         }
                         0xFF => TrackMessage::Meta(MetaMessage::read(self)?),
                         byte => {
@@ -320,13 +319,13 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                             //a running status
 
                             let status = if byte >> 7 == 1 {
-                                running_status = Some(*byte);
-                                Cow::Borrowed(byte)
+                                running_status = Some(byte);
+                                byte
                             } else if let Some(prev_status) = prev_status {
                                 //Hack: decrementing the buffer position should not be done
                                 self.state.decrement_offset(1);
                                 running_status = Some(prev_status);
-                                Cow::Owned(prev_status)
+                                prev_status
                             } else {
                                 return Err(inv_data(self, "Invalid MIDI event triggered"));
                             };
@@ -378,8 +377,9 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                             }
                         },
                     };
+                    let chunk_name = chunk.as_ref();
 
-                    match chunk {
+                    match chunk_name {
                         b"MThd" => {
                             //HeaderChunk should handle us
                             break ChunkEvent::Header(RawHeaderChunk::read(self)?);
@@ -388,12 +388,12 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                             let chunk = RawTrackChunk::read(self)?;
                             break ChunkEvent::Track(chunk);
                         }
-                        bytes => {
+                        _ => {
                             //let chunk
-                            let chunk = UnknownChunk::read(bytes, self)?;
+                            let chunk = UnknownChunk::read(chunk, self)?;
                             break ChunkEvent::Unknown(chunk);
                         }
-                    }
+                    };
                 }
                 ParseState::InsideTrack {
                     start,

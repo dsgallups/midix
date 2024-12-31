@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use reader::MidiSource;
 
 use crate::prelude::*;
@@ -57,8 +55,8 @@ impl<'a> RawHeaderChunk<'a> {
             return Err(inv_data(reader, "Length of header chunk is not 6"));
         }
 
-        let format_bytes: &[u8; 2] = reader.read_exact_size()?;
-        let num_tracks: &[u8; 2] = reader.read_exact_size()?;
+        let format_bytes: BytesConst<'_, 2> = reader.read_exact_size()?;
+        let num_tracks: BytesConst<'_, 2> = reader.read_exact_size()?;
 
         let format = match format_bytes[1] {
             0 => {
@@ -120,10 +118,10 @@ impl<'a> RawHeaderChunk<'a> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Timing<'a> {
     /// The midi file's delta times are defined using a tick rate per quarter note
-    TicksPerQuarterNote(Cow<'a, [u8; 2]>),
+    TicksPerQuarterNote(BytesConst<'a, 2>),
 
     /// The midi file's delta times are defined using an SMPTE and MIDI Time Code
-    NegativeSmpte(Cow<'a, [u8; 2]>),
+    NegativeSmpte(BytesConst<'a, 2>),
 }
 
 impl<'a> Timing<'a> {
@@ -133,7 +131,7 @@ impl<'a> Timing<'a> {
     pub fn new_ticks_per_quarter_note(tpqn: u16) -> Self {
         let msb = (tpqn >> 8) as u8;
         let lsb = (tpqn & 0x00FF) as u8;
-        Self::TicksPerQuarterNote(Cow::Owned([msb, lsb]))
+        Self::TicksPerQuarterNote([msb, lsb].into())
     }
 
     pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
@@ -141,13 +139,13 @@ impl<'a> Timing<'a> {
         R: MidiSource<'slc>,
         'slc: 'a,
     {
-        let bytes: &[u8; 2] = reader.read_exact_size()?;
+        let bytes: BytesConst<'_, 2> = reader.read_exact_size()?;
         match bytes[0] >> 7 {
             0 => {
                 //this is ticks per quarter_note
-                Ok(Timing::TicksPerQuarterNote(Cow::Borrowed(bytes)))
+                Ok(Timing::TicksPerQuarterNote(bytes))
             }
-            1 => Ok(Timing::NegativeSmpte(Cow::Borrowed(bytes))),
+            1 => Ok(Timing::NegativeSmpte(bytes)),
             t => Err(inv_data(reader, format!("Invalid MIDI Timing type {}", t))),
         }
     }

@@ -1,15 +1,15 @@
-use std::borrow::Cow;
+use super::BytesConst;
 
 /// (in microseconds per MIDI quarter-note)
 ///
 /// FF 51 03 tttttt
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Tempo<'a>(Cow<'a, [u8; 3]>);
+pub struct Tempo<'a>(BytesConst<'a, 3>);
 
 impl<'a> Tempo<'a> {
     /// Interprete a byte slice as a tempo
-    pub fn new_from_byte_slice(v: &'a [u8; 3]) -> Self {
-        Self(Cow::Borrowed(v))
+    pub fn new_from_bytes(v: BytesConst<'a, 3>) -> Self {
+        Self(v)
     }
 
     /// The count of microseconds per midi quarter-note

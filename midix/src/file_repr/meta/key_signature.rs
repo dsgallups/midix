@@ -1,4 +1,6 @@
-use std::{borrow::Cow, ops::Neg};
+use std::ops::Neg;
+
+use super::BytesConst;
 
 #[doc = r#"
 Defines the key signature of a MIDI file.
@@ -15,16 +17,11 @@ mi = 0: major key
 mi = 1: minor key
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct KeySignature<'a>(Cow<'a, [u8; 2]>);
+pub struct KeySignature<'a>(BytesConst<'a, 2>);
 impl<'a> KeySignature<'a> {
     /// Create a new key signature from a byte slice
-    pub fn new_from_byte_slice(v: &'a [u8; 2]) -> Self {
-        Self(Cow::Borrowed(v))
-    }
-
-    /// Create a new key signature from a byte array
-    pub fn new_from_byte_array(v: [u8; 2]) -> Self {
-        Self(Cow::Owned(v))
+    pub fn new_from_bytes(v: BytesConst<'a, 2>) -> Self {
+        Self(v)
     }
 
     /// Count the number of flats or sharps. a positive number

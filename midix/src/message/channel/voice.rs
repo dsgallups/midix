@@ -62,8 +62,10 @@ impl<'a> ChannelVoiceMessage<'a> {
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
-                let [lsb, msb] = reader.read_exact_size()?;
-                VoiceEvent::PitchBend(PitchBend::new_borrowed_unchecked(lsb, msb))
+                let b = reader.read_exact(2)?;
+                let lsb = b[0];
+                let msb = b[1];
+                VoiceEvent::PitchBend(PitchBend::new_unchecked(lsb, msb))
             }
             b => {
                 return Err(inv_data(
@@ -177,72 +179,63 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
         let msg = match status >> 4 {
             0x8 => VoiceEvent::NoteOff {
                 key: Key::new(
-                    *data
-                        .get_byte(0)
+                    data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
                 velocity: Velocity::new(
-                    *data
-                        .get_byte(1)
+                    data.get_byte(1)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
             0x9 => VoiceEvent::NoteOn {
                 key: Key::new(
-                    *data
-                        .get_byte(0)
+                    data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
                 velocity: Velocity::new(
-                    *data
-                        .get_byte(1)
+                    data.get_byte(1)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
             0xA => VoiceEvent::Aftertouch {
                 key: Key::new(
-                    *data
-                        .get_byte(0)
+                    data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
                 velocity: Velocity::new(
-                    *data
-                        .get_byte(1)
+                    data.get_byte(1)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
             0xB => VoiceEvent::ControlChange {
                 controller: Controller::new(
-                    *data
-                        .get_byte(0)
+                    data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
-                value: (*data
+                value: (data
                     .get_byte(1)
                     .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?)
                 .try_into()?,
             },
             0xC => VoiceEvent::ProgramChange {
                 program: Program::new(
-                    *data
-                        .get_byte(0)
+                    data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
                 velocity: Velocity::new(
-                    *data
-                        .get_byte(0)
+                    data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
-                let lsb = *data
+                let lsb = data
                     .get_byte(0)
                     .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
-                let msb = *data
+                let msb = data
                     .get_byte(1)
                     .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
                 VoiceEvent::PitchBend(PitchBend::new(lsb, msb)?)
