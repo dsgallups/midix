@@ -1,6 +1,31 @@
 #![doc = include_str!("../README.md")]
 
-mod error;
+pub mod array_math;
+pub mod envelope;
+pub mod error;
+pub mod four_cc;
+pub mod generator;
+pub mod instrument;
+pub mod midifile;
+pub mod preset;
+pub mod reader;
+pub mod region;
+pub mod reverb;
+pub mod sample_header;
+pub mod soundfont;
+pub mod synthesizer;
+pub mod voice;
+pub mod zone;
+
+pub mod prelude {
+    pub use crate::{
+        array_math::*, envelope::*, error::*, four_cc::*, generator::*, instrument::*, midifile::*,
+        preset::*, reader::*, region::*, reverb::*, sample_header::*, soundfont::*, synthesizer::*,
+        voice::*, zone::*,
+    };
+}
+
+/*mod error;
 
 mod array_math;
 mod binary_reader;
@@ -62,4 +87,4 @@ pub use self::soundfont::SoundFont;
 pub use self::soundfont_info::SoundFontInfo;
 pub use self::soundfont_version::SoundFontVersion;
 pub use self::synthesizer::Synthesizer;
-pub use self::synthesizer_settings::SynthesizerSettings;
+pub use self::synthesizer_settings::SynthesizerSettings;*/
