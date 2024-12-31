@@ -2,11 +2,11 @@
 
 mod info;
 pub use info::*;
+
 mod region;
-use crate::error::SoundFontError;
-use crate::sample_header::SampleHeader;
-use crate::zone::Zone;
 pub use region::*;
+
+use crate::prelude::*;
 
 /// Represents an instrument in the SoundFont.
 #[non_exhaustive]

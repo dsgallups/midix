@@ -1,8 +1,7 @@
-use crate::error::SoundFontError;
-use crate::generator::Generator;
-
 mod info;
 pub use info::*;
+
+use crate::prelude::*;
 
 #[non_exhaustive]
 pub(crate) struct Zone {

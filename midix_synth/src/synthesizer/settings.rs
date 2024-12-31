@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::error::SynthesizerError;
+use crate::prelude::*;
 
 /// Specifies a set of parameters for synthesis.
 #[non_exhaustive]

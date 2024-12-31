@@ -2,7 +2,6 @@
 
 pub mod array_math;
 pub mod envelope;
-pub mod error;
 pub mod four_cc;
 pub mod generator;
 pub mod instrument;
@@ -19,7 +18,7 @@ pub mod zone;
 
 pub mod prelude {
     pub use crate::{
-        array_math::*, envelope::*, error::*, four_cc::*, generator::*, instrument::*, midifile::*,
+        array_math::*, envelope::*, four_cc::*, generator::*, instrument::*, midifile::*,
         preset::*, reader::*, region::*, reverb::*, sample_header::*, soundfont::*, synthesizer::*,
         voice::*, zone::*,
     };

@@ -11,6 +11,9 @@ pub use loop_mode::*;
 mod sequencer;
 pub use sequencer::*;
 
+mod error;
+pub use error::*;
+
 use crate::prelude::*;
 
 #[derive(Clone, Copy)]

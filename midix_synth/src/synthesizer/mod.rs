@@ -6,6 +6,9 @@ pub use chorus::*;
 mod settings;
 pub use settings::*;
 
+mod error;
+pub use error::*;
+
 use std::cmp;
 use std::collections::HashMap;
 use std::sync::Arc;

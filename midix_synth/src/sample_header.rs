@@ -2,8 +2,7 @@
 
 use std::io::Read;
 
-use crate::error::SoundFontError;
-use crate::reader::BinaryReader;
+use crate::prelude::*;
 
 /// Represents a sample in the SoundFont.
 #[non_exhaustive]

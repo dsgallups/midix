@@ -13,6 +13,8 @@ mod sampledata;
 pub use sampledata::*;
 mod version;
 pub use version::*;
+mod error;
+pub use error::*;
 
 use crate::prelude::*;
 

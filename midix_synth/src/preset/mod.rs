@@ -6,9 +6,7 @@ pub use info::*;
 mod region;
 pub use region::*;
 
-use crate::error::SoundFontError;
-use crate::instrument::Instrument;
-use crate::zone::Zone;
+use crate::prelude::*;
 
 /// Represents a preset in the SoundFont.
 #[non_exhaustive]
