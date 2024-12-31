@@ -164,7 +164,7 @@ impl<'slc> Reader<&'slc [u8]> {
                     match chunk {
                         b"MThd" => {
                             //HeaderChunk should handle us
-                            break FileEvent::Header(HeaderChunk::read(self)?);
+                            break FileEvent::Header(RawHeaderChunk::read(self)?);
                         }
                         b"MTrk" => {
                             let chunk = TrackChunkHeader::read(self)?;

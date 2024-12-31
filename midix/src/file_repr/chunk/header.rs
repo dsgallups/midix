@@ -38,12 +38,12 @@ If bit 15 of `<division>` is zero, the bits 14 thru 0 represent the number of de
 If bit 15 of `<division>` is a one, delta times in a file correspond to subdivisions of a second, in a way consistent with SMPTE and MIDI Time Code. Bits 14 thru 8 contain one of the four values -24, -25, -29, or -30, corresponding to the four standard SMPTE and MIDI Time Code formats (-29 corresponds to 30 drop frame), and represents the number of frames per second. These negative numbers are stored in two's compliment form. The second byte (stored positive) is the resolution within a frame: typical values may be 4 (MIDI Time Code resolution), 8, 10, 80 (bit resolution), or 100. This stream allows exact specifications of time-code-based tracks, but also allows millisecond-based tracks by specifying 25 frames/sec and a resolution of 40 units per frame. If the events in a file are stored with a bit resolution of thirty-frame time code, the division word would be E250 hex.
 "#]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct HeaderChunk<'a> {
-    format: FileFormat<'a>,
+pub struct RawHeaderChunk<'a> {
+    format: RawFormat<'a>,
     timing: Timing<'a>,
 }
 
-impl<'a> HeaderChunk<'a> {
+impl<'a> RawHeaderChunk<'a> {
     /// Assumes that the chunk type bytes ("MThd") have ALREADY been read
     pub(crate) fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
     where
@@ -65,10 +65,10 @@ impl<'a> HeaderChunk<'a> {
                         "Type 0 MIDI format (SingleMultiChannel) defines multiple tracks!",
                     ));
                 };
-                FileFormat::single_multichannel()
+                RawFormat::single_multichannel()
             } // Always 1 track
-            1 => FileFormat::simultaneous_from_byte_slice(num_tracks),
-            2 => FileFormat::sequentially_independent_from_byte_slice(num_tracks),
+            1 => RawFormat::simultaneous_from_byte_slice(num_tracks),
+            2 => RawFormat::sequentially_independent_from_byte_slice(num_tracks),
             t => return Err(inv_data(reader, format!("Invalid MIDI format {}", t))),
         };
 
@@ -85,7 +85,7 @@ impl<'a> HeaderChunk<'a> {
 
     /// Get the describing format defined by the header. Includes information about the number
     /// of tracks identified.
-    pub fn format(&self) -> &FileFormat<'a> {
+    pub fn format(&self) -> &RawFormat<'a> {
         &self.format
     }
 
@@ -113,7 +113,7 @@ impl<'a> HeaderChunk<'a> {
 /// The header timing type.
 ///
 /// This is either the number of ticks per quarter note or
-/// the alternative SMTPE format. See the [`HeaderChunk`] docs for more information.
+/// the alternative SMTPE format. See the [`RawHeaderChunk`] docs for more information.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Timing<'a> {
     /// The midi file's delta times are defined using a tick rate per quarter note
@@ -178,7 +178,7 @@ fn read_midi_header_simultaneous() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let result = HeaderChunk::read(&mut reader).unwrap();
+    let result = RawHeaderChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.len(), 6);
     assert_eq!(result.format_type(), FormatType::Simultaneous);
@@ -195,7 +195,7 @@ fn read_midi_header_single_multichannel() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let result = HeaderChunk::read(&mut reader).unwrap();
+    let result = RawHeaderChunk::read(&mut reader).unwrap();
 
     assert_eq!(result.len(), 6);
     assert_eq!(result.format_type(), FormatType::SingleMultiChannel);
@@ -212,6 +212,6 @@ fn read_midi_header_single_multichannel_invalid() {
     ];
     let mut reader = Reader::from_byte_slice(&bytes);
 
-    let _err = HeaderChunk::read(&mut reader).expect_err("Invalid");
+    let _err = RawHeaderChunk::read(&mut reader).expect_err("Invalid");
     //assert!(matches!(err, ReaderError::Io(_)))
 }

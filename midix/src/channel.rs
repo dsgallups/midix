@@ -47,7 +47,7 @@ impl<'a> ChannelId<'a> {
         Self(Cow::Borrowed(channel))
     }
 
-    /// Given a status byte from some [`ChannelVoiceMessage`](crate::prelude::ChannelVoiceMessage), perform bitwise ops
+    /// Given a status byte from some [`ChannelVoiceMessage`], perform bitwise ops
     /// to get the channel
     #[must_use]
     pub fn from_status(status: u8) -> Self {

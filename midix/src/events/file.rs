@@ -39,8 +39,8 @@ of MIDI data which may contain information for up to 16 MIDI channels.
 pub enum FileEvent<'a> {
     /// A midi header
     ///
-    /// See [`HeaderChunk`] for a breakdown on layout
-    Header(HeaderChunk<'a>),
+    /// See [`RawHeaderChunk`] for a breakdown on layout
+    Header(RawHeaderChunk<'a>),
 
     /// A track chunk header
     ///
@@ -64,8 +64,8 @@ pub enum FileEvent<'a> {
     EOF,
 }
 
-impl<'a> From<HeaderChunk<'a>> for FileEvent<'a> {
-    fn from(value: HeaderChunk<'a>) -> Self {
+impl<'a> From<RawHeaderChunk<'a>> for FileEvent<'a> {
+    fn from(value: RawHeaderChunk<'a>) -> Self {
         Self::Header(value)
     }
 }
@@ -83,8 +83,8 @@ impl<'a> From<TrackEvent<'a>> for FileEvent<'a> {
 }
 
 impl<'a> FileEvent<'a> {
-    /// Create a new [`FileEvent::Header`] from a [`HeaderChunk`]
-    pub fn header(h: HeaderChunk<'a>) -> Self {
+    /// Create a new [`FileEvent::Header`] from a [`RawHeaderChunk`]
+    pub fn header(h: RawHeaderChunk<'a>) -> Self {
         Self::Header(h)
     }
 

@@ -15,6 +15,9 @@ track. If transfer of several multitrack sequences is required,
 this must be done as a group of format 1 files, each with a different
 sequence number.*/
 
+#[doc = r#"
+Holds the tracks based on the supplied format
+"#]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Format<'a> {
     /// Format 0
