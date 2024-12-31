@@ -15,6 +15,8 @@ pub mod channel;
 pub mod events;
 pub mod file_repr;
 
+pub mod file;
+
 mod pitch_bend;
 pub use pitch_bend::*;
 

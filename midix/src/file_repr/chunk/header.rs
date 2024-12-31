@@ -39,7 +39,7 @@ If bit 15 of `<division>` is a one, delta times in a file correspond to subdivis
 "#]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HeaderChunk<'a> {
-    format: Format<'a>,
+    format: FileFormat<'a>,
     timing: Timing<'a>,
 }
 
@@ -65,10 +65,10 @@ impl<'a> HeaderChunk<'a> {
                         "Type 0 MIDI format (SingleMultiChannel) defines multiple tracks!",
                     ));
                 };
-                Format::single_multichannel()
+                FileFormat::single_multichannel()
             } // Always 1 track
-            1 => Format::simultaneous_from_byte_slice(num_tracks),
-            2 => Format::sequentially_independent_from_byte_slice(num_tracks),
+            1 => FileFormat::simultaneous_from_byte_slice(num_tracks),
+            2 => FileFormat::sequentially_independent_from_byte_slice(num_tracks),
             t => return Err(inv_data(reader, format!("Invalid MIDI format {}", t))),
         };
 
@@ -85,7 +85,7 @@ impl<'a> HeaderChunk<'a> {
 
     /// Get the describing format defined by the header. Includes information about the number
     /// of tracks identified.
-    pub fn format(&self) -> &Format<'a> {
+    pub fn format(&self) -> &FileFormat<'a> {
         &self.format
     }
 

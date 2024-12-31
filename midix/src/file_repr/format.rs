@@ -57,7 +57,7 @@ impl SequenceTrack {
     sequence number.
 "#]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Format<'a> {
+pub enum FileFormat<'a> {
     /// Format 0
     SingleMultiChannel,
     /// Format 1
@@ -65,7 +65,7 @@ pub enum Format<'a> {
     /// Format 2
     SequentiallyIndependent(Cow<'a, [u8; 2]>),
 }
-impl<'a> Format<'a> {
+impl<'a> FileFormat<'a> {
     /// Create a [`Format::SingleMultiChannel`]
     pub const fn single_multichannel() -> Self {
         Self::SingleMultiChannel
@@ -85,7 +85,7 @@ impl<'a> Format<'a> {
     ///
     /// [`Format::SingleMultiChannel`] will always return 1.
     pub fn num_tracks(&self) -> u16 {
-        use Format::*;
+        use FileFormat::*;
         match &self {
             SingleMultiChannel => 1,
             Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(**num),
@@ -94,7 +94,7 @@ impl<'a> Format<'a> {
 
     /// Returns the format type of the format.
     pub const fn format_type(&self) -> FormatType {
-        use Format::*;
+        use FileFormat::*;
         match self {
             SingleMultiChannel => FormatType::SingleMultiChannel,
             Simultaneous(_) => FormatType::Simultaneous,

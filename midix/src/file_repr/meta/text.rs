@@ -5,7 +5,7 @@ use std::{
 };
 
 /// Some text, usually identified by a ['MetaMessage'](super::MetaMessage)s
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BytesText<'a> {
     inner: Cow<'a, str>,
 }

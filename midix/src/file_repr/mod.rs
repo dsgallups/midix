@@ -1,5 +1,8 @@
 #![doc = r#"
 Contains byte-analogous representations to raw MIDI files
+
+These types are distinct from [`MidiFile`](crate::prelude::MidiFile),
+as MidiFile interprets these types and fundamentally restructures the data.
 "#]
 
 //pub mod builder;
