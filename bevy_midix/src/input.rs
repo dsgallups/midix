@@ -2,6 +2,7 @@
 Contains [`MidiInputPlugin`] and other types to handle input
 "#]
 
+use MidiInputError::{ConnectionError, PortRefreshError};
 use bevy::prelude::Plugin;
 use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender};
@@ -11,7 +12,6 @@ use midix::events::{FromLiveEventBytes, LiveEvent};
 use std::error::Error;
 use std::fmt::Display;
 use std::future::Future;
-use MidiInputError::{ConnectionError, PortRefreshError};
 
 #[doc = r#"
 Inserts [`MidiInputSettings`] and [`MidiInputConnection`] as resource
@@ -192,6 +192,7 @@ fn reply(
     }
 }
 
+// Core system
 fn setup(mut commands: Commands, settings: Res<MidiInputSettings>) {
     let (m_sender, m_receiver) = crossbeam_channel::unbounded::<Message>();
     let (r_sender, r_receiver) = crossbeam_channel::unbounded::<Reply>();

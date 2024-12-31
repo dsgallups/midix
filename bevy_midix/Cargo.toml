@@ -13,15 +13,12 @@ categories = ["game-development", "game-engines", "encoding"]
 exclude = ["assets/*"]
 
 
-[features]
-virtual-output = []
-
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.8"
 midix = { version = "2.0.0", features = ["bevy"], path = "../midix" }
-thiserror = "2.0.9"
 midix_synth = { path = "../midix_synth" }
+thiserror = "2.0.9"
 
 [dev-dependencies]
 bevy_egui = { version = "0.31.1", features = ["immutable_ctx"] }
@@ -30,7 +27,7 @@ strum = { version = "0.26", features = ["derive"] }
 [dependencies.bevy]
 version = "0.15"
 default-features = false
-features = ["multi_threaded"]
+features = ["multi_threaded", "bevy_asset"]
 
 [dev-dependencies.bevy]
 version = "0.15"
