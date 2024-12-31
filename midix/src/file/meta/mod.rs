@@ -38,7 +38,7 @@ pub enum MetaMessage<'a> {
     /// Name of the device that this file was intended to be played with.
     DeviceName(BytesText<'a>),
     /// Number of the MIDI channel that this file was intended to be played with.
-    MidiChannel(Channel<'a>),
+    MidiChannel(ChannelId<'a>),
     /// Number of the MIDI port that this file was intended to be played with.
     MidiPort(u8),
     /// Obligatory at track end.
@@ -97,7 +97,7 @@ impl<'a> MetaMessage<'a> {
                     ));
                 }
                 let c = data.first().unwrap();
-                MetaMessage::MidiChannel(Channel::new(*c)?)
+                MetaMessage::MidiChannel(ChannelId::new(*c)?)
             }
             0x21 => {
                 if data.len() != 1 {

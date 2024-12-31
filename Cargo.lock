@@ -3024,6 +3024,9 @@ dependencies = [
 [[package]]
 name = "midix_synth"
 version = "0.1.0"
+dependencies = [
+ "midix",
+]
 
 [[package]]
 name = "minimal-lexical"

@@ -76,7 +76,7 @@ fn on_mouse_down(
     bg.0 = Color::linear_rgb(1.0, 1.0, 0.);
 
     let event = VoiceEvent::note_on(clicked_key.clone(), Velocity::max())
-        .send_to_channel(Channel::new(1).unwrap());
+        .send_to_channel(ChannelId::new(1).unwrap());
 
     output.send(event);
 
@@ -99,7 +99,7 @@ fn on_mouse_up(
     };
 
     let event = VoiceEvent::note_on(clicked_key.clone(), Velocity::zero())
-        .send_to_channel(Channel::new(1).unwrap());
+        .send_to_channel(ChannelId::new(1).unwrap());
 
     output.send(event);
 

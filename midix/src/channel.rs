@@ -12,9 +12,9 @@ use crate::{
 
 /// Identifies a channel for MIDI. Constructors check that the value is between 0-15.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Channel<'a>(Cow<'a, u8>);
+pub struct ChannelId<'a>(Cow<'a, u8>);
 
-impl<'a> Channel<'a> {
+impl<'a> ChannelId<'a> {
     /// Identify a channel (1, 2, 3)
     /// # Errors
     /// If the channel is greater than a value of 15
@@ -54,7 +54,7 @@ impl<'a> Channel<'a> {
     }
 }
 
-impl fmt::Display for Channel<'_> {
+impl fmt::Display for ChannelId<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
     }

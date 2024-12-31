@@ -16,7 +16,7 @@ pub struct ChannelVoiceMessage<'a> {
 
 impl<'a> ChannelVoiceMessage<'a> {
     /// Create a new channel voice event from the channel and associated event type
-    pub fn new(channel: Channel<'_>, message: VoiceEvent<'a>) -> Self {
+    pub fn new(channel: ChannelId<'_>, message: VoiceEvent<'a>) -> Self {
         let status = *channel.byte() | (message.status_nibble() << 4);
         Self {
             status: StatusByte::new_unchecked(status),
@@ -64,7 +64,7 @@ impl<'a> ChannelVoiceMessage<'a> {
                 return Err(inv_data(
                     reader,
                     format!("Invalid status byte for message: {}", b),
-                ))
+                ));
             }
         };
         Ok(ChannelVoiceMessage {
@@ -74,8 +74,8 @@ impl<'a> ChannelVoiceMessage<'a> {
     }
 
     /// Get the channel for the event
-    pub fn channel(&self) -> Channel {
-        Channel::from_status(*self.status.byte())
+    pub fn channel(&self) -> ChannelId {
+        ChannelId::from_status(*self.status.byte())
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
