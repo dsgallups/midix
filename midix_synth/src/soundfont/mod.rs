@@ -15,6 +15,8 @@ mod version;
 pub use version::*;
 mod error;
 pub use error::*;
+mod sample_header;
+pub use sample_header::*;
 
 use crate::prelude::*;
 

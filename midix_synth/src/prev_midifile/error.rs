@@ -2,7 +2,7 @@ use std::error;
 use std::fmt;
 use std::io;
 
-use crate::four_cc::FourCC;
+use crate::soundfont::FourCC;
 
 /// Represents an error when loading a MIDI file.
 #[derive(Debug)]

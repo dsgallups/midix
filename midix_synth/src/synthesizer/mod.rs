@@ -9,6 +9,9 @@ pub use settings::*;
 mod error;
 pub use error::*;
 
+mod array_math;
+pub use array_math::*;
+
 use std::cmp;
 use std::collections::HashMap;
 use std::sync::Arc;

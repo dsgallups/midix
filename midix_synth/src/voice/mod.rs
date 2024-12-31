@@ -14,6 +14,9 @@ pub use bi_quad_filter::*;
 mod channel;
 pub use channel::*;
 
+mod loop_mode;
+pub use loop_mode::*;
+
 use crate::prelude::*;
 
 #[non_exhaustive]

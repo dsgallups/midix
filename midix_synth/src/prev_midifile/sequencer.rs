@@ -3,9 +3,8 @@
 use std::cmp;
 use std::sync::Arc;
 
-use crate::midifile::Message;
-use crate::midifile::MidiFile;
-use crate::synthesizer::Synthesizer;
+use super::*;
+use crate::prelude::*;
 
 /// An instance of the MIDI file sequencer.
 #[non_exhaustive]

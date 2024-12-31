@@ -6,7 +6,7 @@ use std::io::Read;
 use std::slice;
 use std::str;
 
-use crate::four_cc::FourCC;
+use crate::soundfont::FourCC;
 
 #[allow(unused)]
 #[non_exhaustive]

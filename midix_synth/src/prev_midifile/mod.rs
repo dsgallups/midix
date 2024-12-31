@@ -5,9 +5,6 @@ use std::io::Read;
 mod looptype;
 pub use looptype::*;
 
-mod loop_mode;
-pub use loop_mode::*;
-
 mod sequencer;
 pub use sequencer::*;
 
