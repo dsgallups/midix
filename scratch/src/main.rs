@@ -67,6 +67,7 @@ fn main() {
         }
     })
     .unwrap();
+
     // Wait for 10 seconds.
     std::thread::sleep(std::time::Duration::from_secs(180));
 }

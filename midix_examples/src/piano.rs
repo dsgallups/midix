@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_midix::prelude::*;
 
-use crate::ui::HoverNode;
+use crate::{synth::Synth, ui::HoverNode};
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, spawn_piano);
@@ -68,7 +68,7 @@ fn on_mouse_enter(
 fn on_mouse_down(
     trigger: Trigger<Pointer<Down>>,
     mut keys: Query<(&Key<'static>, &mut BackgroundColor)>,
-    output: Res<MidiOutput>,
+    mut synth: ResMut<Synth>,
 ) {
     let (clicked_key, mut bg) = keys.get_mut(trigger.entity()).unwrap();
 
@@ -78,7 +78,9 @@ fn on_mouse_down(
     let event = VoiceEvent::note_on(clicked_key.clone(), Velocity::max())
         .send_to_channel(ChannelId::new(1).unwrap());
 
-    output.send(event);
+    synth.handle_event(event);
+
+    //output.send(event);
 
     println!("clicked {}", clicked_key);
 }
@@ -86,7 +88,7 @@ fn on_mouse_down(
 fn on_mouse_up(
     trigger: Trigger<Pointer<Up>>,
     mut keys: Query<(&Key<'static>, &mut BackgroundColor)>,
-    output: Res<MidiOutput>,
+    mut synth: ResMut<Synth>,
 ) {
     let triggered_entity = trigger.entity();
 
@@ -101,7 +103,7 @@ fn on_mouse_up(
     let event = VoiceEvent::note_on(clicked_key.clone(), Velocity::zero())
         .send_to_channel(ChannelId::new(1).unwrap());
 
-    output.send(event);
+    synth.handle_event(event);
 
     println!("unclicked {}", clicked_key);
 }

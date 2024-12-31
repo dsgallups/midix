@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy_midix::prelude::*;
 mod load;
 mod piano;
-mod scratch;
 mod synth;
 pub mod ui;
 

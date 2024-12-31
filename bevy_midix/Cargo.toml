@@ -20,6 +20,8 @@ virtual-output = []
 midir = "0.10"
 crossbeam-channel = "0.5.8"
 midix = { version = "2.0.0", features = ["bevy"], path = "../midix" }
+thiserror = "2.0.9"
+midix_synth = { path = "../midix_synth" }
 
 [dev-dependencies]
 bevy_egui = { version = "0.31.1", features = ["immutable_ctx"] }

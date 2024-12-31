@@ -109,6 +109,34 @@ impl<'a> ChannelVoiceMessage<'a> {
         }
     }
 
+    /// Returns the byte value for the data 1 byte. In the case
+    /// of voice message it always exists
+    pub fn data_1_byte(&self) -> &u8 {
+        use VoiceEvent as V;
+        match &self.message {
+            V::NoteOn { key, .. } | V::NoteOff { key, .. } | V::Aftertouch { key, .. } => {
+                key.byte()
+            }
+            V::ControlChange { controller, .. } => controller.byte(),
+            V::ProgramChange { program } => program.byte(),
+            V::ChannelPressureAfterTouch { velocity } => velocity.byte(),
+            V::PitchBend(p) => p.lsb(),
+        }
+    }
+
+    /// Returns the byte value for the data 2 byte if it exists
+    pub fn data_2_byte(&self) -> Option<&u8> {
+        match &self.message {
+            VoiceEvent::NoteOn { velocity, .. }
+            | VoiceEvent::NoteOff { velocity, .. }
+            | VoiceEvent::Aftertouch { velocity, .. }
+            | VoiceEvent::ChannelPressureAfterTouch { velocity } => Some(velocity.byte()),
+            VoiceEvent::ControlChange { value, .. } => Some(value.byte()),
+            VoiceEvent::PitchBend(p) => Some(p.msb()),
+            _ => None,
+        }
+    }
+
     /// References the status byte of the event in big-endian.
     ///
     /// the leading (msb) 4 bytes are the voice event
