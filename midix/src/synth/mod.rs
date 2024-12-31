@@ -21,12 +21,12 @@ impl MidiTarget for Synthesizer {
                 Ok(())
             }
             MidiMessage::ChannelVoice(cvm) => {
-                self.process_midi_message(
+                /*self.process_midi_message(
                     *cvm.channel().byte() as i32,
                     (*cvm.status() & 0xF0) as i32,
                     data1,
                     data2,
-                );
+                );*/
                 //todo
                 Ok(())
             }
