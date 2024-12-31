@@ -35,6 +35,9 @@ impl TrackChunkHeader {
     }
 }
 
+#[doc = r#"
+Contains the whole length of the track chunk
+"#]
 #[allow(dead_code)]
 pub struct RawTrackChunk<'a>(Cow<'a, [u8]>);
 

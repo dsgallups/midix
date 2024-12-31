@@ -38,7 +38,7 @@ pub enum MetaMessage<'a> {
     /// Name of the device that this file was intended to be played with.
     DeviceName(BytesText<'a>),
     /// Number of the MIDI channel that this file was intended to be played with.
-    MidiChannel(ChannelId<'a>),
+    MidiChannel(ChannelId),
     /// Number of the MIDI port that this file was intended to be played with.
     MidiPort(u8),
     /// Obligatory at track end.

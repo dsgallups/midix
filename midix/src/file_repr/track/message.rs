@@ -15,7 +15,7 @@ pub enum TrackMessage<'a> {
     /// A channel voice message.
     ///
     /// See [`ChannelVoiceMessage`] for details
-    ChannelVoice(ChannelVoiceMessage<'a>),
+    ChannelVoice(ChannelVoiceMessage),
 
     /// A system exclusive event.
     ///
@@ -45,8 +45,8 @@ impl Debug for TrackMessage<'_> {
     }
 }
 
-impl<'a> From<ChannelVoiceMessage<'a>> for TrackMessage<'a> {
-    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+impl From<ChannelVoiceMessage> for TrackMessage<'_> {
+    fn from(value: ChannelVoiceMessage) -> Self {
         Self::ChannelVoice(value)
     }
 }

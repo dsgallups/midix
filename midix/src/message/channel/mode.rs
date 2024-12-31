@@ -44,7 +44,7 @@ These four messages also cause All Notes Off)
 "#]
 #[allow(dead_code)]
 #[derive(Debug)]
-pub struct ChannelModeMessage<'a> {
-    controller: Controller<'a>,
-    value: DataByte<'a>,
+pub struct ChannelModeMessage {
+    controller: Controller,
+    value: DataByte,
 }

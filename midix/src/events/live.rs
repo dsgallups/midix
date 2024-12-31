@@ -53,7 +53,7 @@ There is currently no `StreamReader` type, so this type is most often manually c
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LiveEvent<'a> {
     /// A MIDI voice message associated with a channel
-    ChannelVoice(ChannelVoiceMessage<'a>),
+    ChannelVoice(ChannelVoiceMessage),
 
     /// A set of common messages that are not meant to be used
     /// For input/output purposes
@@ -65,7 +65,7 @@ pub enum LiveEvent<'a> {
 
 impl LiveEvent<'_> {
     /// returns Some if the message is a [`ChannelVoiceMessage`].
-    pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage<'_>> {
+    pub fn channel_voice(&self) -> Option<&ChannelVoiceMessage> {
         match self {
             LiveEvent::ChannelVoice(c) => Some(c),
             _ => None,
@@ -82,8 +82,8 @@ impl LiveEvent<'_> {
     }
 }
 
-impl<'a> From<ChannelVoiceMessage<'a>> for LiveEvent<'a> {
-    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+impl From<ChannelVoiceMessage> for LiveEvent<'_> {
+    fn from(value: ChannelVoiceMessage) -> Self {
         Self::ChannelVoice(value)
     }
 }

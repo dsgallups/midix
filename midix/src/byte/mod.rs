@@ -38,6 +38,7 @@ impl<'a> Bytes<'a> {
         self.0.to_mut()
     }
 
+    /// Returns the underlying Cow
     pub fn into_inner(self) -> Cow<'a, [u8]> {
         self.0
     }
@@ -72,7 +73,7 @@ impl<'a> TryFrom<Bytes<'a>> for Cow<'a, str> {
     fn try_from(value: Bytes<'a>) -> Result<Self, Self::Error> {
         match value.0 {
             Cow::Borrowed(value) => {
-                let text = std::str::from_utf8(value.as_ref()).map_err(|e| {
+                let text = std::str::from_utf8(value).map_err(|e| {
                     io::Error::new(ErrorKind::InvalidData, format!("Invalid string: {:?}", e))
                 })?;
                 Ok(Cow::Borrowed(text))
@@ -87,6 +88,9 @@ impl<'a> TryFrom<Bytes<'a>> for Cow<'a, str> {
     }
 }
 
+#[doc = r#"
+A representation of a statically borrowed or owned array
+"#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct BytesConst<'a, const SIZE: usize>(Cow<'a, [u8; SIZE]>);
 
@@ -101,6 +105,7 @@ impl<'a, const SIZE: usize> BytesConst<'a, SIZE> {
         self.0.to_mut()
     }
 
+    /// Returns the underlying Cow
     pub fn into_inner(self) -> Cow<'a, [u8; SIZE]> {
         self.0
     }
@@ -127,7 +132,7 @@ impl<'a, const SIZE: usize> TryFrom<Bytes<'a>> for BytesConst<'a, SIZE> {
     }
 }
 
-impl<'a, const SIZE: usize> From<[u8; SIZE]> for BytesConst<'a, SIZE> {
+impl<const SIZE: usize> From<[u8; SIZE]> for BytesConst<'_, SIZE> {
     fn from(value: [u8; SIZE]) -> Self {
         Self(Cow::Owned(value))
     }

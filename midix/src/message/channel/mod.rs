@@ -23,21 +23,21 @@ pub use voice_event::*;
 #[doc = r#"
 The set of possible Channel messages
 "#]
-pub enum ChannelMessage<'a> {
+pub enum ChannelMessage {
     /// A channel voice message
-    Voice(ChannelVoiceMessage<'a>),
+    Voice(ChannelVoiceMessage),
     /// A channel mode message
-    Mode(ChannelModeMessage<'a>),
+    Mode(ChannelModeMessage),
 }
 
-impl<'a> From<ChannelVoiceMessage<'a>> for ChannelMessage<'a> {
-    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+impl From<ChannelVoiceMessage> for ChannelMessage {
+    fn from(value: ChannelVoiceMessage) -> Self {
         Self::Voice(value)
     }
 }
 
-impl<'a> From<ChannelModeMessage<'a>> for ChannelMessage<'a> {
-    fn from(value: ChannelModeMessage<'a>) -> Self {
+impl From<ChannelModeMessage> for ChannelMessage {
+    fn from(value: ChannelModeMessage) -> Self {
         Self::Mode(value)
     }
 }

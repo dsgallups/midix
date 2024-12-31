@@ -3,7 +3,6 @@
 "]
 
 use core::fmt;
-use std::borrow::Cow;
 
 use crate::{
     message::{ChannelVoiceMessage, VoiceEvent},
@@ -11,10 +10,10 @@ use crate::{
 };
 
 /// Identifies a channel for MIDI. Constructors check that the value is between 0-15.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct ChannelId<'a>(Cow<'a, u8>);
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+pub struct ChannelId(u8);
 
-impl<'a> ChannelId<'a> {
+impl ChannelId {
     /// Identify a channel (1, 2, 3)
     ///
     /// # Panics
@@ -23,28 +22,23 @@ impl<'a> ChannelId<'a> {
     /// # Errors
     /// If the channel is greater than a value of 15
     pub fn new(channel: u8) -> Result<Self, std::io::Error> {
-        Ok(Self(Cow::Owned(check_u4(channel - 1)?)))
+        Ok(Self(check_u4(channel - 1)?))
     }
 
     /// Send a voice event to this channel
-    pub fn send_event(self, event: VoiceEvent<'a>) -> ChannelVoiceMessage<'a> {
+    pub fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(self, event)
     }
     /// returns 1-16
     pub fn value(&self) -> u8 {
-        *self.0 + 1
+        self.0 + 1
     }
 
     /// Identify a channel (0, 1, 2)
     ///
     /// Does not check for correctness
     pub fn new_unchecked(channel: u8) -> Self {
-        Self(Cow::Owned(channel))
-    }
-
-    /// Identify a channel from a borrowed value (&1, &2, &3)
-    pub fn new_borrowed_unchecked(channel: &'a u8) -> Self {
-        Self(Cow::Borrowed(channel))
+        Self(channel)
     }
 
     /// Given a status byte from some [`ChannelVoiceMessage`], perform bitwise ops
@@ -52,7 +46,7 @@ impl<'a> ChannelId<'a> {
     #[must_use]
     pub fn from_status(status: u8) -> Self {
         let channel = status & 0b0000_1111;
-        Self(Cow::Owned(channel))
+        Self(channel)
     }
 
     /// Returns the 4-bit channel number (0-15)
@@ -62,8 +56,8 @@ impl<'a> ChannelId<'a> {
     }
 }
 
-impl fmt::Display for ChannelId<'_> {
+impl fmt::Display for ChannelId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
+        (self.0 + 1).fmt(f)
     }
 }

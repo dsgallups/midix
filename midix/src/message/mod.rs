@@ -64,10 +64,10 @@ pub enum MidiMessage<'a> {
     SysExclusive(SystemExclusiveMessage<'a>),
 
     /// A channel voice message
-    ChannelVoice(ChannelVoiceMessage<'a>),
+    ChannelVoice(ChannelVoiceMessage),
 
     /// A channel mode message
-    ChannelMode(ChannelModeMessage<'a>),
+    ChannelMode(ChannelModeMessage),
 }
 
 impl<'a> From<SystemMessage<'a>> for MidiMessage<'a> {
@@ -80,8 +80,8 @@ impl<'a> From<SystemMessage<'a>> for MidiMessage<'a> {
     }
 }
 
-impl<'a> From<ChannelMessage<'a>> for MidiMessage<'a> {
-    fn from(value: ChannelMessage<'a>) -> Self {
+impl From<ChannelMessage> for MidiMessage<'_> {
+    fn from(value: ChannelMessage) -> Self {
         match value {
             ChannelMessage::Mode(m) => MidiMessage::ChannelMode(m),
             ChannelMessage::Voice(v) => MidiMessage::ChannelVoice(v),
@@ -106,14 +106,14 @@ impl<'a> From<SystemExclusiveMessage<'a>> for MidiMessage<'a> {
     }
 }
 
-impl<'a> From<ChannelVoiceMessage<'a>> for MidiMessage<'a> {
-    fn from(value: ChannelVoiceMessage<'a>) -> Self {
+impl From<ChannelVoiceMessage> for MidiMessage<'_> {
+    fn from(value: ChannelVoiceMessage) -> Self {
         Self::ChannelVoice(value)
     }
 }
 
-impl<'a> From<ChannelModeMessage<'a>> for MidiMessage<'a> {
-    fn from(value: ChannelModeMessage<'a>) -> Self {
+impl From<ChannelModeMessage> for MidiMessage<'_> {
+    fn from(value: ChannelModeMessage) -> Self {
         Self::ChannelMode(value)
     }
 }

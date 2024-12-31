@@ -14,10 +14,10 @@ pub enum SystemCommonMessage<'a> {
     SystemExclusive(SystemExclusiveMessage<'a>),
 
     /// An undefined System Common message
-    Undefined(StatusByte<'a>),
+    Undefined(StatusByte),
     /// The number of MIDI beats (6 x MIDI clocks) that have elapsed since the start of the
     /// sequence.
-    SongPositionPointer(SongPositionPointer<'a>),
+    SongPositionPointer(SongPositionPointer),
     /// Select a given song index.
     SongSelect(u8),
     /// Request the device to tune itself.
@@ -31,7 +31,7 @@ impl SystemCommonMessage<'_> {
             SongPositionPointer { .. } => 0xF2,
             SongSelect(_) => 0xF3,
             TuneRequest => 0xF6,
-            Undefined(v) => *v.byte(),
+            Undefined(v) => v.byte(),
         }
     }
 
@@ -41,7 +41,7 @@ impl SystemCommonMessage<'_> {
         match self {
             SystemExclusive(b) => b.to_live_bytes(),
             SongPositionPointer(spp) => {
-                vec![self.status(), *spp.lsb(), *spp.msb()]
+                vec![self.status(), spp.lsb().value(), spp.msb().value()]
             }
             SongSelect(v) => vec![self.status(), *v],
             TuneRequest | Undefined(_) => vec![self.status()],
@@ -154,7 +154,7 @@ impl MtcQuarterFrameMessage {
                 return Err(io_error!(
                     ErrorKind::InvalidData,
                     "Invalid MtcQuarterFrameMessage"
-                ))
+                ));
             }
         })
     }

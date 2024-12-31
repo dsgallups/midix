@@ -86,6 +86,35 @@ Streamer should yield MidiMessage
 whereas static types,
 like MidiFile will yield TrackEvent
 
+
+
+--- Layers
+
+We should identify "layers of midi"
+
+
+
+// on the main thread, or midi i/o handler
+sequencer_controller.send_message(midi, time); // time is some point in the future, or None for "immediately"
+
+// on the audio thread
+let mut time_start = time_current;
+let time_end = time_start + num_frames;
+
+// get all the events between the start of the audio callback and its end.
+for (time_current, event) in sequencer_processor.get_events(time_start, time_end) {
+     // do something with the event.
+     handle(event);
+
+     // if there is a gap of time between events, make sure to process the audio between them.
+     if time_current != time_start {
+         // ... process audio between time_start and time_current ...
+
+         // advance the input to the current time.
+         time_start = time_current;
+     }
+}
+
 */
 
 #[doc = r#"
