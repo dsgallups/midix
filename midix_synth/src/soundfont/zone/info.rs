@@ -11,7 +11,7 @@ pub(crate) struct ZoneInfo {
 }
 
 impl ZoneInfo {
-    fn new<R: Read>(reader: &mut R) -> Result<Self, SoundFontError> {
+    fn new<R: Read + ?Sized>(reader: &mut R) -> Result<Self, SoundFontError> {
         let generator_index = BinaryReader::read_u16(reader)? as i32;
         let modulator_index = BinaryReader::read_u16(reader)? as i32;
 
@@ -23,7 +23,7 @@ impl ZoneInfo {
         })
     }
 
-    pub(crate) fn read_from_chunk<R: Read>(
+    pub(crate) fn read_from_chunk<R: Read + ?Sized>(
         reader: &mut R,
         size: usize,
     ) -> Result<Vec<ZoneInfo>, SoundFontError> {
