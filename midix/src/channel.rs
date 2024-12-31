@@ -35,7 +35,7 @@ impl<'a> ChannelId<'a> {
         *self.0 + 1
     }
 
-    /// Identify a channel (1, 2, 3)
+    /// Identify a channel (0, 1, 2)
     ///
     /// Does not check for correctness
     pub fn new_unchecked(channel: u8) -> Self {

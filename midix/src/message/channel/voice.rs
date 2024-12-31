@@ -183,7 +183,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
                 )?,
                 velocity: Velocity::new(
                     *data
-                        .get_byte(0)
+                        .get_byte(1)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
@@ -195,7 +195,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
                 )?,
                 velocity: Velocity::new(
                     *data
-                        .get_byte(0)
+                        .get_byte(1)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
@@ -207,7 +207,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
                 )?,
                 velocity: Velocity::new(
                     *data
-                        .get_byte(0)
+                        .get_byte(1)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
@@ -218,7 +218,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
                 value: (*data
-                    .get_byte(0)
+                    .get_byte(1)
                     .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?)
                 .try_into()?,
             },
@@ -243,7 +243,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
                     .get_byte(0)
                     .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
                 let msb = *data
-                    .get_byte(0)
+                    .get_byte(1)
                     .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
                 VoiceEvent::PitchBend(PitchBend::new(lsb, msb)?)
             }

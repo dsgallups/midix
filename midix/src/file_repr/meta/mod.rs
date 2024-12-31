@@ -98,7 +98,7 @@ impl<'a> MetaMessage<'a> {
                     ));
                 }
                 let c = data.first().unwrap();
-                MetaMessage::MidiChannel(ChannelId::new(*c)?)
+                MetaMessage::MidiChannel(ChannelId::new(*c + 1)?)
             }
             0x21 => {
                 if data.len() != 1 {
