@@ -66,6 +66,7 @@ pub mod prelude {
     pub use crate::{
         channel::*,
         events::*,
+        file::*,
         file_repr::{chunk::*, meta::*, track::*, *},
         message::{MidiMessage, channel::*, system::*},
         *,

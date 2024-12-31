@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::prelude::*;
 
 #[doc = r#"
@@ -27,5 +29,16 @@ impl TrackChunkHeader {
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.length
+    }
+}
+
+pub struct RawTrackChunk<'a>(Cow<'a, [u8]>);
+
+impl<'a> RawTrackChunk<'a> {
+    pub(crate) fn read<'slc, 'r>(reader: &'r mut Reader<&'slc [u8]>) -> ReadResult<Self>
+    where
+        'slc: 'a,
+    {
+        todo!()
     }
 }

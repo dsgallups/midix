@@ -243,6 +243,74 @@ impl<'slc> Reader<&'slc [u8]> {
         };
         Ok(event)
     }
+
+    /// Read the buffer and return a chunk
+    ///
+    /// # Errors
+    ///
+    /// If the next set of bytes are invalid given the current state of the reader
+    pub fn read_chunk<'a>(&mut self) -> ReadResult<ChunkEvent<'a>>
+    where
+        'slc: 'a,
+    {
+        let event = loop {
+            match self.state.parse_state() {
+                ParseState::Init => {
+                    self.state.set_parse_state(ParseState::InsideMidi);
+                    continue;
+                }
+                ParseState::InsideMidi => {
+                    // expect only a header or track chunk
+                    let chunk = match self.read_exact(4) {
+                        Ok(c) => c,
+                        Err(e) => match e.kind() {
+                            // Inside Midi + UnexpectedEof should only fire at the end of a file.
+                            ErrorKind::UnexpectedEof => {
+                                self.state.set_parse_state(ParseState::Done);
+                                return Ok(ChunkEvent::eof());
+                            }
+                            _ => {
+                                return Err(e);
+                            }
+                        },
+                    };
+
+                    match chunk {
+                        b"MThd" => {
+                            //HeaderChunk should handle us
+                            break ChunkEvent::Header(RawHeaderChunk::read(self)?);
+                        }
+                        b"MTrk" => {
+                            let chunk = RawTrackChunk::read(self)?;
+                            break ChunkEvent::Track(chunk);
+                        }
+                        bytes => {
+                            //let chunk
+                            let chunk = UnknownChunk::read(bytes, self)?;
+                            break ChunkEvent::Unknown(chunk);
+                        }
+                    }
+                }
+                ParseState::InsideTrack {
+                    start,
+                    length,
+                    prev_status: _,
+                } => {
+                    /*
+                    If this happens, then read_event was previously called.
+                    We will just skip to the end of this track and continue
+                    */
+
+                    self.state.set_offset(start + length);
+                    self.state.set_parse_state(ParseState::InsideMidi);
+                    continue;
+                }
+                ParseState::Done => break ChunkEvent::eof(),
+            }
+        };
+
+        Ok(event)
+    }
 }
 
 //internal implementations

@@ -1,5 +1,8 @@
 use crate::prelude::*;
 
+mod chunk;
+pub use chunk::*;
+
 #[doc = r#"
 An event that can be yielded from or put into a `.mid` file.
 

@@ -4,15 +4,26 @@ Rusty representation of a [`MidiFile`]
 TODO
 "#]
 
-pub mod format;
-use format::Format;
-pub mod track;
+//mod builder;
+mod format;
+pub use format::*;
+mod header;
+pub use header::*;
+mod track;
+pub use track::*;
 
 #[doc = r#"
 TODO
 "#]
 pub struct MidiFile<'a> {
+    header: Header<'a>,
     format: Format<'a>,
+}
+
+impl<'a> MidiFile<'a> {
+    pub fn parse(bytes: Vec<u8>) -> Self {
+        todo!();
+    }
 }
 
 /*
