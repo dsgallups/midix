@@ -1,5 +1,3 @@
-use bevy::time::TimeSender;
-
 use super::BytesConst;
 
 #[doc = r#"

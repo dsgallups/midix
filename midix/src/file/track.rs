@@ -22,14 +22,14 @@ impl<'a> Track<'a> {
         let mut time_accumulated = None;
 
         for event in events {
-            let delta_time = event.delta_ticks();
+            let delta_ticks = event.delta_ticks();
 
-            let accumulated_time = if let Some(mut time_acc) = &mut time_accumulated {
-                time_acc += delta_time;
-                time_acc
+            let accumulated_ticks = if let Some(mut tick_acc) = &mut time_accumulated {
+                tick_acc += delta_ticks;
+                tick_acc
             } else {
-                time_accumulated = Some(delta_time);
-                delta_time
+                time_accumulated = Some(delta_ticks);
+                delta_ticks
             };
             let event: LiveEvent = match event.into_event() {
                 TrackMessage::ChannelVoice(cvm) => cvm.into(),
@@ -39,7 +39,7 @@ impl<'a> Track<'a> {
                     continue;
                 }
             };
-            track_events.push(TimedEvent::new(accumulated_time, event));
+            track_events.push(TimedEvent::new(accumulated_ticks, event));
         }
 
         // update track_event's time_since_start, since it currently
@@ -75,7 +75,7 @@ A wrapper around some type with an associated time
 #[derive(Debug, Clone, PartialEq)]
 pub struct TimedEvent<T> {
     /// In microseconds. Can be ticks, or microseconds
-    accumulated: u32,
+    accumulated_ticks: u32,
     event: T,
 }
 
@@ -83,7 +83,7 @@ impl<T> TimedEvent<T> {
     /// Create a new timed event based on *accumulated* ticks
     pub fn new(accumulated_ticks: u32, event: T) -> Self {
         Self {
-            accumulated: accumulated_ticks,
+            accumulated_ticks,
             event,
         }
     }
