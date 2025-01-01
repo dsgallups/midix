@@ -35,6 +35,55 @@ impl<'a> TrackEvent<'a> {
         Self { delta_time, event }
     }
 
+    /// Update the running status here.
+    pub(crate) fn read<'slc, 'r, R>(
+        reader: &'r mut Reader<R>,
+        running_status: &mut Option<u8>,
+    ) -> ReadResult<Self>
+    where
+        R: MidiSource<'slc>,
+        'slc: 'a,
+    {
+        let delta_time = crate::reader::decode_varlen(reader)?;
+
+        let next_event = reader.read_next()?;
+
+        let message = match next_event {
+            0xF0 => {
+                let mut data = reader.read_varlen_slice()?;
+                if !data.is_empty() {
+                    //discard the last 0xF7
+                    data.truncate(1);
+                }
+                TrackMessage::SystemExclusive(SystemExclusiveMessage::new(data))
+            }
+            0xFF => TrackMessage::Meta(MetaMessage::read(reader)?),
+            byte => {
+                //status if the byte has a leading 1, otherwise it's
+                //a running status
+
+                let status = if byte >> 7 == 1 {
+                    *running_status = Some(byte);
+                    byte
+                } else if let Some(prev_status) = running_status {
+                    //Hack: decrementing the buffer position should not be done
+                    reader.state.decrement_offset(1);
+                    *prev_status
+                } else {
+                    return Err(inv_data(reader, "Invalid MIDI event triggered"));
+                };
+                let status = StatusByte::try_from(status).unwrap();
+
+                TrackMessage::ChannelVoice(ChannelVoiceMessage::read(status, reader)?)
+            }
+        };
+
+        Ok(Self {
+            delta_time,
+            event: message,
+        })
+    }
+
     /// Get the difference in time from the last event
     ///
     /// The actual value should be interpreted by the MIDI file's

@@ -8,9 +8,10 @@ use std::{
 pub use message::*;
 
 #[doc = r#"
-Wraps a `Cow<'_, u8>`. This is because
+Wraps a `Cow<'_, u8>`.
 
-Cow doesn't implement From<Vec<u8>> or From<&[u8]>
+This is because Cow doesn't implement From<Vec<u8>> or From<&[u8]>, and a common interface is nice to have
+for [`MidiSource`].
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Bytes<'a>(Cow<'a, [u8]>);
@@ -36,6 +37,10 @@ impl<'a> Bytes<'a> {
     /// Returns mutable reference to underlying byte slice
     pub fn to_mut(&mut self) -> &mut Vec<u8> {
         self.0.to_mut()
+    }
+
+    pub fn as_cow(&self) -> &Cow<'a, [u8]> {
+        &self.0
     }
 
     /// Returns the underlying Cow

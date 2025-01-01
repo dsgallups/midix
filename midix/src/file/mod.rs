@@ -4,13 +4,19 @@ Rusty representation of a [`MidiFile`]
 TODO
 "#]
 
-//mod builder;
+mod builder;
+use builder::*;
 mod format;
 pub use format::*;
 mod header;
 pub use header::*;
 mod track;
 pub use track::*;
+
+use crate::{
+    Bytes,
+    reader::{ReadResult, Reader},
+};
 
 #[doc = r#"
 TODO
@@ -21,75 +27,37 @@ pub struct MidiFile<'a> {
 }
 
 impl<'a> MidiFile<'a> {
-    pub fn parse(bytes: Vec<u8>) -> Self {
-        todo!();
-    }
-}
-
-/*
-pub struct MidiFile {
-    header: MidiHeader,
-    tracks: FormatOwned,
-}
-
-impl MidiFile {
-    /*
-    pub fn parse(bytes: &[u8]) -> OldReadResult<Self> {
-        let mut reader = OldReader::from_byte_slice(bytes);
+    /// Parse a set of bytes into a file struct
+    pub fn parse<B>(bytes: B) -> ReadResult<Self>
+    where
+        B: Into<Bytes<'a>>,
+    {
+        let mut reader = Reader::from_bytes(bytes);
         let mut builder = MidiFileBuilder::default();
+
         loop {
-            match reader.read_chunk() {
-                Ok(c) => builder.handle_chunk(c)?,
-                Err(e) => match e {
-                    OldReaderError::EndOfReader => {
-                        break;
-                    }
-                    e => return Err(e),
-                },
+            let val = reader.read_chunk().unwrap();
+
+            if val.is_eof() {
+                break;
             }
+            builder.handle_chunk(val)?;
         }
+
         builder.build()
-    }*/
-    pub fn header(&self) -> &MidiHeader {
+    }
+
+    /// Returns header info
+    pub fn header(&self) -> &Header {
         &self.header
     }
-    pub fn tracks(&self) -> Vec<&MidiTrack> {
-        match self.tracks {
+
+    /// Returns a track list
+    pub fn tracks(&self) -> Vec<&Track<'a>> {
+        match self.format {
             Format::SequentiallyIndependent(ref t) => t.iter().collect(),
             Format::Simultaneous(ref s) => s.iter().collect(),
             Format::SingleMultiChannel(ref c) => vec![c],
         }
     }
-}*/
-
-/*
-pub struct MidiFileRef<'a> {
-    chunks: Vec<MidiChunk<'a>>,
 }
-
-impl<'a> MidiFileRef<'a> {
-    pub fn read<'r, 'slc>(reader: &'r mut OldReader<&'slc [u8]>) -> OldReadResult<Self>
-    where
-        'slc: 'a,
-    {
-        let mut chunks = Vec::new();
-
-        loop {
-            match MidiChunk::read(reader) {
-                Ok(chunk) => chunks.push(chunk),
-                Err(e) => match e {
-                    OldReaderError::EndOfReader => break,
-                    e => {
-                        return Err(e);
-                    }
-                },
-            }
-        }
-
-        Ok(Self { chunks })
-    }
-    pub fn chunks(&self) -> &[MidiChunk<'a>] {
-        &self.chunks
-    }
-}
-*/

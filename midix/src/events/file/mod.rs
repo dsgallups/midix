@@ -84,25 +84,3 @@ impl<'a> From<TrackEvent<'a>> for FileEvent<'a> {
         Self::TrackEvent(value)
     }
 }
-
-impl<'a> FileEvent<'a> {
-    /// Create a new [`FileEvent::Header`] from a [`RawHeaderChunk`]
-    pub fn header(h: RawHeaderChunk<'a>) -> Self {
-        Self::Header(h)
-    }
-
-    /// Create a new [`FileEvent::Track`] from a [`TrackChunkHeader`]
-    pub fn track(t: TrackChunkHeader) -> Self {
-        Self::Track(t)
-    }
-
-    /// Create a new [`FileEvent::TrackEvent`] from a [`TrackEvent`]
-    pub fn track_event(t: TrackEvent<'a>) -> Self {
-        Self::TrackEvent(t)
-    }
-
-    /// Create an [`FileEvent::EOF`] event
-    pub fn eof() -> Self {
-        Self::EOF
-    }
-}

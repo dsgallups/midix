@@ -18,7 +18,7 @@ sequence number.*/
 #[doc = r#"
 Holds the tracks based on the supplied format
 "#]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Format<'a> {
     /// Format 0
     SingleMultiChannel(Track<'a>),

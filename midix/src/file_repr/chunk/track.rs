@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use reader::ReaderError;
 
 use crate::prelude::*;
 
@@ -39,14 +39,41 @@ impl TrackChunkHeader {
 Contains the whole length of the track chunk
 "#]
 #[allow(dead_code)]
-pub struct RawTrackChunk<'a>(Cow<'a, [u8]>);
+pub struct RawTrackChunk<'a>(Bytes<'a>);
 
 impl<'a> RawTrackChunk<'a> {
-    pub(crate) fn read<'slc, 'r, R>(_reader: &'r mut Reader<R>) -> ReadResult<Self>
+    pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
     where
         R: MidiSource<'slc>,
         'slc: 'a,
     {
-        todo!()
+        let length = u32::from_be_bytes(*reader.read_exact_size()?);
+
+        let track_event_bytes = reader.read_exact(length as usize)?;
+
+        Ok(Self(track_event_bytes))
+    }
+
+    /// Consume self to yield a list of track events
+    pub fn events(self) -> ReadResult<Vec<TrackEvent<'a>>> {
+        // just a guess, may over-allocate
+        let mut events: Vec<TrackEvent<'a>> = Vec::with_capacity(self.0.len());
+        let mut reader = Reader::from_bytes(self.0);
+        let mut running_status = None;
+
+        loop {
+            match TrackEvent::read(&mut reader, &mut running_status) {
+                Ok(e) => events.push(e),
+                Err(err) => {
+                    if err.is_eof() {
+                        break;
+                    } else {
+                        return Err(err);
+                    }
+                }
+            }
+        }
+
+        Ok(events)
     }
 }

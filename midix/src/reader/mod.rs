@@ -15,8 +15,6 @@ pub use error::*;
 pub use source::*;
 use state::{ParseState, ReaderState};
 
-use std::io::ErrorKind;
-
 use crate::prelude::*;
 
 #[doc = r#"
@@ -83,7 +81,7 @@ assert_eq!(
 #[derive(Clone)]
 pub struct Reader<R> {
     reader: R,
-    state: ReaderState,
+    pub(crate) state: ReaderState,
 }
 
 impl<R> Reader<R> {
@@ -132,6 +130,15 @@ impl<'slc> Reader<&'slc [u8]> {
     }
 }
 
+impl<'a> Reader<Bytes<'a>> {
+    pub fn from_bytes<B: Into<Bytes<'a>>>(slice: B) -> Self {
+        Self {
+            reader: slice.into(),
+            state: ReaderState::default(),
+        }
+    }
+}
+
 //internal implementations
 impl<'slc, R: MidiSource<'slc>> Reader<R> {
     // Returns None if there's no bytes left to read
@@ -152,7 +159,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
 
         self.state.increment_offset(bytes);
 
-        let slice = self.reader.get_slice(start, end);
+        let slice = self.reader.get_slice(start, end).unwrap();
 
         Ok(slice)
     }
@@ -206,7 +213,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
     }
 }
 
-pub(super) fn decode_varlen<'slc, R: MidiSource<'slc>>(reader: &mut Reader<R>) -> ReadResult<u32> {
+pub(crate) fn decode_varlen<'slc, R: MidiSource<'slc>>(reader: &mut Reader<R>) -> ReadResult<u32> {
     let mut dec: u32 = 0;
 
     for _ in 0..4 {
@@ -254,16 +261,13 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                     // expect only a header or track chunk
                     let chunk = match self.read_exact(4) {
                         Ok(c) => c,
-                        Err(e) => match e.kind() {
-                            // Inside Midi + UnexpectedEof should only fire at the end of a file.
-                            ErrorKind::UnexpectedEof => {
-                                self.state.set_parse_state(ParseState::Done);
-                                return Ok(FileEvent::eof());
-                            }
-                            _ => {
+                        Err(e) => {
+                            if e.is_eof() {
+                                return Ok(FileEvent::EOF);
+                            } else {
                                 return Err(e);
                             }
-                        },
+                        }
                     };
 
                     match chunk.as_ref() {
@@ -299,43 +303,10 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                         self.state.set_parse_state(ParseState::InsideMidi);
                         continue;
                     }
-                    //need to do this procedurally due to running statuses on midi events
-                    let delta_time = decode_varlen(self)?;
+                    running_status = prev_status;
 
-                    let next_event = self.read_next()?;
-
-                    let message = match next_event {
-                        0xF0 => {
-                            let mut data = self.read_varlen_slice()?;
-                            if !data.is_empty() {
-                                //discard the last 0xF7
-                                data.truncate(1);
-                            }
-                            TrackMessage::SystemExclusive(SystemExclusiveMessage::new(data))
-                        }
-                        0xFF => TrackMessage::Meta(MetaMessage::read(self)?),
-                        byte => {
-                            //status if the byte has a leading 1, otherwise it's
-                            //a running status
-
-                            let status = if byte >> 7 == 1 {
-                                running_status = Some(byte);
-                                byte
-                            } else if let Some(prev_status) = prev_status {
-                                //Hack: decrementing the buffer position should not be done
-                                self.state.decrement_offset(1);
-                                running_status = Some(prev_status);
-                                prev_status
-                            } else {
-                                return Err(inv_data(self, "Invalid MIDI event triggered"));
-                            };
-                            let status = StatusByte::try_from(status).unwrap();
-
-                            TrackMessage::ChannelVoice(ChannelVoiceMessage::read(status, self)?)
-                        }
-                    };
-
-                    break FileEvent::TrackEvent(TrackEvent::new(delta_time, message));
+                    let ev = TrackEvent::read(self, &mut running_status)?;
+                    break FileEvent::TrackEvent(ev);
                 }
                 ParseState::Done => break FileEvent::EOF,
             }
@@ -366,16 +337,15 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                     // expect only a header or track chunk
                     let chunk = match self.read_exact(4) {
                         Ok(c) => c,
-                        Err(e) => match e.kind() {
-                            // Inside Midi + UnexpectedEof should only fire at the end of a file.
-                            ErrorKind::UnexpectedEof => {
+                        Err(e) => {
+                            if e.is_eof() {
+                                // Inside Midi + UnexpectedEof should only fire at the end of a file.
                                 self.state.set_parse_state(ParseState::Done);
-                                return Ok(ChunkEvent::eof());
-                            }
-                            _ => {
+                                return Ok(ChunkEvent::EOF);
+                            } else {
                                 return Err(e);
                             }
-                        },
+                        }
                     };
                     let chunk_name = chunk.as_ref();
 
@@ -409,7 +379,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                     self.state.set_parse_state(ParseState::InsideMidi);
                     continue;
                 }
-                ParseState::Done => break ChunkEvent::eof(),
+                ParseState::Done => break ChunkEvent::EOF,
             }
         };
 

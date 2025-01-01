@@ -37,23 +37,7 @@ impl<'a> From<UnknownChunk<'a>> for ChunkEvent<'a> {
 }
 
 impl<'a> ChunkEvent<'a> {
-    /// Create a new [`FileEvent::Header`] from a [`RawHeaderChunk`]
-    pub fn header(h: RawHeaderChunk<'a>) -> Self {
-        Self::Header(h)
-    }
-
-    /// Create a new [`FileEvent::Track`] from a [`TrackChunkHeader`]
-    pub fn track(t: RawTrackChunk<'a>) -> Self {
-        Self::Track(t)
-    }
-
-    /// Create a new [`FileEvent::TrackEvent`] from a [`TrackEvent`]
-    pub fn unknown(t: UnknownChunk<'a>) -> Self {
-        Self::Unknown(t)
-    }
-
-    /// Create an [`FileEvent::EOF`] event
-    pub fn eof() -> Self {
-        Self::EOF
+    pub fn is_eof(&self) -> bool {
+        matches!(self, Self::EOF)
     }
 }

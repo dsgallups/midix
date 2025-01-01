@@ -106,7 +106,7 @@ impl<'a> RawHeaderChunk<'a> {
     /// Get the timing property of the header
     ///
     /// identified as `<division>` in the docs
-    pub fn timing(&self) -> &Timing {
+    pub fn timing(&self) -> &Timing<'a> {
         &self.timing
     }
 }
