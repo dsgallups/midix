@@ -31,7 +31,8 @@ impl Debug for TrackEvent<'_> {
 }
 
 impl<'a> TrackEvent<'a> {
-    pub(crate) fn new(delta_time: u32, event: TrackMessage<'a>) -> Self {
+    /// Create a new event with a given time
+    pub fn new(delta_time: u32, event: TrackMessage<'a>) -> Self {
         Self { delta_time, event }
     }
 

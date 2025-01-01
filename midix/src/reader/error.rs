@@ -6,27 +6,40 @@ use thiserror::Error;
 
 use super::Reader;
 
+#[doc = r#"
+A set of errors that can occur while reading something into a midi representation
+"#]
 #[derive(Error, Debug)]
 pub enum ReaderError {
+    /// Some io::Error
     #[error("{0}")]
     Io(#[from] io::Error),
 
+    /// Unexpected out of bounds. Not necessarily IO related
     #[error("Out of bounds error: {0}")]
     OutOfBounds(String),
+
+    /// Some Unknown error.
     #[error("Unknown error occurred")]
     Unknown,
 }
 
 impl ReaderError {
-    pub fn is_eof(&self) -> bool {
+    /// True if out of bounds or unexpected end of file
+    pub fn is_out_of_bounds(&self) -> bool {
         match self {
             Self::Io(o) => o.kind() == ErrorKind::UnexpectedEof,
+            Self::OutOfBounds(_) => true,
             _ => false,
         }
     }
+
+    /// Create a new invalid data error
     pub fn invalid_data(msg: impl fmt::Display) -> Self {
         Self::Io(io::Error::new(ErrorKind::InvalidData, msg.to_string()))
     }
+
+    /// Create a new out of bounds error
     pub fn oob(msg: impl fmt::Display) -> Self {
         Self::OutOfBounds(msg.to_string())
     }

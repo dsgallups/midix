@@ -39,6 +39,7 @@ impl<'a> Bytes<'a> {
         self.0.to_mut()
     }
 
+    /// Return a reference to the underlying Cow
     pub fn as_cow(&self) -> &Cow<'a, [u8]> {
         &self.0
     }

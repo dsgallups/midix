@@ -1,5 +1,3 @@
-use reader::ReaderError;
-
 use crate::prelude::*;
 
 #[doc = r#"
@@ -65,7 +63,7 @@ impl<'a> RawTrackChunk<'a> {
             match TrackEvent::read(&mut reader, &mut running_status) {
                 Ok(e) => events.push(e),
                 Err(err) => {
-                    if err.is_eof() {
+                    if err.is_out_of_bounds() {
                         break;
                     } else {
                         return Err(err);

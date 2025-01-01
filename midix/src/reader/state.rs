@@ -20,7 +20,7 @@ pub(crate) enum ParseState {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct ReaderState {
+pub(crate) struct ReaderState {
     offset: usize,
     last_error_offset: usize,
     state: ParseState,

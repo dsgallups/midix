@@ -131,6 +131,7 @@ impl<'slc> Reader<&'slc [u8]> {
 }
 
 impl<'a> Reader<Bytes<'a>> {
+    /// Create a new reader from anything that can be turned into [`Bytes`]
     pub fn from_bytes<B: Into<Bytes<'a>>>(slice: B) -> Self {
         Self {
             reader: slice.into(),
@@ -262,7 +263,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                     let chunk = match self.read_exact(4) {
                         Ok(c) => c,
                         Err(e) => {
-                            if e.is_eof() {
+                            if e.is_out_of_bounds() {
                                 return Ok(FileEvent::EOF);
                             } else {
                                 return Err(e);
@@ -338,7 +339,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
                     let chunk = match self.read_exact(4) {
                         Ok(c) => c,
                         Err(e) => {
-                            if e.is_eof() {
+                            if e.is_out_of_bounds() {
                                 // Inside Midi + UnexpectedEof should only fire at the end of a file.
                                 self.state.set_parse_state(ParseState::Done);
                                 return Ok(ChunkEvent::EOF);
