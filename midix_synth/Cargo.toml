@@ -1,7 +1,7 @@
 [package]
 name = "midix_synth"
 version = "0.0.0"
-edition = "2024"
+edition = "2021"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 description = "SoundFont compatible MIDI synthesizer for midix"
 repository = "https://github.com/dsgallups/midix"
