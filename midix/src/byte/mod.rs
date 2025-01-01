@@ -74,6 +74,18 @@ impl<'a> From<&'a [u8]> for Bytes<'a> {
     }
 }
 
+impl<'a, const SIZE: usize> From<&'a [u8; SIZE]> for Bytes<'a> {
+    fn from(value: &'a [u8; SIZE]) -> Self {
+        Self(Cow::Borrowed(value))
+    }
+}
+
+impl<const SIZE: usize> From<[u8; SIZE]> for Bytes<'_> {
+    fn from(value: [u8; SIZE]) -> Self {
+        Self(Cow::Owned(value.to_vec()))
+    }
+}
+
 impl<'a> TryFrom<Bytes<'a>> for Cow<'a, str> {
     type Error = io::Error;
     fn try_from(value: Bytes<'a>) -> Result<Self, Self::Error> {

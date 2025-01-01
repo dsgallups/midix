@@ -6,34 +6,24 @@ TODO
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use std::convert::Infallible;
-use thiserror::Error;
-
 use bevy::{
-    asset::{AssetLoader, LoadContext, io::Reader},
+    asset::{io::Reader, AssetLoader, LoadContext},
     prelude::*,
 };
+
+use midix::{file::MidiFile as Mf, reader::ReaderError};
 
 /// Sound font asset
 #[derive(Asset, TypePath)]
 pub struct MidiFile {
-    file: Vec<u8>,
+    inner: Mf<'static>,
 }
 
 impl MidiFile {
     /// Create a new
-    fn new(file: Vec<u8>) -> Self {
-        Self { file }
+    pub fn new(file: Mf<'static>) -> Self {
+        Self { inner: file }
     }
-}
-
-/// Possible errors that can be produced by [`CustomAssetLoader`]
-#[non_exhaustive]
-#[derive(Debug, Error)]
-enum MidiFileLoadError {
-    /// An [IO](std::io) Error
-    #[error("Could not load asset: {0}")]
-    Io(#[from] std::io::Error),
 }
 
 /// Loader for sound fonts
@@ -43,7 +33,7 @@ pub struct MidiFileLoader;
 impl AssetLoader for MidiFileLoader {
     type Asset = MidiFile;
     type Settings = ();
-    type Error = Infallible;
+    type Error = ReaderError;
     async fn load(
         &self,
         reader: &mut dyn Reader,
@@ -51,11 +41,11 @@ impl AssetLoader for MidiFileLoader {
         _load_context: &mut LoadContext<'_>,
     ) -> Result<Self::Asset, Self::Error> {
         let mut bytes = Vec::new();
-        println!("here");
-        reader.read_to_end(&mut bytes);
-        println!("read to end");
+        reader.read_to_end(&mut bytes).await.unwrap();
 
-        let res = MidiFile::new(bytes);
+        let inner = Mf::parse(bytes)?;
+
+        let res = MidiFile::new(inner);
 
         Ok(res)
     }

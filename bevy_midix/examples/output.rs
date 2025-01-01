@@ -3,6 +3,7 @@ use bevy::{
     prelude::*,
 };
 use bevy_midix::prelude::*;
+use midix::{events::FromLiveEventBytes as _, prelude::ChannelVoiceMessage};
 
 const KEY_PORT_MAP: [(KeyCode, usize); 10] = [
     (KeyCode::Digit0, 0),

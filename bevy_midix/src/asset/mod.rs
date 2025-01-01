@@ -1,2 +1,5 @@
-pub mod midi_file;
-pub mod sound_font;
+//! asset types
+mod midi_file;
+pub use midi_file::*;
+mod sound_font;
+pub use sound_font::*;

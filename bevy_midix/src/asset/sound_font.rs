@@ -8,7 +8,7 @@ use std::{io::Read, sync::Arc};
 use thiserror::Error;
 
 use bevy::{
-    asset::{AssetLoader, LoadContext, io::Reader},
+    asset::{io::Reader, AssetLoader, LoadContext},
     prelude::*,
 };
 use midix_synth::{prelude::SoundFontError, soundfont::SoundFont as Sf};
@@ -56,9 +56,7 @@ impl AssetLoader for SoundFontLoader {
         _load_context: &mut LoadContext<'_>,
     ) -> Result<Self::Asset, Self::Error> {
         let mut bytes = Vec::new();
-        println!("here");
-        reader.read_to_end(&mut bytes);
-        println!("read to end");
+        reader.read_to_end(&mut bytes).await?;
 
         let res = SoundFont::new(&mut bytes.as_slice())?;
 

@@ -18,7 +18,7 @@ fn midi_file_ref() {
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(track_event.delta_time(), 0);
+    assert_eq!(track_event.delta_ticks(), 0);
     let TrackMessage::Meta(MetaMessage::TimeSignature(time_sig)) = track_event.event() else {
         panic!();
     };
@@ -30,7 +30,7 @@ fn midi_file_ref() {
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(track_event.delta_time(), 0);
+    assert_eq!(track_event.delta_ticks(), 0);
 
     // microseconds per quarter note. In this case, it's 120bpm
     let TrackMessage::Meta(MetaMessage::Tempo(tempo)) = track_event.event() else {
@@ -42,7 +42,7 @@ fn midi_file_ref() {
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(track_event.delta_time(), 0);
+    assert_eq!(track_event.delta_ticks(), 0);
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
@@ -57,7 +57,7 @@ fn midi_file_ref() {
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(track_event.delta_time(), 0);
+    assert_eq!(track_event.delta_ticks(), 0);
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
@@ -72,7 +72,7 @@ fn midi_file_ref() {
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(track_event.delta_time(), 0);
+    assert_eq!(track_event.delta_ticks(), 0);
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
@@ -87,7 +87,7 @@ fn midi_file_ref() {
     let Ok(FileEvent::TrackEvent(track_event)) = reader.read_event() else {
         panic!()
     };
-    assert_eq!(track_event.delta_time(), 0);
+    assert_eq!(track_event.delta_ticks(), 0);
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };

@@ -1,3 +1,5 @@
+use bevy::time::TimeSender;
+
 use super::BytesConst;
 
 #[doc = r#"
@@ -30,7 +32,36 @@ eight notated 32nd-notes per quarter-note.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct TimeSignature<'a>(BytesConst<'a, 4>);
 
+impl Default for TimeSignature<'_> {
+    fn default() -> Self {
+        Self([4, 2, 24, 32].into())
+    }
+}
+
 impl<'a> TimeSignature<'a> {
+    /// 4 bytes; 4/4 time; 24 MIDI clocks/click, 8 32nd notes/ 24 MIDI clocks (24 MIDI clocks = 1 crotchet = 1 beat)
+    /// is represented by
+    /// ```rust
+    /// # use midix::prelude::*;
+    /// let x = TimeSignature::new_from_parts(6, 8, 24, 8);
+    /// # assert_eq!(x.den(), 3);
+    /// ```
+    pub fn new_from_parts(
+        numerator: u8,
+        denominator: u8,
+        clocks_per_quarter: u8,
+        notes_per_clocks: u8,
+    ) -> Self {
+        let pow_den = f64::log2(denominator as f64) as u8;
+
+        Self(BytesConst::new([
+            numerator,
+            pow_den,
+            clocks_per_quarter,
+            notes_per_clocks,
+        ]))
+    }
+
     /// Interpret a byte slice as a time signature
     pub fn new_from_bytes(v: BytesConst<'a, 4>) -> Self {
         Self(v)

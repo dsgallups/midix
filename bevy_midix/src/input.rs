@@ -2,7 +2,6 @@
 Contains [`MidiInputPlugin`] and other types to handle input
 "#]
 
-use MidiInputError::{ConnectionError, PortRefreshError};
 use bevy::prelude::Plugin;
 use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender};
@@ -12,6 +11,9 @@ use midix::events::{FromLiveEventBytes, LiveEvent};
 use std::error::Error;
 use std::fmt::Display;
 use std::future::Future;
+use MidiInputError::{ConnectionError, PortRefreshError};
+
+use crate::asset::{MidiFile, MidiFileLoader};
 
 #[doc = r#"
 Inserts [`MidiInputSettings`] and [`MidiInputConnection`] as resource
@@ -24,6 +26,8 @@ impl Plugin for MidiInputPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MidiInputSettings>()
             .init_resource::<MidiInputConnection>()
+            .init_asset::<MidiFile>()
+            .init_asset_loader::<MidiFileLoader>()
             .add_event::<MidiInputError>()
             .add_event::<MidiData>()
             .add_systems(Startup, setup)
@@ -130,9 +134,9 @@ impl MidiInputConnection {
 #[derive(Resource, Event, Debug)]
 pub struct MidiData {
     /// Returns the timestamp of the data
-    pub stamp: u64,
+    pub stamp: Option<u64>,
 
-    /// The underlyign message of the event
+    /// The underlying message of the event
     pub message: LiveEvent<'static>,
 }
 
@@ -271,7 +275,10 @@ impl Future for MidiInputTask {
                             let Ok(message) = LiveEvent::from_bytes(message) else {
                                 return;
                             };
-                            let data = MidiData { stamp, message };
+                            let data = MidiData {
+                                stamp: Some(stamp),
+                                message,
+                            };
                             let _ = s.send(Reply::Midi(data));
                         },
                         (),
@@ -319,7 +326,10 @@ impl Future for MidiInputTask {
                                 let Ok(message) = LiveEvent::from_bytes(message) else {
                                     return;
                                 };
-                                let data = MidiData { stamp, message };
+                                let data = MidiData {
+                                    stamp: Some(stamp),
+                                    message,
+                                };
                                 let _ = s.send(Reply::Midi(data));
                             },
                             (),

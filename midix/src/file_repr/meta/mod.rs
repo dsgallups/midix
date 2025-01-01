@@ -47,7 +47,7 @@ pub enum MetaMessage<'a> {
     ///
     /// Usually appears at the beginning of a track, before any midi events are sent, but there
     /// are no guarantees.
-    Tempo(Tempo<'a>),
+    Tempo(Tempo),
     /// The MIDI SMPTE offset meta message specifies an offset for the starting point of a MIDI
     /// track from the start of a sequence in terms of SMPTE time (hours:minutes:seconds:frames:subframes).
     ///
@@ -113,16 +113,7 @@ impl<'a> MetaMessage<'a> {
             0x2F => MetaMessage::EndOfTrack,
             0x51 => {
                 //FF 51 03 tttttt
-                if data.len() != 3 {
-                    return Err(inv_data(
-                        reader,
-                        format!(
-                            "Varlen is invalid for tempo (should be 3, is {}",
-                            data.len()
-                        ),
-                    ));
-                }
-                MetaMessage::Tempo(Tempo::new_from_bytes(data.try_into().unwrap()))
+                MetaMessage::Tempo(Tempo::new_from_bytes(data))
             }
             0x54 => {
                 //TODO
@@ -157,6 +148,21 @@ impl<'a> MetaMessage<'a> {
             0x7F => MetaMessage::SequencerSpecific(data),
             _ => MetaMessage::Unknown(type_byte, data),
         })
+    }
+
+    /// Mutates the data of a track
+    pub fn adjust_track_info(self, info: &mut TrackInfo<'a>) {
+        use MetaMessage::*;
+
+        match self {
+            TrackName(name) => {
+                info.name = Some(name);
+            }
+            DeviceName(device) => info.device = Some(device),
+            MidiChannel(channel) => info.channel = Some(channel),
+            Tempo(tempo) => info.tempo = tempo,
+            _ => {}
+        }
     }
 }
 

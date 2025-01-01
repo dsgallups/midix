@@ -92,6 +92,12 @@ impl<'a> From<SystemCommonMessage<'a>> for LiveEvent<'a> {
         Self::SysCommon(value)
     }
 }
+
+impl<'a> From<SystemExclusiveMessage<'a>> for LiveEvent<'a> {
+    fn from(value: SystemExclusiveMessage<'a>) -> Self {
+        Self::SysCommon(SystemCommonMessage::SystemExclusive(value))
+    }
+}
 impl From<SystemRealTimeMessage> for LiveEvent<'_> {
     fn from(value: SystemRealTimeMessage) -> Self {
         Self::SysRealTime(value)

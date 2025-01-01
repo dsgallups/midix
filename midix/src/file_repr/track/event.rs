@@ -13,10 +13,10 @@ identifies the amount of time since the previous event.
 #[derive(Clone, PartialEq)]
 pub struct TrackEvent<'a> {
     /// Variable length quantity
-    /// Delta-time is in some fraction of a beat
+    /// Delta-ticks is in some fraction of a beat
     /// (or a second, for recording a track with SMPTE times),
     /// as specified in the header chunk.
-    delta_time: u32,
+    delta_ticks: u32,
     event: TrackMessage<'a>,
 }
 
@@ -25,7 +25,7 @@ impl Debug for TrackEvent<'_> {
         write!(
             f,
             "Track Event {{ delta_time: 0x{:02X}, event: {:?} }}",
-            self.delta_time, self.event
+            self.delta_ticks, self.event
         )
     }
 }
@@ -33,7 +33,10 @@ impl Debug for TrackEvent<'_> {
 impl<'a> TrackEvent<'a> {
     /// Create a new event with a given time
     pub fn new(delta_time: u32, event: TrackMessage<'a>) -> Self {
-        Self { delta_time, event }
+        Self {
+            delta_ticks: delta_time,
+            event,
+        }
     }
 
     /// Update the running status here.
@@ -45,7 +48,7 @@ impl<'a> TrackEvent<'a> {
         R: MidiSource<'slc>,
         'slc: 'a,
     {
-        let delta_time = crate::reader::decode_varlen(reader)?;
+        let delta_ticks = crate::reader::decode_varlen(reader)?;
 
         let next_event = reader.read_next()?;
 
@@ -80,20 +83,26 @@ impl<'a> TrackEvent<'a> {
         };
 
         Ok(Self {
-            delta_time,
+            delta_ticks,
             event: message,
         })
     }
 
-    /// Get the difference in time from the last event
+    /// Get the difference in ticks from the last event
     ///
     /// The actual value should be interpreted by the MIDI file's
     /// [`Timing`] event.
-    pub fn delta_time(&self) -> u32 {
-        self.delta_time
+    pub fn delta_ticks(&self) -> u32 {
+        self.delta_ticks
     }
+
     /// Get a refrence to the message for the track event
     pub fn event(&self) -> &TrackMessage<'a> {
         &self.event
+    }
+
+    /// Get the owned inner track event
+    pub fn into_event(self) -> TrackMessage<'a> {
+        self.event
     }
 }
