@@ -55,6 +55,15 @@ impl<'a> Track<'a> {
             events: track_events,
         }
     }
+
+    /// Get information about the track
+    pub fn info(&self) -> &TrackInfo<'a> {
+        &self.info
+    }
+    /// Get the timed events for the track
+    pub fn events(&self) -> &[TimedEvent<LiveEvent<'a>>] {
+        self.events.as_slice()
+    }
 }
 
 /// Provides information about the track
@@ -86,5 +95,12 @@ impl<T> TimedEvent<T> {
             accumulated_ticks,
             event,
         }
+    }
+
+    pub fn accumulated_ticks(&self) -> u32 {
+        self.accumulated_ticks
+    }
+    pub fn event(&self) -> &T {
+        &self.event
     }
 }

@@ -24,6 +24,10 @@ impl MidiFile {
     pub fn new(file: Mf<'static>) -> Self {
         Self { inner: file }
     }
+
+    pub fn inner(&self) -> &Mf<'static> {
+        &self.inner
+    }
 }
 
 /// Loader for sound fonts

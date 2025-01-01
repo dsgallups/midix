@@ -14,8 +14,8 @@ mod track;
 pub use track::*;
 
 use crate::{
-    Bytes,
     reader::{ReadResult, Reader},
+    Bytes,
 };
 
 #[doc = r#"
