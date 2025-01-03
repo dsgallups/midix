@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::prelude::*;
 
 /// The value of a pitch bend, represented as 14 bits.
@@ -9,24 +7,21 @@ use crate::prelude::*;
 /// A value of `0x3FFF` indicates full bend upwards.
 ///
 /// This value is available via [`PitchBend::value`]
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct PitchBend<'a> {
-    lsb: Cow<'a, u8>,
-    msb: Cow<'a, u8>,
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct PitchBend {
+    lsb: DataByte,
+    msb: DataByte,
 }
 
-impl<'a> PitchBend<'a> {
+impl PitchBend {
     /// Creates a new pitch bend given the
     /// least significant and most significant bytes.
     ///
     /// Checks for byte correctness (leading 0 bit)
     pub fn new(lsb: u8, msb: u8) -> Result<Self, std::io::Error> {
-        let lsb = check_u7(lsb)?;
-        let msb = check_u7(msb)?;
-        Ok(Self {
-            lsb: Cow::Owned(lsb),
-            msb: Cow::Owned(msb),
-        })
+        let lsb = DataByte::new(lsb)?;
+        let msb = DataByte::new(msb)?;
+        Ok(Self { lsb, msb })
     }
 
     /// Creates a new pitch bend given the
@@ -35,36 +30,25 @@ impl<'a> PitchBend<'a> {
     /// Does not check for correctness
     pub const fn new_unchecked(lsb: u8, msb: u8) -> Self {
         Self {
-            lsb: Cow::Owned(lsb),
-            msb: Cow::Owned(msb),
-        }
-    }
-
-    /// Creates a new pitch bend given the
-    /// borrowed least significant and most significant bytes.
-    ///
-    /// Does not check for correctness
-    pub const fn new_borrowed_unchecked(lsb: &'a u8, msb: &'a u8) -> Self {
-        Self {
-            lsb: Cow::Borrowed(lsb),
-            msb: Cow::Borrowed(msb),
+            lsb: DataByte::new_unchecked(lsb),
+            msb: DataByte::new_unchecked(msb),
         }
     }
 
     /// Returns a reference to the pitch bend's least significant byte.
-    pub fn lsb(&self) -> &u8 {
-        self.lsb.as_ref()
+    pub fn lsb(&self) -> DataByte {
+        self.lsb
     }
 
     /// Returns a reference to the pitch bend's most significant byte.
-    pub fn msb(&self) -> &u8 {
-        self.msb.as_ref()
+    pub fn msb(&self) -> DataByte {
+        self.msb
     }
 
     /// Represents a pitch bend
     pub fn value(&self) -> u16 {
-        let lsb = *self.lsb;
-        let msb = *self.msb;
+        let lsb = self.lsb.value();
+        let msb = self.msb.value();
         let combined: u16 = ((msb as u16) << 8) | (lsb as u16);
         combined
     }
@@ -77,7 +61,7 @@ impl<'a> PitchBend<'a> {
     }
 }
 
-impl PitchBend<'_> {
+impl PitchBend {
     /// The minimum value of `0x0000`, indicating full bend downwards.
     pub const MIN_BYTES: u16 = 0x0000;
 

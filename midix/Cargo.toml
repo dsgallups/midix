@@ -11,7 +11,14 @@ keywords = ["midi", "audio", "parser"]
 categories = ["multimedia::audio", "multimedia::encoding", "multimedia"]
 license = "MIT OR Apache-2.0"
 
+
+[features]
+bevy = ["dep:bevy"]
+debug = ["bevy"]
+
 [dependencies]
+bevy = { version = "0.15", optional = true, default-features = false }
+thiserror = "2.0.9"
 
 [dev-dependencies]
 pretty_assertions = { default-features = false, features = [

@@ -43,7 +43,8 @@ c = 127, v = 0: Poly Mode On (Mono Off) (Note:
 These four messages also cause All Notes Off)
 "#]
 #[allow(dead_code)]
-pub struct ChannelModeMessage<'a> {
-    controller: Controller<'a>,
-    value: DataByte<'a>,
+#[derive(Debug)]
+pub struct ChannelModeMessage {
+    controller: Controller,
+    value: DataByte,
 }

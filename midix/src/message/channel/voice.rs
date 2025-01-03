@@ -1,3 +1,5 @@
+use io::ErrorKind;
+
 use crate::prelude::*;
 
 /// Represents a MIDI voice message,.
@@ -5,18 +7,18 @@ use crate::prelude::*;
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct ChannelVoiceMessage<'a> {
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub struct ChannelVoiceMessage {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel as the status' lsb contains the channel
-    status: StatusByte<'a>,
+    status: StatusByte,
     /// The MIDI message type and associated data.
-    message: VoiceEvent<'a>,
+    message: VoiceEvent,
 }
 
-impl<'a> ChannelVoiceMessage<'a> {
+impl ChannelVoiceMessage {
     /// Create a new channel voice event from the channel and associated event type
-    pub fn new(channel: Channel<'_>, message: VoiceEvent<'a>) -> Self {
+    pub fn new(channel: ChannelId, message: VoiceEvent) -> Self {
         let status = *channel.byte() | (message.status_nibble() << 4);
         Self {
             status: StatusByte::new_unchecked(status),
@@ -25,7 +27,10 @@ impl<'a> ChannelVoiceMessage<'a> {
     }
 
     /// TODO: read functions should take in an iterator that yields u8s
-    pub(crate) fn read(status: StatusByte<'a>, reader: &mut Reader<&'a [u8]>) -> ReadResult<Self> {
+    pub(crate) fn read<'a, R>(status: StatusByte, reader: &mut Reader<R>) -> ReadResult<Self>
+    where
+        R: MidiSource<'a>,
+    {
         let msg = match status.byte() >> 4 {
             0x8 => VoiceEvent::NoteOff {
                 key: Key::new(reader.read_next()?)?,
@@ -57,14 +62,16 @@ impl<'a> ChannelVoiceMessage<'a> {
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
-                let [lsb, msb] = reader.read_exact_size()?;
-                VoiceEvent::PitchBend(PitchBend::new_borrowed_unchecked(lsb, msb))
+                let b = reader.read_exact(2)?;
+                let lsb = b[0];
+                let msb = b[1];
+                VoiceEvent::PitchBend(PitchBend::new_unchecked(lsb, msb))
             }
             b => {
                 return Err(inv_data(
                     reader,
                     format!("Invalid status byte for message: {}", b),
-                ))
+                ));
             }
         };
         Ok(ChannelVoiceMessage {
@@ -74,8 +81,8 @@ impl<'a> ChannelVoiceMessage<'a> {
     }
 
     /// Get the channel for the event
-    pub fn channel(&self) -> Channel {
-        Channel::from_status(*self.status.byte())
+    pub fn channel(&self) -> ChannelId {
+        ChannelId::from_status(self.status.byte())
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
@@ -89,7 +96,7 @@ impl<'a> ChannelVoiceMessage<'a> {
     }
 
     /// Returns the key if the event has a key
-    pub fn key(&self) -> Option<&Key<'a>> {
+    pub fn key(&self) -> Option<&Key> {
         match &self.message {
             VoiceEvent::NoteOn { key, .. }
             | VoiceEvent::NoteOff { key, .. }
@@ -99,7 +106,7 @@ impl<'a> ChannelVoiceMessage<'a> {
     }
 
     /// Returns the velocity if the type has a velocity
-    pub fn velocity(&self) -> Option<&Velocity<'a>> {
+    pub fn velocity(&self) -> Option<&Velocity> {
         match &self.message {
             VoiceEvent::NoteOn { velocity, .. }
             | VoiceEvent::NoteOff { velocity, .. }
@@ -109,12 +116,39 @@ impl<'a> ChannelVoiceMessage<'a> {
         }
     }
 
+    /// Returns the byte value for the data 1 byte. In the case
+    /// of voice message it always exists
+    pub fn data_1_byte(&self) -> DataByte {
+        use VoiceEvent as V;
+        match &self.message {
+            V::NoteOn { key, .. } | V::NoteOff { key, .. } | V::Aftertouch { key, .. } => {
+                key.byte()
+            }
+            V::ControlChange { controller, .. } => controller.byte(),
+            V::ProgramChange { program } => program.byte(),
+            V::ChannelPressureAfterTouch { velocity } => velocity.byte(),
+            V::PitchBend(p) => p.lsb(),
+        }
+    }
+
+    /// Returns the byte value for the data 2 byte if it exists
+    pub fn data_2_byte(&self) -> Option<DataByte> {
+        match &self.message {
+            VoiceEvent::NoteOn { velocity, .. }
+            | VoiceEvent::NoteOff { velocity, .. }
+            | VoiceEvent::Aftertouch { velocity, .. }
+            | VoiceEvent::ChannelPressureAfterTouch { velocity } => Some(velocity.byte()),
+            VoiceEvent::ControlChange { value, .. } => Some(*value),
+            VoiceEvent::PitchBend(p) => Some(p.msb()),
+            _ => None,
+        }
+    }
+
     /// References the status byte of the event in big-endian.
     ///
     /// the leading (msb) 4 bytes are the voice event
     /// and the trailing (lsb) 4 bytes are the channel
-    pub fn status(&self) -> &u8 {
-        //self.message.status_nibble() << 4 | self.channel.bits()
+    pub fn status(&self) -> u8 {
         self.status.byte()
     }
 
@@ -126,15 +160,15 @@ impl<'a> ChannelVoiceMessage<'a> {
     /// Get the raw midi packet for this message
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
-        packet.push(*self.status());
-        let data = self.message.to_raw();
+        packet.push(self.status());
+        let data = self.message.to_raw().into_iter().map(|b| b.value());
         packet.extend(data);
 
         packet
     }
 }
 
-impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
+impl FromLiveEventBytes for ChannelVoiceMessage {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xEF;
     fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
@@ -143,32 +177,66 @@ impl FromLiveEventBytes for ChannelVoiceMessage<'_> {
     {
         let msg = match status >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::new(*data.get_byte(0)?)?,
-                velocity: Velocity::new(*data.get_byte(1)?)?,
+                key: Key::new(
+                    data.get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                velocity: Velocity::new(
+                    data.get_byte(1)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0x9 => VoiceEvent::NoteOn {
-                key: Key::new(*data.get_byte(0)?)?,
-                velocity: Velocity::new(*data.get_byte(1)?)?,
+                key: Key::new(
+                    data.get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                velocity: Velocity::new(
+                    data.get_byte(1)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xA => VoiceEvent::Aftertouch {
-                key: Key::new(*data.get_byte(0)?)?,
-                velocity: Velocity::new(*data.get_byte(1)?)?,
+                key: Key::new(
+                    data.get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                velocity: Velocity::new(
+                    data.get_byte(1)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xB => VoiceEvent::ControlChange {
-                controller: Controller::new(*data.get_byte(0)?)?,
-                value: (*data.get_byte(1)?).try_into()?,
+                controller: Controller::new(
+                    data.get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
+                value: (data
+                    .get_byte(1)
+                    .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?)
+                .try_into()?,
             },
             0xC => VoiceEvent::ProgramChange {
-                program: Program::new(*data.get_byte(0)?)?,
+                program: Program::new(
+                    data.get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xD => VoiceEvent::ChannelPressureAfterTouch {
-                velocity: Velocity::new(*data.get_byte(0)?)?,
+                velocity: Velocity::new(
+                    data.get_byte(0)
+                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
+                )?,
             },
             0xE => {
                 //Note the little-endian order, contrasting with the default big-endian order of
                 //Standard Midi Files
-                let lsb = *data.get_byte(0)?;
-                let msb = *data.get_byte(1)?;
+                let lsb = data
+                    .get_byte(0)
+                    .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
+                let msb = data
+                    .get_byte(1)
+                    .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?;
                 VoiceEvent::PitchBend(PitchBend::new(lsb, msb)?)
             }
             _ => panic!("parsed midi message before checking that status is in range"),

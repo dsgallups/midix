@@ -6,7 +6,7 @@ fn loop_through(bytes: &[u8]) {
     loop {
         match reader.read_event() {
             Ok(e) => {
-                if e == FileEvent::eof() {
+                if e == FileEvent::EOF {
                     break;
                 }
             }
@@ -48,7 +48,7 @@ fn read_pi_damaged() {
     let mut reader = Reader::from_byte_slice(bytes);
 
     while let Ok(e) = reader.read_event() {
-        if e == FileEvent::eof() {
+        if e == FileEvent::EOF {
             panic!("Corrupted file should not have yielded an eof event")
         }
     }
