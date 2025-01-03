@@ -24,9 +24,9 @@ impl<'a> Track<'a> {
         for event in events {
             let delta_ticks = event.delta_ticks();
 
-            let accumulated_ticks = if let Some(mut tick_acc) = &mut time_accumulated {
-                tick_acc += delta_ticks;
-                tick_acc
+            let accumulated_ticks = if let Some(ref mut tick_acc) = &mut time_accumulated {
+                *tick_acc += delta_ticks;
+                *tick_acc
             } else {
                 time_accumulated = Some(delta_ticks);
                 delta_ticks
@@ -97,10 +97,16 @@ impl<T> TimedEvent<T> {
         }
     }
 
+    /// Returns the accumulated ticks since the beginning of the track
     pub fn accumulated_ticks(&self) -> u32 {
         self.accumulated_ticks
     }
+
+    /// Returns the timed event
     pub fn event(&self) -> &T {
         &self.event
     }
 }
+
+#[test]
+fn get_accumulated_ticks() {}

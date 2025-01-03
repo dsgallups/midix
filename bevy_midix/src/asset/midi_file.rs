@@ -13,18 +13,19 @@ use bevy::{
 
 use midix::{file::MidiFile as Mf, reader::ReaderError};
 
-/// Sound font asset
+/// Sound font asset. Wraps a midix MidiFile
 #[derive(Asset, TypePath)]
 pub struct MidiFile {
     inner: Mf<'static>,
 }
 
 impl MidiFile {
-    /// Create a new
+    /// Create a new midifile with the given inner midix MidiFile
     pub fn new(file: Mf<'static>) -> Self {
         Self { inner: file }
     }
 
+    /// Get a reference to the inner midifile
     pub fn inner(&self) -> &Mf<'static> {
         &self.inner
     }
