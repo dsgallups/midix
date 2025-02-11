@@ -24,19 +24,25 @@ assert_eq!(key.note(), Note::DSharp);
 assert_eq!(key.octave(), Octave::new(4))
 ```
 "#]
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Key<'a>(DataByte<'a>);
+#[derive(Copy, Clone, PartialEq, Eq, Ord, PartialOrd, Debug, Hash)]
+#[cfg_attr(feature = "bevy", derive(bevy::prelude::Component))]
+pub struct Key(DataByte);
 
-impl<'a> Key<'a> {
+impl Key {
     /// Create a new key.
     ///
     /// Checks for correctness (leading 0 bit).
     pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
     where
-        B: TryInto<DataByte<'a>, Error = E>,
+        B: TryInto<DataByte, Error = E>,
         E: Into<io::Error>,
     {
         rep.try_into().map(Self).map_err(Into::into)
+    }
+
+    /// Create all possible keys (128)
+    pub fn all() -> Vec<Self> {
+        (0..128).map(|v| Key::new(v).unwrap()).collect()
     }
 
     /// Create a key from a given note and octave
@@ -56,6 +62,21 @@ impl<'a> Key<'a> {
         Note::from_data_byte(&self.0)
     }
 
+    /// Returns true if the note of the key is sharp. Same as `is_flat`
+    ///
+    /// See [`Note::is_sharp`] for an example
+    #[inline]
+    pub fn is_sharp(&self) -> bool {
+        self.note().is_sharp()
+    }
+
+    /// Returns true if the note of the key is flat. Same as `is_sharp`
+    /// See [`Note::is_flat`] for an example
+    #[inline]
+    pub fn is_flat(&self) -> bool {
+        self.note().is_flat()
+    }
+
     /// Identifies the octave of the key pressed
     #[inline]
     pub fn octave(&self) -> Octave {
@@ -63,14 +84,14 @@ impl<'a> Key<'a> {
     }
 
     /// Returns the underlying byte of the key
-    pub fn byte(&self) -> &u8 {
-        self.0.byte()
+    pub fn byte(&self) -> DataByte {
+        self.0
     }
 }
 
-impl fmt::Display for Key<'_> {
+impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}-{}", self.note(), self.octave())
+        write!(f, "{}:{}", self.note(), self.octave())
     }
 }
 
@@ -137,14 +158,14 @@ impl Note {
     ///
     /// # Errors
     /// if the byte is > 127
-    pub fn new<'a, K, E>(key: K) -> Result<Self, io::Error>
+    pub fn new<K, E>(key: K) -> Result<Self, io::Error>
     where
-        K: TryInto<DataByte<'a>, Error = E>,
+        K: TryInto<DataByte, Error = E>,
         E: Into<io::Error>,
     {
         use Note::*;
         let key = key.try_into().map_err(Into::into)?;
-        let note = *key.byte() % 12;
+        let note = key.value() % 12;
 
         Ok(match note {
             0 => C,
@@ -163,10 +184,42 @@ impl Note {
         })
     }
 
-    /// Identify the note from a key byte.
-    pub fn from_data_byte(key: &DataByte<'_>) -> Self {
+    /// Returns true if the note type is sharp. Same as `is_flat`
+    ///
+    /// # Example
+    /// ```rust
+    /// # use midix::prelude::*;
+    /// let note = Note::C;
+    /// assert!(!note.is_sharp());
+    /// let note = Note::FSharp;
+    /// assert!(note.is_sharp());
+    /// ```
+    #[inline]
+    pub fn is_sharp(&self) -> bool {
         use Note::*;
-        let note = *key.byte() % 12;
+        matches!(self, CSharp | DSharp | FSharp | GSharp | ASharp)
+    }
+
+    /// Returns true if the note type is flat. Same as `is_sharp`
+    ///
+    /// # Example
+    /// ```rust
+    /// # use midix::prelude::*;
+    /// let note = Note::A;
+    /// assert!(!note.is_flat());
+    /// let note = Note::CSharp;
+    /// assert!(note.is_flat());
+    /// ```
+    #[inline]
+    pub fn is_flat(&self) -> bool {
+        self.is_sharp()
+    }
+
+    /// Identify the note from a key byte.
+    #[inline]
+    pub fn from_data_byte(key: &DataByte) -> Self {
+        use Note::*;
+        let note = key.value() % 12;
 
         match note {
             0 => C,
@@ -203,7 +256,7 @@ impl Note {
     }
 
     /// Create a [`Key`] given this note and a provided [`Octave`]
-    pub fn with_octave(self, octave: Octave) -> Key<'static> {
+    pub fn with_octave(self, octave: Octave) -> Key {
         Key::from_note_and_octave(self, octave)
     }
 }
@@ -251,8 +304,8 @@ pub struct Octave(i8);
 
 impl Octave {
     /// Identify an octave from a key byte.
-    pub fn from_data_byte(key: &DataByte<'_>) -> Self {
-        let octave = *key.byte() / 12;
+    pub fn from_data_byte(key: &DataByte) -> Self {
+        let octave = key.value() / 12;
 
         Self(octave as i8 - 1)
     }
@@ -267,7 +320,7 @@ impl Octave {
     }
 
     /// Create a [`Key`] given this octave and a provided [`Note`]
-    pub fn with_note(self, note: Note) -> Key<'static> {
+    pub fn with_note(self, note: Note) -> Key {
         Key::from_note_and_octave(note, self)
     }
 }

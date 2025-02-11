@@ -3,7 +3,11 @@ use bevy::{
     pbr::AmbientLight,
     prelude::*,
 };
-use bevy_midix::prelude::{Key as MidiKey, *};
+use bevy_midix::{
+    input::{MidiData, MidiInput, MidiInputPlugin, MidiInputSettings},
+    output::{MidiOutput, MidiOutputPlugin, MidiOutputSettings},
+};
+use midix::prelude::{Key as MidiKey, *};
 
 fn main() {
     App::new()
@@ -36,7 +40,7 @@ fn main() {
 
 #[derive(Component, Debug)]
 struct Key {
-    key_val: MidiKey<'static>,
+    key_val: MidiKey,
     y_reset: f32,
 }
 

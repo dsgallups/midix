@@ -9,11 +9,11 @@ Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 "]
 
 mod error;
+mod source;
 mod state;
 pub use error::*;
+pub use source::*;
 use state::{ParseState, ReaderState};
-
-use std::{borrow::Cow, io::ErrorKind};
 
 use crate::prelude::*;
 
@@ -81,7 +81,7 @@ assert_eq!(
 #[derive(Clone)]
 pub struct Reader<R> {
     reader: R,
-    state: ReaderState,
+    pub(crate) state: ReaderState,
 }
 
 impl<R> Reader<R> {
@@ -128,7 +128,120 @@ impl<'slc> Reader<&'slc [u8]> {
             state: ReaderState::default(),
         }
     }
+}
 
+impl<'a> Reader<Bytes<'a>> {
+    /// Create a new reader from anything that can be turned into [`Bytes`]
+    pub fn from_bytes<B: Into<Bytes<'a>>>(slice: B) -> Self {
+        Self {
+            reader: slice.into(),
+            state: ReaderState::default(),
+        }
+    }
+}
+
+//internal implementations
+impl<'slc, R: MidiSource<'slc>> Reader<R> {
+    // Returns None if there's no bytes left to read
+    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<Bytes<'slc>>
+    where
+        'slc: 'slf,
+    {
+        if self.buffer_position() > self.reader.max_len() {
+            return Err(unexp_eof());
+        }
+        let start = self.buffer_position();
+
+        let end = start + bytes;
+
+        if end > self.reader.max_len() {
+            return Err(unexp_eof());
+        }
+
+        self.state.increment_offset(bytes);
+
+        let slice = self.reader.get_slice(start, end).unwrap();
+
+        Ok(slice)
+    }
+
+    /// Returns a statically sized array
+    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
+        &'slf mut self,
+    ) -> ReadResult<BytesConst<'slc, SIZE>>
+    where
+        'slc: 'slf,
+    {
+        let slice = self.read_exact(SIZE)?;
+
+        slice
+            .try_into()
+            .map_err(|e| inv_data(self, format!("{e:?}")))
+    }
+
+    /// Get the next byte without incrementing
+    #[allow(dead_code)]
+    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get_byte(self.buffer_position())
+            .ok_or(unexp_eof())?;
+        Ok(res)
+    }
+    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<u8>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get_byte(self.buffer_position())
+            .ok_or(unexp_eof())?;
+        self.state.increment_offset(1);
+
+        Ok(res)
+    }
+    /// ASSUMING that the offset is pointing at the length of a varlen,
+    /// it will read that length and return the resulting slice.
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<Bytes<'slc>>
+    where
+        'slc: 'slf,
+    {
+        let size = decode_varlen(self)?;
+        self.read_exact(size as usize)
+    }
+}
+
+pub(crate) fn decode_varlen<'slc, R: MidiSource<'slc>>(reader: &mut Reader<R>) -> ReadResult<u32> {
+    let mut dec: u32 = 0;
+
+    for _ in 0..4 {
+        let next = reader.read_next()?;
+        dec <<= 7;
+        let add = u32::from(next & 0x7F);
+        dec |= add;
+
+        //need to continue
+        if next & 0x80 != 0x80 {
+            break;
+        }
+    }
+
+    Ok(dec)
+}
+
+/// grabs the next byte from the reader and checks it's a u4
+#[allow(dead_code)]
+pub(crate) fn check_u4(reader: &mut Reader<&[u8]>) -> ReadResult<u8> {
+    let byte = reader.read_next()?;
+    (byte & 0b1111_0000 == 0)
+        .then_some(byte)
+        .ok_or(inv_data(reader, "Leading bit found"))
+}
+
+impl<'slc, R: MidiSource<'slc>> Reader<R> {
     /// Read the buffer and return an event
     ///
     /// # Errors
@@ -149,22 +262,19 @@ impl<'slc> Reader<&'slc [u8]> {
                     // expect only a header or track chunk
                     let chunk = match self.read_exact(4) {
                         Ok(c) => c,
-                        Err(e) => match e.kind() {
-                            // Inside Midi + UnexpectedEof should only fire at the end of a file.
-                            ErrorKind::UnexpectedEof => {
-                                self.state.set_parse_state(ParseState::Done);
-                                return Ok(FileEvent::eof());
-                            }
-                            _ => {
+                        Err(e) => {
+                            if e.is_out_of_bounds() {
+                                return Ok(FileEvent::EOF);
+                            } else {
                                 return Err(e);
                             }
-                        },
+                        }
                     };
 
-                    match chunk {
+                    match chunk.as_ref() {
                         b"MThd" => {
                             //HeaderChunk should handle us
-                            break FileEvent::Header(HeaderChunk::read(self)?);
+                            break FileEvent::Header(RawHeaderChunk::read(self)?);
                         }
                         b"MTrk" => {
                             let chunk = TrackChunkHeader::read(self)?;
@@ -176,9 +286,9 @@ impl<'slc> Reader<&'slc [u8]> {
                             });
                             break FileEvent::Track(chunk);
                         }
-                        bytes => {
+                        _ => {
                             //let chunk
-                            let chunk = UnknownChunk::read(bytes, self)?;
+                            let chunk = UnknownChunk::read(chunk, self)?;
 
                             break FileEvent::Unknown(chunk);
                         }
@@ -194,151 +304,86 @@ impl<'slc> Reader<&'slc [u8]> {
                         self.state.set_parse_state(ParseState::InsideMidi);
                         continue;
                     }
-                    //need to do this procedurally due to running statuses on midi events
-                    let delta_time = decode_varlen(self)?;
+                    running_status = prev_status;
 
-                    let next_event = self.read_next()?;
-
-                    let message = match next_event {
-                        0xF0 => {
-                            let mut data = self.read_varlen_slice()?;
-                            if !data.is_empty() {
-                                //discard the last 0xF7
-                                data = &data[..data.len() - 1];
-                            }
-                            TrackMessage::SystemExclusive(SystemExclusiveMessage::new_borrowed(
-                                data,
-                            ))
-                        }
-                        0xFF => TrackMessage::Meta(MetaMessage::read(self)?),
-                        byte => {
-                            //status if the byte has a leading 1, otherwise it's
-                            //a running status
-
-                            let status = if byte >> 7 == 1 {
-                                running_status = Some(*byte);
-                                Cow::Borrowed(byte)
-                            } else if let Some(prev_status) = prev_status {
-                                //Hack: decrementing the buffer position should not be done
-                                self.state.decrement_offset(1);
-                                running_status = Some(prev_status);
-                                Cow::Owned(prev_status)
-                            } else {
-                                return Err(inv_data(self, "Invalid MIDI event triggered"));
-                            };
-                            let status = StatusByte::try_from(status).unwrap();
-
-                            TrackMessage::ChannelVoice(ChannelVoiceMessage::read(status, self)?)
-                        }
-                    };
-
-                    break FileEvent::TrackEvent(TrackEvent::new(delta_time, message));
+                    let ev = TrackEvent::read(self, &mut running_status)?;
+                    break FileEvent::TrackEvent(ev);
                 }
                 ParseState::Done => break FileEvent::EOF,
             }
         };
 
-        if let ParseState::InsideTrack {
-            ref mut prev_status,
-            ..
-        } = self.state.parse_state_mut()
-        {
+        if let ParseState::InsideTrack { prev_status, .. } = self.state.parse_state_mut() {
             *prev_status = running_status;
         };
         Ok(event)
     }
-}
 
-//internal implementations
-impl<'slc> Reader<&'slc [u8]> {
-    // Returns None if there's no bytes left to read
-    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<&'slc [u8]>
+    /// Read the buffer and return a chunk
+    ///
+    /// # Errors
+    ///
+    /// If the next set of bytes are invalid given the current state of the reader
+    pub fn read_chunk<'a>(&mut self) -> ReadResult<ChunkEvent<'a>>
     where
-        'slc: 'slf,
+        'slc: 'a,
     {
-        if self.buffer_position() > self.reader.len() {
-            return Err(unexp_eof());
-        }
-        let start = self.buffer_position();
+        let event = loop {
+            match self.state.parse_state() {
+                ParseState::Init => {
+                    self.state.set_parse_state(ParseState::InsideMidi);
+                    continue;
+                }
+                ParseState::InsideMidi => {
+                    // expect only a header or track chunk
+                    let chunk = match self.read_exact(4) {
+                        Ok(c) => c,
+                        Err(e) => {
+                            if e.is_out_of_bounds() {
+                                // Inside Midi + UnexpectedEof should only fire at the end of a file.
+                                self.state.set_parse_state(ParseState::Done);
+                                return Ok(ChunkEvent::EOF);
+                            } else {
+                                return Err(e);
+                            }
+                        }
+                    };
+                    let chunk_name = chunk.as_ref();
 
-        let end = start + bytes;
+                    match chunk_name {
+                        b"MThd" => {
+                            //HeaderChunk should handle us
+                            break ChunkEvent::Header(RawHeaderChunk::read(self)?);
+                        }
+                        b"MTrk" => {
+                            let chunk = RawTrackChunk::read(self)?;
+                            break ChunkEvent::Track(chunk);
+                        }
+                        _ => {
+                            //let chunk
+                            let chunk = UnknownChunk::read(chunk, self)?;
+                            break ChunkEvent::Unknown(chunk);
+                        }
+                    };
+                }
+                ParseState::InsideTrack {
+                    start,
+                    length,
+                    prev_status: _,
+                } => {
+                    /*
+                    If this happens, then read_event was previously called.
+                    We will just skip to the end of this track and continue
+                    */
 
-        if end > self.reader.len() {
-            return Err(unexp_eof());
-        }
+                    self.state.set_offset(start + length);
+                    self.state.set_parse_state(ParseState::InsideMidi);
+                    continue;
+                }
+                ParseState::Done => break ChunkEvent::EOF,
+            }
+        };
 
-        self.state.increment_offset(bytes);
-
-        let slice = &self.reader[start..end];
-
-        Ok(slice)
+        Ok(event)
     }
-    /// Returns a statically sized array
-    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
-        &'slf mut self,
-    ) -> ReadResult<&'slc [u8; SIZE]>
-    where
-        'slc: 'slf,
-    {
-        let slice = self.read_exact(SIZE)?;
-
-        slice
-            .try_into()
-            .map_err(|e| inv_data(self, format!("{e:?}")))
-    }
-
-    /// Get the next byte without incrementing
-    #[allow(dead_code)]
-    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
-    where
-        'slc: 'slf,
-    {
-        let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
-        Ok(res)
-    }
-    pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<&'slc u8>
-    where
-        'slc: 'slf,
-    {
-        let res = self.reader.get(self.buffer_position()).ok_or(unexp_eof())?;
-        self.state.increment_offset(1);
-
-        Ok(res)
-    }
-    /// ASSUMING that the offset is pointing at the length of a varlen,
-    /// it will read that length and return the resulting slice.
-    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<&'slc [u8]>
-    where
-        'slc: 'slf,
-    {
-        let size = decode_varlen(self)?;
-        self.read_exact(size as usize)
-    }
-}
-
-pub(super) fn decode_varlen(reader: &mut Reader<&[u8]>) -> ReadResult<u32> {
-    let mut dec: u32 = 0;
-
-    for _ in 0..4 {
-        let next = reader.read_next()?;
-        dec <<= 7;
-        let add = u32::from(next & 0x7F);
-        dec |= add;
-
-        //need to continue
-        if next & 0x80 != 0x80 {
-            break;
-        }
-    }
-
-    Ok(dec)
-}
-
-/// grabs the next byte from the reader and checks it's a u4
-#[allow(dead_code)]
-pub(crate) fn check_u4<'slc>(reader: &mut Reader<&'slc [u8]>) -> ReadResult<&'slc u8> {
-    let byte = reader.read_next()?;
-    (byte & 0b1111_0000 == 0)
-        .then_some(byte)
-        .ok_or(inv_data(reader, "Leading bit found"))
 }

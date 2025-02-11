@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use crate::Bytes;
 
 #[doc = r#"
 A System Exclusive messsage, found in
@@ -42,17 +42,12 @@ is used for extensions called Universal Exclusive Messages.
 ```
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SystemExclusiveMessage<'a>(Cow<'a, [u8]>);
+pub struct SystemExclusiveMessage<'a>(Bytes<'a>);
 
 impl<'a> SystemExclusiveMessage<'a> {
     /// Create a new owned system exclusive message
-    pub const fn new(data: Vec<u8>) -> Self {
-        Self(Cow::Owned(data))
-    }
-
-    /// Create a new system exclusive message from a borrowed slice
-    pub const fn new_borrowed(data: &'a [u8]) -> Self {
-        Self(Cow::Borrowed(data))
+    pub fn new<B: Into<Bytes<'a>>>(data: B) -> Self {
+        Self(data.into())
     }
 
     /// Returns a mutable reference to the underlying data.

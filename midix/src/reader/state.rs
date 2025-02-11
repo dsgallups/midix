@@ -1,5 +1,5 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(super) enum ParseState {
+pub(crate) enum ParseState {
     /// Initial state in which reader stay after creation. Transition from that
     /// state could produce a `HeaderChunk` or `TrackChunk` event. The next
     /// state is always `InsideMidi`. The reader will never return to this state. The
@@ -20,7 +20,7 @@ pub(super) enum ParseState {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct ReaderState {
+pub(crate) struct ReaderState {
     offset: usize,
     last_error_offset: usize,
     state: ParseState,

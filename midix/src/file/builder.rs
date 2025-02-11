@@ -1,3 +1,5 @@
+use reader::ReaderError;
+
 use crate::prelude::*;
 
 use super::MidiFile;
@@ -6,117 +8,118 @@ use super::MidiFile;
 pub enum FormatStage<'a> {
     #[default]
     Unknown,
-    KnownType(MidiFormatRef<'a>),
-    KnownTracks(Vec<MidiTrack>),
-    Formatted(MidiFormat),
-}
-
-impl FormatStage<'_> {
-    pub fn known(&self) -> bool {
-        !(matches!(self, Self::Unknown))
-    }
+    KnownFormat(RawFormat<'a>),
+    KnownTracks(Vec<Track<'a>>),
+    Formatted(Format<'a>),
 }
 
 #[derive(Default)]
 pub struct MidiFileBuilder<'a> {
     format: FormatStage<'a>,
-    timing: Option<MidiTiming>,
-    unknown_chunks: Vec<Vec<u8>>,
+    timing: Option<Timing<'a>>,
+    unknown_chunks: Vec<UnknownChunk<'a>>,
 }
 
 impl<'a> MidiFileBuilder<'a> {
-    pub fn handle_chunk<'b: 'a>(&mut self, chunk: MidiChunk<'b>) -> OldReadResult<()> {
-        use MidiChunk::*;
+    pub fn handle_chunk<'b: 'a>(&mut self, chunk: ChunkEvent<'b>) -> ReadResult<()> {
+        use ChunkEvent::*;
         match chunk {
             Header(h) => {
                 if self.timing.is_some() {
-                    return Err(OldReaderError::invalid_data());
+                    return Err(ReaderError::invalid_data(
+                        "Found another header, should only expect one",
+                    ));
                 }
 
                 match self.format {
                     FormatStage::Unknown => {
-                        self.format = FormatStage::KnownType(h.format());
+                        self.format = FormatStage::KnownFormat(h.format().clone());
                     }
-                    FormatStage::KnownType(_) | FormatStage::Formatted(_) => {
-                        return Err(OldReaderError::invalid_data());
+                    FormatStage::KnownFormat(_) | FormatStage::Formatted(_) => {
+                        return Err(ReaderError::invalid_data(
+                            "Found another format when one was already provided",
+                        ));
                     }
                     FormatStage::KnownTracks(ref tracks) => match h.format_type() {
-                        MidiFormatType::Simultaneous => {
+                        FormatType::Simultaneous => {
                             self.format =
-                                FormatStage::Formatted(MidiFormat::Simultaneous(tracks.clone()))
+                                FormatStage::Formatted(Format::Simultaneous(tracks.clone()))
                         }
-                        MidiFormatType::SingleMultiChannel => {
+                        FormatType::SingleMultiChannel => {
+                            // this shouldn't even happen...but we will support headers that aren't at the top of the file, so it *could*
                             if tracks.len() != 1 {
-                                return Err(OldReaderError::invalid_data());
+                                return Err(ReaderError::invalid_data(
+                                    "track lengths is greater than one, yet format is single multichannel",
+                                ));
                             }
                             let track = tracks.first().unwrap().clone();
-                            self.format =
-                                FormatStage::Formatted(MidiFormat::SingleMultiChannel(track))
+                            self.format = FormatStage::Formatted(Format::SingleMultiChannel(track))
                         }
-                        MidiFormatType::SequentiallyIndependent => {
-                            self.format = FormatStage::Formatted(
-                                MidiFormat::SequentiallyIndependent(tracks.clone()),
-                            )
+                        FormatType::SequentiallyIndependent => {
+                            self.format = FormatStage::Formatted(Format::SequentiallyIndependent(
+                                tracks.clone(),
+                            ))
                         }
                     },
                 };
 
-                self.timing = Some(h.timing().to_owned());
+                self.timing = Some(h.timing().clone());
 
                 Ok(())
             }
             Track(t) => {
-                let events = t.events()?.into_iter().map(|e| e.to_owned()).collect();
+                let events = t.events()?;
 
-                let track = MidiTrack::new(events);
-                match self.format {
+                let track = super::Track::new(events);
+                match &mut self.format {
                     FormatStage::Unknown => {
                         self.format = FormatStage::KnownTracks(vec![track]);
                     }
-                    FormatStage::KnownType(t) => match t.format_type() {
-                        MidiFormatType::Simultaneous => {
-                            self.format =
-                                FormatStage::Formatted(MidiFormat::Simultaneous(vec![track]))
+                    FormatStage::KnownFormat(t) => match t.format_type() {
+                        FormatType::Simultaneous => {
+                            self.format = FormatStage::Formatted(Format::Simultaneous(vec![track]))
                         }
-                        MidiFormatType::SingleMultiChannel => {
-                            self.format =
-                                FormatStage::Formatted(MidiFormat::SingleMultiChannel(track))
+                        FormatType::SingleMultiChannel => {
+                            self.format = FormatStage::Formatted(Format::SingleMultiChannel(track))
                         }
-                        MidiFormatType::SequentiallyIndependent => {
+                        FormatType::SequentiallyIndependent => {
                             self.format =
-                                FormatStage::Formatted(MidiFormat::SequentiallyIndependent(vec![
-                                    track,
-                                ]))
+                                FormatStage::Formatted(Format::SequentiallyIndependent(vec![track]))
                         }
                     },
-                    FormatStage::KnownTracks(ref mut tracks) => tracks.push(track),
-                    FormatStage::Formatted(ref mut format) => match format {
-                        MidiFormat::SequentiallyIndependent(tracks) => tracks.push(track),
-                        MidiFormat::SingleMultiChannel(_) => {
-                            return Err(OldReaderError::invalid_data());
+                    FormatStage::KnownTracks(tracks) => tracks.push(track),
+                    FormatStage::Formatted(format) => match format {
+                        Format::SequentiallyIndependent(tracks) => tracks.push(track),
+                        Format::SingleMultiChannel(_) => {
+                            return Err(ReaderError::invalid_data(
+                                "Track of format 0 has multiple tracks",
+                            ));
                         }
-                        MidiFormat::Simultaneous(tracks) => tracks.push(track),
+                        Format::Simultaneous(tracks) => tracks.push(track),
                     },
                 }
                 Ok(())
             }
-            Unknown { data, .. } => {
-                self.unknown_chunks.push(data.to_vec());
+            Unknown(data) => {
+                self.unknown_chunks.push(data);
                 Ok(())
             }
+            EOF => Err(ReaderError::oob("Expected end of file to be handled")),
         }
     }
-    pub fn build(self) -> OldReadResult<MidiFile> {
-        let FormatStage::Formatted(f) = self.format else {
-            return Err(OldReaderError::invalid_data());
+    pub fn build(self) -> ReadResult<MidiFile<'a>> {
+        let FormatStage::Formatted(format) = self.format else {
+            return Err(ReaderError::invalid_data(
+                "Error: format doesn't line up with tracks",
+            ));
         };
         let Some(timing) = self.timing else {
-            return Err(OldReaderError::invalid_data());
+            return Err(ReaderError::invalid_data("No timing provided"));
         };
 
         Ok(MidiFile {
-            tracks: f,
-            header: MidiHeader::new(timing),
+            format,
+            header: Header::new(timing),
         })
     }
 }

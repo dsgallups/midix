@@ -1,8 +1,8 @@
 #![warn(missing_docs)]
-#![warn(clippy::print_stdout)]
+#![cfg_attr(not(feature = "debug"), warn(clippy::print_stdout))]
 #![doc = include_str!("../README.md")]
 
-use std::io::{self, ErrorKind};
+use std::io::{self};
 
 #[macro_use]
 mod error;
@@ -13,7 +13,10 @@ pub(crate) mod utils;
 pub mod channel;
 
 pub mod events;
+pub mod file_repr;
+
 pub mod file;
+
 mod pitch_bend;
 pub use pitch_bend::*;
 
@@ -37,18 +40,11 @@ pub mod message;
 mod song_position_pointer;
 pub use song_position_pointer::*;
 
-pub(crate) trait ReadDataBytesExt {
-    fn get_byte(&self, byte: usize) -> Result<&u8, io::Error>;
-}
+mod target;
+pub use target::*;
 
-impl ReadDataBytesExt for &[u8] {
-    fn get_byte(&self, byte: usize) -> Result<&u8, io::Error> {
-        self.get(byte).ok_or(io_error!(
-            ErrorKind::InvalidInput,
-            "Data not accessible for message!"
-        ))
-    }
-}
+#[cfg(feature = "debug")]
+pub mod debug;
 
 pub mod prelude {
     #![doc = r#"
@@ -57,12 +53,13 @@ pub mod prelude {
     pub use crate::{
         channel::*,
         events::*,
-        file::{chunk::*, meta::*, track::*, *},
+        file::*,
+        file_repr::{chunk::*, meta::*, track::*, *},
         message::{channel::*, system::*, MidiMessage},
         *,
     };
 
-    pub use crate::reader::{ReadResult, Reader};
+    pub use crate::reader::{MidiSource, ReadResult, Reader};
 
     #[allow(unused_imports)]
     pub(crate) use crate::reader::{inv_data, inv_input, unexp_eof};

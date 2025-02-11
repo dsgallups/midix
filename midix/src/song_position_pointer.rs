@@ -15,16 +15,16 @@ where
 
 "#]
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SongPositionPointer<'a> {
-    lsb: DataByte<'a>,
-    msb: DataByte<'a>,
+pub struct SongPositionPointer {
+    lsb: DataByte,
+    msb: DataByte,
 }
 
-impl<'a> SongPositionPointer<'a> {
+impl SongPositionPointer {
     /// Create a new Song PositionPointer from lsb and msb bytes
     pub fn new<B, E>(lsb: B, msb: B) -> Result<Self, std::io::Error>
     where
-        B: TryInto<DataByte<'a>, Error = E>,
+        B: TryInto<DataByte, Error = E>,
         E: Into<io::Error>,
     {
         let lsb = lsb.try_into().map_err(Into::into)?;
@@ -33,12 +33,12 @@ impl<'a> SongPositionPointer<'a> {
     }
 
     /// Get the least significant byte from a SongPositionPointer
-    pub fn lsb(&self) -> &u8 {
-        self.lsb.byte()
+    pub fn lsb(&self) -> DataByte {
+        self.lsb
     }
 
     /// Get the most significant byte from a SongPositionPointer
-    pub fn msb(&self) -> &u8 {
-        self.msb.byte()
+    pub fn msb(&self) -> DataByte {
+        self.msb
     }
 }

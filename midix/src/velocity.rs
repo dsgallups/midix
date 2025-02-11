@@ -2,34 +2,39 @@ use crate::prelude::*;
 use core::fmt;
 
 /// Identifies the velocity of a key press, or a key unpress, or an aftertouch.
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Velocity<'a>(DataByte<'a>);
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+pub struct Velocity(DataByte);
 
-impl<'a> Velocity<'a> {
+impl Velocity {
     /// Creates a new velocity from the provided byte
     ///
     /// Checks for correctness (leading 0 bit)
     pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
     where
-        B: TryInto<DataByte<'a>, Error = E>,
+        B: TryInto<DataByte, Error = E>,
         E: Into<io::Error>,
     {
         rep.try_into().map(Self).map_err(Into::into)
     }
 
-    /// Get a reference to the underlying byte
-    pub fn byte(&self) -> &u8 {
-        self.0.byte()
+    /// Returns a max velocity
+    pub fn max() -> Self {
+        Self(DataByte::new_unchecked(127))
+    }
+
+    /// Returns a velocity of zero.
+    pub fn zero() -> Self {
+        Self(DataByte::new_unchecked(0))
     }
 
     /// Get a reference to the underlying byte
-    pub fn value(&self) -> u8 {
-        *self.0.byte()
+    pub fn byte(&self) -> DataByte {
+        self.0
     }
 
     /// Get the dynamic of the velocity...fortississississimo
     pub fn dynamic(&self) -> Dynamic {
-        match self.value() {
+        match self.byte().value() {
             0 => Dynamic::off(),
             1..16 => Dynamic::ppp(),
             16..32 => Dynamic::pp(),
@@ -43,7 +48,7 @@ impl<'a> Velocity<'a> {
     }
 }
 
-impl fmt::Display for Velocity<'_> {
+impl fmt::Display for Velocity {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }

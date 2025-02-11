@@ -6,6 +6,7 @@ A suite of tools used to read, modify, and manage MIDI-related systems
 
 - `midix` - MIDI live/file parsing
 - `bevy_midix` - MIDI event resource and handlers
+- `midix_synth` - Streaming midi-command SoundFont synth (Under heavy development)
 
 ## MIDIx feature roadmap
 - `no_std`
@@ -31,3 +32,7 @@ Thanks to these mainters and contributors for inspiration!
 ## `bevy_midix`
 
 Forked originally from [`bevy_midi`](https://github.com/BlackPhlox/bevy_midi). Huge thank you for the examples and docs!
+
+## `midix_synth`
+
+Forked originally from [rustysynth](https://github.com/sinshu/rustysynth).

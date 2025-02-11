@@ -63,10 +63,10 @@ let VoiceEvent::NoteOn { key, velocity } = channel_voice_msg.event() else {
     panic!("Expected a note on event");
 };
 
-assert_eq!(channel_voice_msg.channel(), Channel::new(3).unwrap());
+assert_eq!(channel_voice_msg.channel(), ChannelId::new(3).unwrap());
 assert_eq!(key.note(), Note::C);
 assert_eq!(key.octave(), Octave::new(4));
-assert_eq!(velocity.value(), 96);
+assert_eq!(velocity.byte().value(), 96);
 ```
 
 
