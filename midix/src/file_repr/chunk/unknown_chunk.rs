@@ -1,6 +1,6 @@
 use crate::{
-    Bytes,
     reader::{MidiSource, ReadResult, Reader},
+    Bytes,
 };
 
 #[doc = r#"
