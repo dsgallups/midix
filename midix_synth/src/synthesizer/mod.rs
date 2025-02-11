@@ -243,6 +243,7 @@ impl Synthesizer {
             }
         }
 
+        // TODO(dsgallups): refactor
         let preset = &self.sound_font.presets[preset];
         for preset_region in preset.regions.iter() {
             if preset_region.contains(key, velocity) {
