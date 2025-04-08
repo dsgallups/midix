@@ -20,7 +20,7 @@ A suite of tools used to read, modify, and manage MIDI-related systems
 
 ## `midix`
 
-This crate is inspired by [`midly`](https://github.com/kovaxis/midix)
+This crate is inspired by [`midly`](https://github.com/kovaxis/midly)
 and [`quick-xml`](https://github.com/tafia/quick-xml).
 
 If you are in need of a MIDI writer, I highly
