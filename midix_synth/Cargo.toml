@@ -12,4 +12,8 @@ categories = ["multimedia::audio", "multimedia"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+firewheel = { version = "0.3.0", default-features = false, features = [
+    "cpal",
+    "beep_test",
+] }
 midix = { version = "3.0.0-rc1", path = "../midix" }

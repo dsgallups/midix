@@ -25,9 +25,10 @@ impl Synth {
         let mut synth = self.synthesizer.lock().unwrap();
         let channel = event.channel().to_byte() as i32;
         let command = (event.status_byte() & 0xF0) as i32;
-        let data1 = event.data_1_byte().value() as i32;
-        let data2 = event.data_2_byte().map(|b| b.value()).unwrap_or(0) as i32;
-        synth.old_process_midi_message(channel, command, data1, data2);
+        let data1 = event.data_1_byte() as i32;
+        let data2 = event.data_2_byte().unwrap_or(0) as i32;
+        //synth.old_process_midi_message(channel, command, data1, data2);
+        todo!()
     }
 }
 
@@ -41,12 +42,10 @@ impl Default for Synth {
 
         let mut sf2 = include_bytes!("../assets/soundfont.sf2").as_slice();
 
-        let sound_font = Arc::new(midix_synth::soundfont::SoundFont::new(&mut sf2).unwrap());
+        let sound_font = Arc::new(midix_synth::soundfont::SoundFont::parse(&mut sf2).unwrap());
         let synth_settings = SynthesizerSettings::new(params.sample_rate as i32);
 
-        let synthesizer = Arc::new(Mutex::new(
-            Synthesizer::new(&sound_font, &synth_settings).unwrap(),
-        ));
+        let synthesizer = Arc::new(Mutex::new(Synthesizer::new(sound_font, synth_settings)));
 
         let device_synth_ref = synthesizer.clone();
 
@@ -56,8 +55,8 @@ impl Default for Synth {
         let _device = run_output_device(params, {
             move |data| {
                 let mut synth = device_synth_ref.lock().unwrap();
-
-                synth.render(&mut left[..], &mut right[..]);
+                //todo
+                //synth.render(&mut left[..], &mut right[..]);
                 for (i, value) in left.iter().interleave(right.iter()).enumerate() {
                     data[i] = *value;
                 }
