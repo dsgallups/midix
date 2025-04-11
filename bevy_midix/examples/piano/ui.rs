@@ -5,8 +5,7 @@ use bevy::{
 use bevy_midix::prelude::*;
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, spawn_piano)
-        .add_systems(Update, interaction);
+    app.add_systems(Startup, spawn_piano);
 }
 
 #[derive(Component)]
@@ -35,7 +34,9 @@ fn spawn_piano(mut commands: Commands) {
     };
     let get_octave = |i: u8| {
         // piano octave starts at 2.
-        let octave = i / 12;
+        //
+        // note that octaves start with C, not A. so that's why we add 9 here.
+        let octave = (i + 9) / 12;
         Octave::new(octave as i8)
     };
 
@@ -58,17 +59,22 @@ fn spawn_piano(mut commands: Commands) {
                 let octave = get_octave(i);
                 let key = Key::new(note, octave);
 
-                commands.spawn((
-                    Button,
-                    Node {
-                        flex_grow: 1.,
-                        border: UiRect::all(Val::Px(1.)),
-                        ..default()
-                    },
-                    BorderColor(Color::BLACK),
-                    BackgroundColor(bg_color(key.is_sharp())),
-                    key,
-                ));
+                commands
+                    .spawn((
+                        Button,
+                        Node {
+                            flex_grow: 1.,
+                            border: UiRect::all(Val::Px(1.)),
+                            ..default()
+                        },
+                        BorderColor(Color::BLACK),
+                        BackgroundColor(bg_color(key.is_sharp())),
+                        key,
+                    ))
+                    .observe(on_mouse_enter)
+                    .observe(on_mouse_down)
+                    .observe(on_mouse_up)
+                    .observe(on_mouse_leave);
             })
         });
 }
@@ -81,30 +87,40 @@ fn bg_color(sharp: bool) -> Color {
     }
 }
 
-fn interaction(
-    mut interactions: Query<(&Interaction, &mut BackgroundColor, &Key), Changed<Interaction>>,
+const HOVERED: Srgba = GREEN;
+const PRESSED: Srgba = RED;
+
+fn on_mouse_enter(trigger: Trigger<Pointer<Over>>, mut keys: Query<(&mut BackgroundColor, &Key)>) {
+    let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
+    warn!("{key} hovered");
+    *background_color = HOVERED.into();
+}
+
+fn on_mouse_down(
+    trigger: Trigger<Pointer<Pressed>>,
+    mut keys: Query<(&mut BackgroundColor, &Key)>,
     mut synth: ResMut<Synth>,
 ) {
-    for (interaction, mut background_color, key) in &mut interactions {
-        match *interaction {
-            Interaction::Pressed => {
-                warn!("{key} pressed");
-                *background_color = RED.into();
-                let event =
-                    VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
-                synth.handle_event(event);
-            }
-            Interaction::Hovered => {
-                warn!("{key} hovered");
-                *background_color = GREEN.into();
-            }
-            Interaction::None => {
-                *background_color = BackgroundColor(bg_color(key.is_sharp()));
+    let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
+    warn!("{key} pressed");
+    *background_color = PRESSED.into();
+    let event = VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
+    synth.handle_event(event);
+}
+fn on_mouse_up(
+    trigger: Trigger<Pointer<Released>>,
+    mut keys: Query<(&mut BackgroundColor, &Key)>,
+    mut synth: ResMut<Synth>,
+) {
+    let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
+    warn!("{key} unpressed");
 
-                let event =
-                    VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
-                synth.handle_event(event);
-            }
-        }
-    }
+    let event = VoiceEvent::note_on(*key, Velocity::zero()).send_to_channel(Channel::One);
+    // could make this beter and revert to hover, but lazy
+    *background_color = BackgroundColor(bg_color(key.is_sharp()));
+    synth.handle_event(event);
+}
+fn on_mouse_leave(trigger: Trigger<Pointer<Out>>, mut keys: Query<(&mut BackgroundColor, &Key)>) {
+    let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
+    *background_color = BackgroundColor(bg_color(key.is_sharp()));
 }
