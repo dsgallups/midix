@@ -237,7 +237,6 @@ struct MidiInputTask {
     receiver: Receiver<Message>,
     sender: Sender<Reply>,
     settings: MidiInputSettings,
-
     // Invariant: exactly one of `input` or `connection` is Some
     input: Option<midir::MidiInput>,
     connection: Option<(midir::MidiInputConnection<()>, MidiInputPort)>,

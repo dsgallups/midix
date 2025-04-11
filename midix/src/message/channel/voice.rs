@@ -33,7 +33,7 @@ impl ChannelVoiceMessage {
     {
         let msg = match status.byte() >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::new(reader.read_next()?)?,
+                key: Key::from_databyte(reader.read_next()?)?,
                 velocity: Velocity::new(reader.read_next()?)?,
             },
             0x9 => {
@@ -41,12 +41,12 @@ impl ChannelVoiceMessage {
                 let velocity = reader.read_next()?;
 
                 VoiceEvent::NoteOn {
-                    key: Key::new(key)?,
+                    key: Key::from_databyte(key)?,
                     velocity: Velocity::new(velocity)?,
                 }
             }
             0xA => VoiceEvent::Aftertouch {
-                key: Key::new(reader.read_next()?)?,
+                key: Key::from_databyte(reader.read_next()?)?,
                 velocity: Velocity::new(reader.read_next()?)?,
             },
             0xB => VoiceEvent::ControlChange {
@@ -177,7 +177,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage {
     {
         let msg = match status >> 4 {
             0x8 => VoiceEvent::NoteOff {
-                key: Key::new(
+                key: Key::from_databyte(
                     data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
@@ -187,7 +187,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage {
                 )?,
             },
             0x9 => VoiceEvent::NoteOn {
-                key: Key::new(
+                key: Key::from_databyte(
                     data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
@@ -197,7 +197,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage {
                 )?,
             },
             0xA => VoiceEvent::Aftertouch {
-                key: Key::new(
+                key: Key::from_databyte(
                     data.get_byte(0)
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
