@@ -887,7 +887,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_midix"
-version = "2.0.0"
+version = "3.0.0-rc1"
 dependencies = [
  "bevy",
  "bevy_egui",
