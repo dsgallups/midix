@@ -36,13 +36,13 @@ impl PitchBend {
     }
 
     /// Returns a reference to the pitch bend's least significant byte.
-    pub fn lsb(&self) -> DataByte {
-        self.lsb
+    pub fn lsb(&self) -> u8 {
+        self.lsb.0
     }
 
     /// Returns a reference to the pitch bend's most significant byte.
-    pub fn msb(&self) -> DataByte {
-        self.msb
+    pub fn msb(&self) -> u8 {
+        self.msb.0
     }
 
     /// Represents a pitch bend

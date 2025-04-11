@@ -2,7 +2,7 @@ use midix::{
     events::LiveEvent,
     file::{MidiFile, TimedEvent},
     prelude::{Channel, VoiceEvent},
-    DataByte, Dynamic, Note, Octave,
+    Dynamic, Note, Octave,
 };
 
 #[test]
@@ -62,7 +62,7 @@ fn note_off(
     assert_eq!(cv.channel(), channel);
     match cv.event() {
         VoiceEvent::NoteOn { key, velocity } => {
-            assert_eq!(velocity.byte(), DataByte::new_unchecked(0));
+            assert_eq!(velocity.byte(), 0);
             assert_eq!(key.note(), note);
             assert_eq!(key.octave(), Octave::new(octave));
         }

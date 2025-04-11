@@ -99,7 +99,7 @@ fn midi_file_ref() {
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
-    assert_eq!(program.byte().value(), 5);
+    assert_eq!(program.byte(), 5);
     /*************/
 
     //channel 2 program change to 46
@@ -114,7 +114,7 @@ fn midi_file_ref() {
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
-    assert_eq!(program.byte().value(), 46);
+    assert_eq!(program.byte(), 46);
     /*************/
 
     //channel 3 program change to 70
@@ -129,7 +129,7 @@ fn midi_file_ref() {
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
-    assert_eq!(program.byte().value(), 70);
+    assert_eq!(program.byte(), 70);
     /*************/
 
     use Channel::*;
@@ -185,7 +185,7 @@ fn note_off(
 
     match cv.event() {
         VoiceEvent::NoteOn { key, velocity } => {
-            assert_eq!(velocity.byte(), DataByte::new_unchecked(0));
+            assert_eq!(velocity.byte(), 0);
             assert_eq!(key.note(), note);
             assert_eq!(key.octave(), Octave::new(octave));
         }

@@ -74,7 +74,7 @@ impl VoiceEvent {
     pub fn is_note_on(&self) -> bool {
         use VoiceEvent::*;
         match self {
-            NoteOn { velocity, .. } => velocity.byte().value() != 0,
+            NoteOn { velocity, .. } => velocity.byte() != 0,
             _ => false,
         }
     }
@@ -84,13 +84,13 @@ impl VoiceEvent {
         use VoiceEvent::*;
         match self {
             NoteOff { .. } => true,
-            NoteOn { velocity, .. } => velocity.byte().value() == 0,
+            NoteOn { velocity, .. } => velocity.byte() == 0,
             _ => false,
         }
     }
 
     /// Get the raw data bytes for this message
-    pub fn to_raw(&self) -> Vec<DataByte> {
+    pub fn to_raw(&self) -> Vec<u8> {
         match self {
             VoiceEvent::NoteOff { key, velocity } => vec![key.byte(), velocity.byte()],
             VoiceEvent::NoteOn { key, velocity } => vec![key.byte(), velocity.byte()],
@@ -98,7 +98,7 @@ impl VoiceEvent {
                 vec![key.byte(), velocity.byte()]
             }
             VoiceEvent::ControlChange { controller, value } => {
-                vec![controller.byte(), *value]
+                vec![controller.byte(), value.0]
             }
             VoiceEvent::ProgramChange { program } => vec![program.byte()],
             VoiceEvent::ChannelPressureAfterTouch { velocity } => vec![velocity.byte()],

@@ -118,7 +118,7 @@ impl ChannelVoiceMessage {
 
     /// Returns the byte value for the data 1 byte. In the case
     /// of voice message it always exists
-    pub fn data_1_byte(&self) -> DataByte {
+    pub fn data_1_byte(&self) -> u8 {
         use VoiceEvent as V;
         match &self.message {
             V::NoteOn { key, .. } | V::NoteOff { key, .. } | V::Aftertouch { key, .. } => {
@@ -132,13 +132,13 @@ impl ChannelVoiceMessage {
     }
 
     /// Returns the byte value for the data 2 byte if it exists
-    pub fn data_2_byte(&self) -> Option<DataByte> {
+    pub fn data_2_byte(&self) -> Option<u8> {
         match &self.message {
             VoiceEvent::NoteOn { velocity, .. }
             | VoiceEvent::NoteOff { velocity, .. }
             | VoiceEvent::Aftertouch { velocity, .. }
             | VoiceEvent::ChannelPressureAfterTouch { velocity } => Some(velocity.byte()),
-            VoiceEvent::ControlChange { value, .. } => Some(*value),
+            VoiceEvent::ControlChange { value, .. } => Some(value.0),
             VoiceEvent::PitchBend(p) => Some(p.msb()),
             _ => None,
         }
@@ -161,8 +161,7 @@ impl ChannelVoiceMessage {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
         packet.push(self.status());
-        let data = self.message.to_raw().into_iter().map(|b| b.value());
-        packet.extend(data);
+        packet.extend(self.message.to_raw());
 
         packet
     }

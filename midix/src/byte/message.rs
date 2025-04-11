@@ -140,7 +140,7 @@ impl fmt::Display for StatusByte {
 Data Byte is between [0x00 and 0x7F]
 "#]
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DataByte(u8);
+pub struct DataByte(pub(crate) u8);
 impl Debug for DataByte {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Debug(0x{:0X}", self.0)
