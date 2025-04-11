@@ -843,11 +843,13 @@ version = "3.0.0-rc1"
 dependencies = [
  "bevy",
  "crossbeam-channel",
+ "itertools 0.14.0",
  "midir",
  "midix",
  "midix_synth",
  "strum 0.27.1",
  "thiserror 2.0.12",
+ "tinyaudio",
 ]
 
 [[package]]
@@ -4007,6 +4009,23 @@ checksum = "8b9ef9bad013ada3808854ceac7b46812a6465ba368859a37e2100283d2d719c"
 dependencies = [
  "cfg-if",
  "once_cell",
+]
+
+[[package]]
+name = "tinyaudio"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e28f61bcbbeed46a2b3080aa12f480e059e7b319f79361f1b89af5e60d023cc9"
+dependencies = [
+ "alsa-sys",
+ "core-foundation-sys",
+ "coreaudio-sys",
+ "js-sys",
+ "ndk 0.9.0",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "winapi",
 ]
 
 [[package]]

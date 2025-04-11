@@ -83,14 +83,16 @@ fn bg_color(sharp: bool) -> Color {
 
 fn interaction(
     mut interactions: Query<(&Interaction, &mut BackgroundColor, &Key), Changed<Interaction>>,
-    channel: Res<ChannelOne>,
+    mut synth: ResMut<Synth>,
 ) {
     for (interaction, mut background_color, key) in &mut interactions {
         match *interaction {
             Interaction::Pressed => {
                 warn!("{key} pressed");
                 *background_color = RED.into();
-                channel.play(KeyPress::new(key, Velocity::max()));
+                let event =
+                    VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
+                synth.handle_event(event);
             }
             Interaction::Hovered => {
                 warn!("{key} hovered");
@@ -98,7 +100,10 @@ fn interaction(
             }
             Interaction::None => {
                 *background_color = BackgroundColor(bg_color(key.is_sharp()));
-                channel.play(KeyPress::new(key, Velocity::zero()));
+
+                let event =
+                    VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
+                synth.handle_event(event);
             }
         }
     }
