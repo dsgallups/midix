@@ -2739,6 +2739,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "midix_synth_old"
+version = "0.0.0"
+dependencies = [
+ "midix",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
