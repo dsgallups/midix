@@ -4,41 +4,56 @@
 
 use core::fmt;
 
-use crate::{
-    message::{ChannelVoiceMessage, VoiceEvent},
-    utils::check_u4,
-};
+use num_enum::{IntoPrimitive, TryFromPrimitive};
 
-/// Identifies a channel for MIDI. Constructors check that the value is between 0-15.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-pub struct ChannelId(u8);
+use crate::message::{ChannelVoiceMessage, VoiceEvent};
 
-impl ChannelId {
-    /// Identify a channel (1, 2, 3)
-    ///
-    /// # Panics
-    /// if the byte is 0
-    ///
-    /// # Errors
-    /// If the channel is greater than a value of 15
-    pub fn new(channel: u8) -> Result<Self, std::io::Error> {
-        Ok(Self(check_u4(channel - 1)?))
-    }
+/// Identifies a channel for MIDI.
+///
+/// To get this channel from a `u8`, use [`Channel::try_from_primitive`].
+#[derive(
+    Clone, Copy, PartialEq, Eq, Debug, Hash, IntoPrimitive, TryFromPrimitive, PartialOrd, Ord,
+)]
+#[repr(u8)]
+pub enum Channel {
+    /// 0bxxxx0000
+    One = 0,
+    /// 0bxxxx0001
+    Two,
+    /// 0bxxxx0010
+    Three,
+    /// 0bxxxx0011
+    Four,
+    /// 0bxxxx0100
+    Five,
+    /// 0bxxxx0101
+    Six,
+    /// 0bxxxx0110
+    Seven,
+    /// 0bxxxx0111
+    Eight,
+    /// 0bxxxx1000
+    Nine,
+    /// 0bxxxx1001
+    Ten,
+    /// 0bxxxx1010
+    Eleven,
+    /// 0bxxxx1011
+    Twelve,
+    /// 0bxxxx1100
+    Thirteen,
+    /// 0bxxxx1101
+    Fourteen,
+    /// 0bxxxx1110
+    Fifteen,
+    /// 0bxxxx1111
+    Sixteen,
+}
 
+impl Channel {
     /// Send a voice event to this channel
     pub fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(self, event)
-    }
-    /// returns 1-16
-    pub fn value(&self) -> u8 {
-        self.0 + 1
-    }
-
-    /// Identify a channel (0, 1, 2)
-    ///
-    /// Does not check for correctness
-    pub fn new_unchecked(channel: u8) -> Self {
-        Self(channel)
     }
 
     /// Given a status byte from some [`ChannelVoiceMessage`], perform bitwise ops
@@ -46,18 +61,27 @@ impl ChannelId {
     #[must_use]
     pub fn from_status(status: u8) -> Self {
         let channel = status & 0b0000_1111;
-        Self(channel)
+        Channel::try_from(channel).unwrap()
     }
 
     /// Returns the 4-bit channel number (0-15)
     #[must_use]
-    pub fn byte(&self) -> &u8 {
-        &self.0
+    pub fn to_byte(&self) -> u8 {
+        (*self).into()
     }
 }
 
-impl fmt::Display for ChannelId {
+impl fmt::Display for Channel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        (self.0 + 1).fmt(f)
+        let res: u8 = (*self).into();
+        res.fmt(f)
     }
+}
+
+#[test]
+fn channel_from_status() {
+    use pretty_assertions::assert_eq;
+    assert_eq!(Channel::Eight, Channel::from_status(0b1011_0111));
+    assert_eq!(Channel::One, Channel::from_status(0b1011_0000));
+    assert_eq!(Channel::Sixteen, Channel::from_status(0b0101_1111));
 }

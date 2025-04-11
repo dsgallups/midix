@@ -66,7 +66,7 @@ impl VoiceEvent {
     }
 
     /// Turn self into a ChannelVoiceMessage
-    pub fn send_to_channel(self, channel: ChannelId) -> ChannelVoiceMessage {
+    pub fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(channel, self)
     }
 

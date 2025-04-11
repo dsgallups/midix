@@ -1,5 +1,5 @@
 use crate::{
-    channel::ChannelId,
+    channel::Channel,
     events::LiveEvent,
     prelude::{BytesText, Tempo, TimeSignature, TrackEvent, TrackMessage},
 };
@@ -74,7 +74,7 @@ pub struct TrackInfo<'a> {
     pub name: Option<BytesText<'a>>,
     pub device: Option<BytesText<'a>>,
     pub track_info: Option<u16>,
-    pub channel: Option<ChannelId>,
+    pub channel: Option<Channel>,
     pub tempo: Tempo,
 }
 

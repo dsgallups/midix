@@ -2987,6 +2987,7 @@ name = "midix"
 version = "2.0.0"
 dependencies = [
  "bevy",
+ "num_enum",
  "pretty_assertions",
  "thiserror 2.0.9",
 ]

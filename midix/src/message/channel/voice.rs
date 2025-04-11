@@ -18,8 +18,8 @@ pub struct ChannelVoiceMessage {
 
 impl ChannelVoiceMessage {
     /// Create a new channel voice event from the channel and associated event type
-    pub fn new(channel: ChannelId, message: VoiceEvent) -> Self {
-        let status = *channel.byte() | (message.status_nibble() << 4);
+    pub fn new(channel: Channel, message: VoiceEvent) -> Self {
+        let status = channel.to_byte() | (message.status_nibble() << 4);
         Self {
             status: StatusByte::new_unchecked(status),
             message,
@@ -81,8 +81,8 @@ impl ChannelVoiceMessage {
     }
 
     /// Get the channel for the event
-    pub fn channel(&self) -> ChannelId {
-        ChannelId::from_status(self.status.byte())
+    pub fn channel(&self) -> Channel {
+        Channel::from_status(self.status.byte())
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.

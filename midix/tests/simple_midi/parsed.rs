@@ -1,7 +1,7 @@
 use midix::{
     events::LiveEvent,
     file::{MidiFile, TimedEvent},
-    prelude::{ChannelId, VoiceEvent},
+    prelude::{Channel, VoiceEvent},
     DataByte, Dynamic, Note, Octave,
 };
 
@@ -15,19 +15,20 @@ fn test_parse() {
 
     let mut events = track.events().iter().skip(3);
 
-    note_on(events.next().unwrap(), 0, 3, Note::C, 3, Dynamic::ff());
-    note_on(events.next().unwrap(), 0, 3, Note::C, 4, Dynamic::ff());
-    note_on(events.next().unwrap(), 96, 2, Note::G, 4, Dynamic::mf());
-    note_on(events.next().unwrap(), 192, 1, Note::E, 5, Dynamic::p());
-    note_off(events.next().unwrap(), 384, 3, Note::C, 3);
-    note_off(events.next().unwrap(), 384, 3, Note::C, 4);
-    note_off(events.next().unwrap(), 384, 2, Note::G, 4);
-    note_off(events.next().unwrap(), 384, 1, Note::E, 5);
+    use Channel::*;
+    note_on(events.next().unwrap(), 0, Three, Note::C, 3, Dynamic::ff());
+    note_on(events.next().unwrap(), 0, Three, Note::C, 4, Dynamic::ff());
+    note_on(events.next().unwrap(), 96, Two, Note::G, 4, Dynamic::mf());
+    note_on(events.next().unwrap(), 192, One, Note::E, 5, Dynamic::p());
+    note_off(events.next().unwrap(), 384, Three, Note::C, 3);
+    note_off(events.next().unwrap(), 384, Three, Note::C, 4);
+    note_off(events.next().unwrap(), 384, Two, Note::G, 4);
+    note_off(events.next().unwrap(), 384, One, Note::E, 5);
 }
 fn note_on(
     e: &TimedEvent<LiveEvent<'_>>,
     accumulated_ticks: u32,
-    channel_id: u8,
+    channel: Channel,
     note: Note,
     octave: i8,
     dynamic: Dynamic,
@@ -37,7 +38,7 @@ fn note_on(
         panic!();
     };
 
-    assert_eq!(cv.channel(), ChannelId::new(channel_id).unwrap());
+    assert_eq!(cv.channel(), channel);
     let VoiceEvent::NoteOn { key, velocity } = cv.event() else {
         panic!();
     };
@@ -49,7 +50,7 @@ fn note_on(
 fn note_off(
     e: &TimedEvent<LiveEvent<'_>>,
     accumulated_ticks: u32,
-    channel_id: u8,
+    channel: Channel,
     note: Note,
     octave: i8,
 ) {
@@ -58,7 +59,7 @@ fn note_off(
         panic!();
     };
 
-    assert_eq!(cv.channel(), ChannelId::new(channel_id).unwrap());
+    assert_eq!(cv.channel(), channel);
     match cv.event() {
         VoiceEvent::NoteOn { key, velocity } => {
             assert_eq!(velocity.byte(), DataByte::new_unchecked(0));
