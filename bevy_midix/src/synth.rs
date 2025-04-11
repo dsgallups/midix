@@ -42,7 +42,7 @@ impl Default for Synth {
 
         let mut sf2 = include_bytes!("../assets/soundfont.sf2").as_slice();
 
-        let sound_font = Arc::new(midix_synth::soundfont::SoundFont::parse(&mut sf2).unwrap());
+        let sound_font = Arc::new(midix_synth::soundfont::SoundFont::new(&mut sf2).unwrap());
         let synth_settings = SynthesizerSettings::new(params.sample_rate as i32);
 
         let synthesizer = Arc::new(Mutex::new(Synthesizer::new(sound_font, synth_settings)));

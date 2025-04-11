@@ -14,14 +14,14 @@ pub struct ChannelVoiceMessage {
     /// Used for getting the channel as the status' lsb contains the channel
     pub channel: Channel,
     /// The MIDI message type and associated data.
-    pub message: VoiceEvent,
+    pub event: VoiceEvent,
 }
 
 impl ChannelVoiceMessage {
     /// Create a new channel voice event from the channel and associated event type
-    pub fn new(channel: Channel, message: VoiceEvent) -> Self {
+    pub fn new(channel: Channel, event: VoiceEvent) -> Self {
         //let status = channel.to_byte() | (message.status_nibble() << 4);
-        Self { channel, message }
+        Self { channel, event }
     }
 
     /// TODO: Remove this function, and replace it with some
@@ -79,7 +79,7 @@ impl ChannelVoiceMessage {
         let channel = status.byte() & 0b0000_1111;
         Ok(ChannelVoiceMessage {
             channel: Channel::try_from_primitive(channel).unwrap(),
-            message: msg,
+            event: msg,
         })
     }
 
@@ -90,17 +90,17 @@ impl ChannelVoiceMessage {
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
-        self.message.is_note_on()
+        self.event.is_note_on()
     }
 
     /// Returns true if the note is off. This includes note on where the velocity is zero.
     pub fn is_note_off(&self) -> bool {
-        self.message.is_note_off()
+        self.event.is_note_off()
     }
 
     /// Returns the key if the event has a key
     pub fn key(&self) -> Option<&Key> {
-        match &self.message {
+        match &self.event {
             VoiceEvent::NoteOn { key, .. }
             | VoiceEvent::NoteOff { key, .. }
             | VoiceEvent::Aftertouch { key, .. } => Some(key),
@@ -110,7 +110,7 @@ impl ChannelVoiceMessage {
 
     /// Returns the velocity if the type has a velocity
     pub fn velocity(&self) -> Option<&Velocity> {
-        match &self.message {
+        match &self.event {
             VoiceEvent::NoteOn { velocity, .. }
             | VoiceEvent::NoteOff { velocity, .. }
             | VoiceEvent::Aftertouch { velocity, .. }
@@ -125,7 +125,7 @@ impl ChannelVoiceMessage {
     /// TODO: remove.
     pub fn data_1_byte(&self) -> u8 {
         use VoiceEvent as V;
-        match &self.message {
+        match &self.event {
             V::NoteOn { key, .. } | V::NoteOff { key, .. } | V::Aftertouch { key, .. } => {
                 key.byte()
             }
@@ -140,7 +140,7 @@ impl ChannelVoiceMessage {
     ///
     /// TODO: remove.
     pub fn data_2_byte(&self) -> Option<u8> {
-        match &self.message {
+        match &self.event {
             VoiceEvent::NoteOn { velocity, .. }
             | VoiceEvent::NoteOff { velocity, .. }
             | VoiceEvent::Aftertouch { velocity, .. }
@@ -158,19 +158,19 @@ impl ChannelVoiceMessage {
     ///
     /// TODO: remove
     pub fn status_byte(&self) -> u8 {
-        self.channel.to_byte() | (self.message.status_nibble() << 4)
+        self.channel.to_byte() | (self.event.status_nibble() << 4)
     }
 
     /// References the voice event for the message.
     pub fn event(&self) -> &VoiceEvent {
-        &self.message
+        &self.event
     }
 
     /// Get the raw midi packet for this message
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
         packet.push(self.status_byte());
-        packet.extend(self.message.to_raw());
+        packet.extend(self.event.to_raw());
 
         packet
     }
@@ -264,7 +264,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage {
         };
         Ok(ChannelVoiceMessage {
             channel: Channel::try_from_primitive(status & 0b0000_1111).unwrap(),
-            message: msg,
+            event: msg,
         })
     }
 }

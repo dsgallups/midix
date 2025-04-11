@@ -4,6 +4,12 @@ use super::{Channel, Voice};
 
 use crate::prelude::*;
 
+/*
+A voice is something that can play sound?
+why are all voices initialized on channel zero with zero velocity?
+Seems like this is wrong
+
+*/
 #[non_exhaustive]
 pub(crate) struct VoiceCollection {
     voices: Vec<Voice>,

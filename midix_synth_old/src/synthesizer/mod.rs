@@ -29,6 +29,21 @@ use std::sync::Arc;
 
 use crate::prelude::*;
 
+/*
+A voice is something that can play sound?
+why are all voices initialized on channel zero with zero velocity?
+Seems like this is wrong.
+
+On initialization, synthesizer creates a bunch of voices like this.
+wonder when this changes..
+
+
+ending a voice sets some voice state to RELEASE_REQUESTED.
+this occurs during note off.
+wonder how this is handled.
+
+*/
+
 /// An instance of the SoundFont synthesizer.
 #[non_exhaustive]
 pub struct Synthesizer {
