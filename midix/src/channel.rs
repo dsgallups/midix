@@ -8,42 +8,49 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 
 use crate::message::{ChannelVoiceMessage, VoiceEvent};
 
-/// Identifies a channel for MIDI. Constructors check that the value is between 0-15.
+/// Identifies a channel for MIDI.
+///
+/// To get this channel from a `u8`, use [`Channel::try_from_primitive`].
 #[derive(
     Clone, Copy, PartialEq, Eq, Debug, Hash, IntoPrimitive, TryFromPrimitive, PartialOrd, Ord,
 )]
 #[repr(u8)]
 pub enum Channel {
+    /// 0bxxxx0000
     One = 0,
+    /// 0bxxxx0001
     Two,
+    /// 0bxxxx0010
     Three,
+    /// 0bxxxx0011
     Four,
+    /// 0bxxxx0100
     Five,
+    /// 0bxxxx0101
     Six,
+    /// 0bxxxx0110
     Seven,
+    /// 0bxxxx0111
     Eight,
+    /// 0bxxxx1000
     Nine,
+    /// 0bxxxx1001
     Ten,
+    /// 0bxxxx1010
     Eleven,
+    /// 0bxxxx1011
     Twelve,
+    /// 0bxxxx1100
     Thirteen,
+    /// 0bxxxx1101
     Fourteen,
+    /// 0bxxxx1110
     Fifteen,
+    /// 0bxxxx1111
     Sixteen,
 }
 
 impl Channel {
-    // /// Identify a channel (1, 2, 3)
-    // ///
-    // /// # Panics
-    // /// if the byte is 0
-    // ///
-    // /// # Errors
-    // /// If the channel is greater than a value of 15
-    // pub fn new(channel: u8) -> Result<Self, std::io::Error> {
-    //     Ok(Self(check_u4(channel - 1)?))
-    // }
-
     /// Send a voice event to this channel
     pub fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(self, event)
