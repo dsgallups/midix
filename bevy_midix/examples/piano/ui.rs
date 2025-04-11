@@ -43,8 +43,12 @@ fn spawn_piano(mut commands: Commands) {
         .spawn((
             Piano,
             Node {
+                padding: UiRect::top(Val::Px(5.))
+                    .with_right(Val::Px(5.))
+                    .with_left(Val::Px(5.)),
+                box_sizing: BoxSizing::BorderBox,
                 width: Val::Percent(100.),
-                height: Val::Px(50.),
+                height: Val::Px(80.),
                 ..default()
             },
         ))
