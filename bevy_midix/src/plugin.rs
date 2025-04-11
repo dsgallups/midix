@@ -1,7 +1,11 @@
+#![doc = r#"
+Module for the [`MidiPlugin`]
+"#]
 use bevy::prelude::*;
 
 use crate::{input::MidiInputPlugin, output::MidiOutputPlugin, synth::Synth};
 
+/// Configure the parts you want to include (input, output, synth)
 pub struct MidiPlugin {
     output: bool,
     input: bool,
