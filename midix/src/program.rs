@@ -19,9 +19,9 @@ impl Program {
         rep.try_into().map(Self).map_err(Into::into)
     }
 
-    /// Get a reference to the underlying byte for the program.
-    pub fn byte(&self) -> DataByte {
-        self.0
+    /// Get the underlying byte for the program.
+    pub fn byte(&self) -> u8 {
+        self.0 .0
     }
 }
 

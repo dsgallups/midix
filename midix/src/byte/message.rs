@@ -79,12 +79,6 @@ impl StatusByte {
         byte.try_into()
     }
 
-    /// Only use if the value is already been checked or
-    /// constructed such that it cannot have a leading 0 bit
-    pub(crate) fn new_unchecked(byte: u8) -> Self {
-        Self(byte)
-    }
-
     /// Get the underlying byte of the status
     pub fn byte(&self) -> u8 {
         self.0
