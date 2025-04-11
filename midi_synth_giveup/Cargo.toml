@@ -1,0 +1,16 @@
+[package]
+name = "midix_synth"
+version = "0.0.1-rc1"
+edition = "2021"
+authors = ["dsgallups <dsgallups@protonmail.com>"]
+description = "SoundFont compatible MIDI synthesizer for midix"
+repository = "https://github.com/dsgallups/midix"
+documentation = "https://docs.rs/midix_synth"
+readme = "README.md"
+keywords = ["midi", "audio", "synthesizer"]
+categories = ["multimedia::audio", "multimedia"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+fnv = "1.0.7"
+midix = { version = "3.0.0-rc1", path = "../midix" }

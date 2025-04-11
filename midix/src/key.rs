@@ -84,8 +84,8 @@ impl Key {
     }
 
     /// Returns the underlying byte of the key
-    pub fn byte(&self) -> DataByte {
-        self.0
+    pub fn byte(&self) -> u8 {
+        self.0 .0
     }
 }
 

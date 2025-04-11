@@ -1,4 +1,5 @@
 use io::ErrorKind;
+use num_enum::TryFromPrimitive;
 
 use crate::prelude::*;
 
@@ -11,22 +12,23 @@ use crate::prelude::*;
 pub struct ChannelVoiceMessage {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel as the status' lsb contains the channel
-    status: StatusByte,
+    pub channel: Channel,
     /// The MIDI message type and associated data.
-    message: VoiceEvent,
+    pub message: VoiceEvent,
 }
 
 impl ChannelVoiceMessage {
     /// Create a new channel voice event from the channel and associated event type
     pub fn new(channel: Channel, message: VoiceEvent) -> Self {
-        let status = channel.to_byte() | (message.status_nibble() << 4);
-        Self {
-            status: StatusByte::new_unchecked(status),
-            message,
-        }
+        //let status = channel.to_byte() | (message.status_nibble() << 4);
+        Self { channel, message }
     }
 
-    /// TODO: read functions should take in an iterator that yields u8s
+    /// TODO: Remove this function, and replace it with some
+    /// parse method that takes in &[u8]. good for no_std as well.
+    ///
+    /// Additionally, we will need a write function that takes in either a mutable buffer
+    /// or a mutable vector. not sure.
     pub(crate) fn read<'a, R>(status: StatusByte, reader: &mut Reader<R>) -> ReadResult<Self>
     where
         R: MidiSource<'a>,
@@ -74,15 +76,16 @@ impl ChannelVoiceMessage {
                 ));
             }
         };
+        let channel = status.byte() & 0b0000_1111;
         Ok(ChannelVoiceMessage {
-            status,
+            channel: Channel::try_from_primitive(channel).unwrap(),
             message: msg,
         })
     }
 
     /// Get the channel for the event
     pub fn channel(&self) -> Channel {
-        Channel::from_status(self.status.byte())
+        self.channel
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
@@ -118,6 +121,8 @@ impl ChannelVoiceMessage {
 
     /// Returns the byte value for the data 1 byte. In the case
     /// of voice message it always exists
+    ///
+    /// TODO: remove.
     pub fn data_1_byte(&self) -> DataByte {
         use VoiceEvent as V;
         match &self.message {
@@ -131,7 +136,9 @@ impl ChannelVoiceMessage {
         }
     }
 
-    /// Returns the byte value for the data 2 byte if it exists
+    /// Returns the byte value for the data 2 byte if it exists.
+    ///
+    /// TODO: remove.
     pub fn data_2_byte(&self) -> Option<DataByte> {
         match &self.message {
             VoiceEvent::NoteOn { velocity, .. }
@@ -147,9 +154,11 @@ impl ChannelVoiceMessage {
     /// References the status byte of the event in big-endian.
     ///
     /// the leading (msb) 4 bytes are the voice event
-    /// and the trailing (lsb) 4 bytes are the channel
-    pub fn status(&self) -> u8 {
-        self.status.byte()
+    /// and the trailing (lsb) 4 bytes are the channel.
+    ///
+    /// TODO: remove
+    pub fn status_byte(&self) -> u8 {
+        self.channel.to_byte() | (self.message.status_nibble() << 4)
     }
 
     /// References the voice event for the message.
@@ -160,11 +169,24 @@ impl ChannelVoiceMessage {
     /// Get the raw midi packet for this message
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(3);
-        packet.push(self.status());
+        packet.push(self.status_byte());
         let data = self.message.to_raw().into_iter().map(|b| b.value());
         packet.extend(data);
 
         packet
+    }
+
+    /// TODO: make a WriteResult. this will panic rn
+    pub fn write_into(&self, buf: &mut [u8]) -> usize {
+        buf[0] = self.status_byte();
+        buf[1] = self.data_1_byte().value();
+        match self.data_2_byte() {
+            Some(b) => {
+                buf[2] = b.value();
+                3
+            }
+            None => 2,
+        }
     }
 }
 
@@ -242,7 +264,7 @@ impl FromLiveEventBytes for ChannelVoiceMessage {
             _ => panic!("parsed midi message before checking that status is in range"),
         };
         Ok(ChannelVoiceMessage {
-            status: status.try_into()?,
+            channel: Channel::try_from_primitive(status & 0b0000_1111).unwrap(),
             message: msg,
         })
     }

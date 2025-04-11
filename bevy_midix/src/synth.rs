@@ -24,10 +24,10 @@ impl Synth {
         // TODO: refacctor midix synth
         let mut synth = self.synthesizer.lock().unwrap();
         let channel = event.channel().to_byte() as i32;
-        let command = (event.status() & 0xF0) as i32;
+        let command = (event.status_byte() & 0xF0) as i32;
         let data1 = event.data_1_byte().value() as i32;
         let data2 = event.data_2_byte().map(|b| b.value()).unwrap_or(0) as i32;
-        synth.process_midi_message(channel, command, data1, data2);
+        synth.old_process_midi_message(channel, command, data1, data2);
     }
 }
 

@@ -51,6 +51,15 @@ pub enum Channel {
 }
 
 impl Channel {
+    /// Returns a vector of all available channels, ordered from One -> Sixteen
+    pub fn all() -> Vec<Self> {
+        use Channel::*;
+        vec![
+            One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen,
+            Fourteen, Fifteen, Sixteen,
+        ]
+    }
+
     /// Send a voice event to this channel
     pub fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(self, event)

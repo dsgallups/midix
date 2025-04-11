@@ -27,14 +27,20 @@ impl Velocity {
         Self(DataByte::new_unchecked(0))
     }
 
-    /// Get a reference to the underlying byte
-    pub fn byte(&self) -> DataByte {
-        self.0
+    /// The underlying byte
+    pub fn byte(&self) -> u8 {
+        self.0 .0
+    }
+    /// Returns true if the velocity is set to zero.
+    ///
+    /// A common case for turning off a key with a [`VoiceEvent::NoteOn`].
+    pub fn is_zero(&self) -> bool {
+        self.0.value() == 0
     }
 
     /// Get the dynamic of the velocity...fortississississimo
     pub fn dynamic(&self) -> Dynamic {
-        match self.byte().value() {
+        match self.byte() {
             0 => Dynamic::off(),
             1..16 => Dynamic::ppp(),
             16..32 => Dynamic::pp(),

@@ -118,7 +118,7 @@ impl MidiFileSequencer {
 
             if time <= self.current_time {
                 if msg.get_message_type() == Message::NORMAL {
-                    self.synthesizer.process_midi_message(
+                    self.synthesizer.old_process_midi_message(
                         msg.channel as i32,
                         msg.command as i32,
                         msg.data1 as i32,

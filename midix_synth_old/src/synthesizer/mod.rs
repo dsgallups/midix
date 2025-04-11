@@ -7,6 +7,7 @@ use chorus::*;
 
 mod reverb;
 use math::SoundFontMath;
+use midix::prelude::ChannelVoiceMessage;
 use reverb::*;
 
 mod settings;
@@ -135,6 +136,10 @@ impl Synthesizer {
         })
     }
 
+    pub fn process_voice_message(&mut self, event: ChannelVoiceMessage) {
+        todo!()
+    }
+
     /// Processes a MIDI message.
     ///
     /// # Arguments
@@ -143,16 +148,24 @@ impl Synthesizer {
     /// * `command` - The type of the message.
     /// * `data1` - The first data part of the message.
     /// * `data2` - The second data part of the message.
-    pub fn process_midi_message(&mut self, channel: i32, command: i32, data1: i32, data2: i32) {
+    pub fn old_process_midi_message(&mut self, channel: i32, command: i32, data1: i32, data2: i32) {
         if !(0 <= channel && channel < self.channels.len() as i32) {
             return;
         }
 
         let channel_info = &mut self.channels[channel as usize];
 
+        /*
+            Notes:
+            - Missing AfterTouch (0xC)
+            - Missing ChannelPressureAfterTouch
+
+
+        */
         match command {
             0x80 => self.note_off(channel, data1),       // Note Off
             0x90 => self.note_on(channel, data1, data2), // Note On
+            // mis
             0xB0 => match data1 // Controller
             {
                 0x00 => channel_info.set_bank(data2), // Bank Selection
