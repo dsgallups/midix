@@ -20,7 +20,7 @@ fn main() {
                 filter: "bevy_midix=debug".to_string(),
                 ..default()
             }),
-            MidiPlugin::default(),
+            //MidiPlugin::default(),
             ui::plugin,
         ))
         .run();
