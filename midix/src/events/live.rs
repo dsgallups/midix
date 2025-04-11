@@ -139,7 +139,7 @@ fn parse_note_on() {
     assert_eq!(
         parsed,
         LiveEvent::ChannelVoice(ChannelVoiceMessage::new(
-            Channel::new(2).unwrap(),
+            Channel::Two,
             VoiceEvent::NoteOn {
                 key: Key::new(72).unwrap(),
                 velocity: Velocity::new(33).unwrap()

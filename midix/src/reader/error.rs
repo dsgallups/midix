@@ -1,3 +1,4 @@
+use num_enum::{TryFromPrimitive, TryFromPrimitiveError};
 use std::{
     fmt,
     io::{self, ErrorKind},
@@ -42,6 +43,14 @@ impl ReaderError {
     /// Create a new out of bounds error
     pub fn oob(msg: impl fmt::Display) -> Self {
         Self::OutOfBounds(msg.to_string())
+    }
+}
+
+impl<T: TryFromPrimitive> From<TryFromPrimitiveError<T>> for ReaderError {
+    fn from(value: TryFromPrimitiveError<T>) -> Self {
+        // probably better way to handle this error. Please file
+        // an issue if you have a suggestion!
+        Self::oob(format!("{:?}", value))
     }
 }
 

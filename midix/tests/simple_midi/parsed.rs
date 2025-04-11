@@ -4,6 +4,7 @@ use midix::{
     prelude::{Channel, VoiceEvent},
     DataByte, Dynamic, Note, Octave,
 };
+use num_enum::TryFromPrimitive;
 
 #[test]
 fn test_parse() {
@@ -37,7 +38,10 @@ fn note_on(
         panic!();
     };
 
-    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
+    assert_eq!(
+        cv.channel(),
+        Channel::try_from_primitive(channel_id).unwrap()
+    );
     let VoiceEvent::NoteOn { key, velocity } = cv.event() else {
         panic!();
     };
@@ -58,7 +62,10 @@ fn note_off(
         panic!();
     };
 
-    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
+    assert_eq!(
+        cv.channel(),
+        Channel::try_from_primitive(channel_id).unwrap()
+    );
     match cv.event() {
         VoiceEvent::NoteOn { key, velocity } => {
             assert_eq!(velocity.byte(), DataByte::new_unchecked(0));

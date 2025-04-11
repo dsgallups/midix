@@ -3,6 +3,7 @@ Contains types that deal with file ['MetaMessage']s
 "#]
 
 mod tempo;
+use num_enum::TryFromPrimitive;
 pub use tempo::*;
 mod time_signature;
 pub use time_signature::*;
@@ -97,8 +98,9 @@ impl<'a> MetaMessage<'a> {
                         ),
                     ));
                 }
+                //TODO: need to test thsi
                 let c = data.first().unwrap();
-                MetaMessage::MidiChannel(Channel::new(*c + 1)?)
+                MetaMessage::MidiChannel(Channel::try_from_primitive(*c)?)
             }
             0x21 => {
                 if data.len() != 1 {

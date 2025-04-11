@@ -1,4 +1,5 @@
 use midix::prelude::*;
+use num_enum::TryFromPrimitive;
 mod parsed;
 #[test]
 fn midi_file_ref() {
@@ -47,7 +48,7 @@ fn midi_file_ref() {
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), Channel::new(1).unwrap());
+    assert_eq!(cv.channel(), Channel::One);
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
@@ -62,7 +63,7 @@ fn midi_file_ref() {
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), Channel::new(2).unwrap());
+    assert_eq!(cv.channel(), Channel::Two);
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
@@ -77,7 +78,7 @@ fn midi_file_ref() {
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), Channel::new(3).unwrap());
+    assert_eq!(cv.channel(), Channel::Three);
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
@@ -109,7 +110,10 @@ fn note_on(
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
+    assert_eq!(
+        cv.channel(),
+        Channel::try_from_primitive(channel_id).unwrap()
+    );
     let VoiceEvent::NoteOn { key, velocity } = cv.event() else {
         panic!();
     };
@@ -126,7 +130,10 @@ fn note_off(reader: &mut Reader<&[u8]>, delta_ticks: u32, channel_id: u8, note: 
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
+    assert_eq!(
+        cv.channel(),
+        Channel::try_from_primitive(channel_id).unwrap()
+    );
 
     match cv.event() {
         VoiceEvent::NoteOn { key, velocity } => {
