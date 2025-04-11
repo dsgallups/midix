@@ -83,18 +83,23 @@ fn bg_color(sharp: bool) -> Color {
 
 fn interaction(
     mut interactions: Query<(&Interaction, &mut BackgroundColor, &Key), Changed<Interaction>>,
+    mut todo_writer: EventWriter<MidiEvent>,
 ) {
     for (interaction, mut background_color, key) in &mut interactions {
         match *interaction {
             Interaction::Pressed => {
                 warn!("{key} pressed");
                 *background_color = RED.into();
+                todo_writer.write(KeyPress::new(key, Velocity::max()))
             }
             Interaction::Hovered => {
                 warn!("{key} hovered");
                 *background_color = GREEN.into();
             }
-            Interaction::None => *background_color = BackgroundColor(bg_color(key.is_sharp())),
+            Interaction::None => {
+                *background_color = BackgroundColor(bg_color(key.is_sharp()));
+                todo_writer.write(KeyPress::new(key, Velocity::zero()));
+            }
         }
     }
 }
