@@ -1,7 +1,7 @@
 use midix::{
     events::LiveEvent,
     file::{MidiFile, TimedEvent},
-    prelude::{ChannelId, VoiceEvent},
+    prelude::{Channel, VoiceEvent},
     DataByte, Dynamic, Note, Octave,
 };
 
@@ -37,7 +37,7 @@ fn note_on(
         panic!();
     };
 
-    assert_eq!(cv.channel(), ChannelId::new(channel_id).unwrap());
+    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
     let VoiceEvent::NoteOn { key, velocity } = cv.event() else {
         panic!();
     };
@@ -58,7 +58,7 @@ fn note_off(
         panic!();
     };
 
-    assert_eq!(cv.channel(), ChannelId::new(channel_id).unwrap());
+    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
     match cv.event() {
         VoiceEvent::NoteOn { key, velocity } => {
             assert_eq!(velocity.byte(), DataByte::new_unchecked(0));

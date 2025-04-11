@@ -47,7 +47,7 @@ fn midi_file_ref() {
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), ChannelId::new(1).unwrap());
+    assert_eq!(cv.channel(), Channel::new(1).unwrap());
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
@@ -62,7 +62,7 @@ fn midi_file_ref() {
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), ChannelId::new(2).unwrap());
+    assert_eq!(cv.channel(), Channel::new(2).unwrap());
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
@@ -77,7 +77,7 @@ fn midi_file_ref() {
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), ChannelId::new(3).unwrap());
+    assert_eq!(cv.channel(), Channel::new(3).unwrap());
     let VoiceEvent::ProgramChange { program } = cv.event() else {
         panic!();
     };
@@ -109,7 +109,7 @@ fn note_on(
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), ChannelId::new(channel_id).unwrap());
+    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
     let VoiceEvent::NoteOn { key, velocity } = cv.event() else {
         panic!();
     };
@@ -126,7 +126,7 @@ fn note_off(reader: &mut Reader<&[u8]>, delta_ticks: u32, channel_id: u8, note: 
     let TrackMessage::ChannelVoice(cv) = track_event.event() else {
         panic!();
     };
-    assert_eq!(cv.channel(), ChannelId::new(channel_id).unwrap());
+    assert_eq!(cv.channel(), Channel::new(channel_id).unwrap());
 
     match cv.event() {
         VoiceEvent::NoteOn { key, velocity } => {
