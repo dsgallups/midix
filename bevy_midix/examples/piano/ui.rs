@@ -5,7 +5,8 @@ use bevy::{
 use bevy_midix::prelude::*;
 
 pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, spawn_piano);
+    app.add_systems(Startup, spawn_piano)
+        .add_systems(Update, handle_input);
 }
 
 #[derive(Component)]
@@ -33,7 +34,7 @@ fn spawn_piano(mut commands: Commands) {
         }
     };
     let get_octave = |i: u8| {
-        // piano octave starts at 2.
+        // piano octave starts at 0.
         //
         // note that octaves start with C, not A. so that's why we add 9 here.
         let octave = (i + 9) / 12;
@@ -55,6 +56,19 @@ fn spawn_piano(mut commands: Commands) {
         ))
         .with_children(|commands| {
             (0..88).for_each(|i| {
+                // Note: there's an easier way to do this.
+                // In theory, you can make the key by adding an amount to i such that
+                // the first key is A:0 using `Key::from_databyte`.
+                // Note that there are 127 available keys.
+                // The first key (byte 0) is going to be C:-1. so you'd write
+                //
+                // `let key = Key::from_databyte(i + 9 + 12).unwrap()`
+                //
+                // 9 will get the next A, and 12 skips the -1 octave. most soundfonts
+                // don't carry a -1 piano octave.
+                //
+                // However, for example purposes, I have provided the logic for getting
+                // the correct key via note and octave.
                 let note = get_note(i);
                 let octave = get_octave(i);
                 let key = Key::new(note, octave);
@@ -71,10 +85,12 @@ fn spawn_piano(mut commands: Commands) {
                         BackgroundColor(bg_color(key.is_sharp())),
                         key,
                     ))
-                    .observe(on_mouse_enter)
-                    .observe(on_mouse_down)
-                    .observe(on_mouse_up)
-                    .observe(on_mouse_leave);
+                    .observe(on_mouse_leave)
+                    .observe(on_mouse_up);
+                // .observe(on_mouse_enter)
+                // .observe(on_mouse_down)
+                // .observe(on_mouse_up)
+                // .observe(on_mouse_leave);
             })
         });
 }
@@ -90,23 +106,33 @@ fn bg_color(sharp: bool) -> Color {
 const HOVERED: Srgba = GREEN;
 const PRESSED: Srgba = RED;
 
-fn on_mouse_enter(trigger: Trigger<Pointer<Over>>, mut keys: Query<(&mut BackgroundColor, &Key)>) {
-    let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
-    warn!("{key} hovered");
-    *background_color = HOVERED.into();
-}
-
-fn on_mouse_down(
-    trigger: Trigger<Pointer<Pressed>>,
-    mut keys: Query<(&mut BackgroundColor, &Key)>,
+// use mouse input over Interaction::Pressed so you can hold down the button and go nuts
+fn handle_input(
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    mut keys: Query<(&Interaction, &mut BackgroundColor, &Key), Changed<Interaction>>,
     mut synth: ResMut<Synth>,
 ) {
-    let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
-    warn!("{key} pressed");
-    *background_color = PRESSED.into();
-    let event = VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
-    synth.handle_event(event);
+    for (interaction, mut background_color, key) in &mut keys {
+        match *interaction {
+            Interaction::Hovered | Interaction::Pressed => {
+                if mouse_input.pressed(MouseButton::Left) {
+                    warn!("{key} pressed");
+                    *background_color = PRESSED.into();
+                    let event =
+                        VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
+                    synth.handle_event(event);
+                } else {
+                    *background_color = HOVERED.into();
+                }
+            }
+            // on_mouse_leave does runs logic that would otherwise be here.
+            Interaction::None => {}
+        }
+    }
 }
+
+// handles the case where you are dragging and then you release the mouse on a key.
+// The Interaction component will remain Interaction::Hovered, so the handle_input system will not catch it.
 fn on_mouse_up(
     trigger: Trigger<Pointer<Released>>,
     mut keys: Query<(&mut BackgroundColor, &Key)>,
@@ -117,10 +143,18 @@ fn on_mouse_up(
 
     let event = VoiceEvent::note_on(*key, Velocity::zero()).send_to_channel(Channel::One);
     // could make this beter and revert to hover, but lazy
-    *background_color = BackgroundColor(bg_color(key.is_sharp()));
+    *background_color = HOVERED.into();
     synth.handle_event(event);
 }
-fn on_mouse_leave(trigger: Trigger<Pointer<Out>>, mut keys: Query<(&mut BackgroundColor, &Key)>) {
+
+// because Interaction::Pressed doesn't do anything if you leave pressed.
+fn on_mouse_leave(
+    trigger: Trigger<Pointer<Out>>,
+    mut keys: Query<(&mut BackgroundColor, &Key)>,
+    mut synth: ResMut<Synth>,
+) {
     let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
     *background_color = BackgroundColor(bg_color(key.is_sharp()));
+    let event = VoiceEvent::note_on(*key, Velocity::zero()).send_to_channel(Channel::One);
+    synth.handle_event(event);
 }

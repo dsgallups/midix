@@ -17,7 +17,7 @@ fn main() {
         .add_plugins((
             DefaultPlugins.set(LogPlugin {
                 level: Level::WARN,
-                filter: "bevy_midix=debug".to_string(),
+                filter: "bevy_midix=DEBUG".to_string(),
                 ..default()
             }),
             MidiPlugin::default(),
