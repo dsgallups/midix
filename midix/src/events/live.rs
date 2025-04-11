@@ -141,7 +141,7 @@ fn parse_note_on() {
         LiveEvent::ChannelVoice(ChannelVoiceMessage::new(
             Channel::Two,
             VoiceEvent::NoteOn {
-                key: Key::new(72).unwrap(),
+                key: Key::from_databyte(72).unwrap(),
                 velocity: Velocity::new(33).unwrap()
             }
         ))
