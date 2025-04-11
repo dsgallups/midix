@@ -2735,7 +2735,6 @@ dependencies = [
 name = "midix_synth"
 version = "0.0.1-rc1"
 dependencies = [
- "fnv",
  "midix",
 ]
 

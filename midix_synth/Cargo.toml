@@ -1,5 +1,5 @@
 [package]
-name = "midi_synth"
+name = "midix_synth"
 version = "0.0.1-rc1"
 edition = "2024"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
