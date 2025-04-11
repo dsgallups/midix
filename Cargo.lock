@@ -887,7 +887,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_midix"
-version = "2.0.0"
+version = "3.0.0-rc1"
 dependencies = [
  "bevy",
  "bevy_egui",
@@ -2984,7 +2984,7 @@ dependencies = [
 
 [[package]]
 name = "midix"
-version = "2.0.0"
+version = "3.0.0-rc1"
 dependencies = [
  "bevy",
  "num_enum",
@@ -2994,7 +2994,7 @@ dependencies = [
 
 [[package]]
 name = "midix_synth"
-version = "0.0.0"
+version = "0.0.1-rc1"
 dependencies = [
  "midix",
 ]
