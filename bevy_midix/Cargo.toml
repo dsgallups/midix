@@ -25,10 +25,10 @@ bevy_egui = { version = "0.33", features = ["immutable_ctx"] }
 strum = { version = "0.27", features = ["derive"] }
 
 [dependencies.bevy]
-version = "0.15"
+version = "0.16.0-rc.3"
 default-features = false
 features = ["multi_threaded", "bevy_asset"]
 
 [dev-dependencies.bevy]
-version = "0.15"
+version = "0.16.0-rc.3"
 default-features = true
