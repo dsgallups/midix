@@ -1,12 +1,41 @@
 use bevy::{
     color::palettes::css::{GREEN, RED},
+    log::{Level, LogPlugin},
     prelude::*,
 };
 use bevy_midix::prelude::*;
 
-pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, spawn_piano)
-        .add_systems(Update, handle_input);
+///Creates a 2d Piano Keyboard and plays the sound on press.
+///
+/// Note: due to the size of soundfont files and the lack of optimization
+/// for running this example, you should run this with example with `--release`
+///
+/// i.e.
+/// ```console
+/// cargo run --example piano --release
+/// ```
+fn main() {
+    App::new()
+        .add_plugins((
+            DefaultPlugins.set(LogPlugin {
+                level: Level::INFO,
+                ..default()
+            }),
+            MidiPlugin::default(),
+        ))
+        .add_systems(Startup, (load_sf2, spawn_piano))
+        .add_systems(Update, handle_input)
+        .run();
+}
+/// Note: you need to bring your own soundfont file.
+///
+/// sf2s are generally huge, so I added those to the gitignore.
+///
+/// Take a look here for some soundfonts:
+///
+/// <https://sites.google.com/site/soundfonts4u/>
+fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
+    synth.use_soundfont(asset_server.load("soundfont.sf2"));
 }
 
 #[derive(Component)]
