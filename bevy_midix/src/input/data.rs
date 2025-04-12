@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use midix::events::LiveEvent;
 
-// An [`Event`] for incoming midi data.
+/// An [`Event`] for incoming midi data.
 #[derive(Resource, Event, Debug)]
 pub struct MidiData {
     /// Returns the timestamp of the data

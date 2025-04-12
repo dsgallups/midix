@@ -12,7 +12,7 @@ pub struct MidiPlugin {
     /// Include the output plugin. Disabled by default
     pub output: bool,
     /// Include the input plugin. Enabled by default
-    pub input: bool,
+    pub input: Option<MidiInputPlugin>,
     /// Include an ingame synth. Enabled by default
     ///
     /// Note: synth is separate from OutputPlugin,
@@ -25,7 +25,7 @@ impl Default for MidiPlugin {
     fn default() -> Self {
         Self {
             output: false,
-            input: true,
+            input: Some(MidiInputPlugin::default()),
             synth: Some(SynthPlugin::default()),
         }
     }
@@ -33,8 +33,8 @@ impl Default for MidiPlugin {
 
 impl Plugin for MidiPlugin {
     fn build(&self, app: &mut App) {
-        if self.input {
-            app.add_plugins(MidiInputPlugin);
+        if let Some(input) = self.input {
+            app.add_plugins(input);
         }
         if self.output {
             app.add_plugins(MidiOutputPlugin);

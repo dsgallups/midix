@@ -1,11 +1,5 @@
 use bevy::{prelude::*, tasks::IoTaskPool};
-use crossbeam_channel::{Receiver, Sender};
-use midir::ConnectErrorKind; // XXX: do we expose this?
-pub use midir::{Ignore, MidiInputPort};
-use midix::events::{FromLiveEventBytes, LiveEvent};
-use std::error::Error;
-use std::fmt::Display;
-use std::future::Future;
+pub use midir::Ignore;
 
 use crate::asset::{MidiFile, MidiFileLoader};
 
@@ -13,31 +7,8 @@ use super::{
     Message, MidiData, MidiInput, MidiInputConnection, MidiInputError, MidiInputTask, MidirReply,
 };
 
-#[doc = r#"
-Inserts [`MidiInputSettings`] and [`MidiInputConnection`] as resource
-
-Input system utilizes the [`PreUpdate`] schedule
-"#]
-pub struct MidiInputPlugin;
-
-impl Plugin for MidiInputPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<MidiInputSettings>()
-            .init_resource::<MidiInputConnection>()
-            .init_asset::<MidiFile>()
-            .init_asset_loader::<MidiFileLoader>()
-            .add_event::<MidiInputError>()
-            .add_event::<MidiData>()
-            .add_systems(Startup, setup)
-            .add_systems(PreUpdate, reply)
-            .add_systems(Update, debug);
-    }
-}
-
 /// Settings for [`MidiInputPlugin`].
-///
-/// This resource must be added before [`MidiInputPlugin`] to take effect.
-#[derive(Resource, Clone, Debug)]
+#[derive(Resource, Clone, Copy, Debug)]
 pub struct MidiInputSettings {
     /// The name of the listening client
     pub client_name: &'static str,
@@ -64,6 +35,53 @@ impl Default for MidiInputSettings {
             ignore: Ignore::None,
         }
     }
+}
+
+#[doc = r#"
+Inserts [`MidiInputSettings`] and [`MidiInputConnection`] as resource
+
+Input system utilizes the [`PreUpdate`] schedule
+"#]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MidiInputPlugin {
+    settings: MidiInputSettings,
+}
+
+impl Plugin for MidiInputPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(self.settings)
+            .init_resource::<MidiInputConnection>()
+            .init_asset::<MidiFile>()
+            .init_asset_loader::<MidiFileLoader>()
+            .add_event::<MidiInputError>()
+            .add_event::<MidiData>()
+            .add_systems(Startup, setup)
+            .add_systems(PreUpdate, reply)
+            .add_systems(Update, debug);
+    }
+}
+
+// Core system
+fn setup(mut commands: Commands, settings: Res<MidiInputSettings>) {
+    let (m_sender, m_receiver) = crossbeam_channel::unbounded::<Message>();
+    let (r_sender, r_receiver) = crossbeam_channel::unbounded::<MidirReply>();
+
+    let thread_pool = IoTaskPool::get();
+    thread_pool
+        .spawn(MidiInputTask {
+            receiver: m_receiver,
+            sender: r_sender,
+            settings: *settings,
+            input: None,
+            connection: None,
+        })
+        .detach();
+
+    commands.insert_resource(MidiInput {
+        sender: m_sender,
+        receiver: r_receiver,
+        ports: Vec::new(),
+    });
 }
 
 fn reply(
@@ -93,29 +111,6 @@ fn reply(
             }
         }
     }
-}
-
-// Core system
-fn setup(mut commands: Commands, settings: Res<MidiInputSettings>) {
-    let (m_sender, m_receiver) = crossbeam_channel::unbounded::<Message>();
-    let (r_sender, r_receiver) = crossbeam_channel::unbounded::<MidirReply>();
-
-    let thread_pool = IoTaskPool::get();
-    thread_pool
-        .spawn(MidiInputTask {
-            receiver: m_receiver,
-            sender: r_sender,
-            settings: settings.clone(),
-            input: None,
-            connection: None,
-        })
-        .detach();
-
-    commands.insert_resource(MidiInput {
-        sender: m_sender,
-        receiver: r_receiver,
-        ports: Vec::new(),
-    });
 }
 
 // A system which debug prints note events

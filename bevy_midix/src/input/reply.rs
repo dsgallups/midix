@@ -2,7 +2,7 @@ use midir::MidiInputPort;
 
 use super::{MidiData, MidiInputError};
 
-pub enum MidirReply {
+pub(crate) enum MidirReply {
     AvailablePorts(Vec<(String, MidiInputPort)>),
     Error(MidiInputError),
     Connected,
@@ -11,7 +11,7 @@ pub enum MidirReply {
 }
 
 impl MidirReply {
-    pub fn dbg(&self) -> String {
+    pub(crate) fn dbg(&self) -> String {
         use MidirReply::*;
         match self {
             MidirReply::AvailablePorts(ports) => {

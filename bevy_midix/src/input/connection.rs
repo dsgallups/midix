@@ -5,7 +5,7 @@ use bevy::prelude::*;
 /// Change detection fires whenever the connection changes.
 #[derive(Resource, Default)]
 pub struct MidiInputConnection {
-    pub connected: bool,
+    pub(crate) connected: bool,
 }
 
 impl MidiInputConnection {

@@ -1,26 +1,20 @@
-use bevy::{prelude::*, tasks::IoTaskPool};
+use bevy::prelude::*;
 use crossbeam_channel::{Receiver, Sender};
-use midir::ConnectErrorKind; // XXX: do we expose this?
-pub use midir::{Ignore, MidiInputPort};
+pub use midir::MidiInputPort;
 use midix::events::{FromLiveEventBytes, LiveEvent};
-use std::error::Error;
-use std::fmt::Display;
 use std::future::Future;
 
-use crate::{
-    asset::{MidiFile, MidiFileLoader},
-    input::{MidiData, MidiInputError},
-};
+use crate::input::{MidiData, MidiInputError};
 
 use super::{MidiInputSettings, MidirReply};
 
-pub enum Message {
+pub(crate) enum Message {
     RefreshPorts,
     ConnectToPort(MidiInputPort),
     DisconnectFromPort,
 }
 
-pub struct MidiInputTask {
+pub(crate) struct MidiInputTask {
     pub receiver: Receiver<Message>,
     pub sender: Sender<MidirReply>,
     pub settings: MidiInputSettings,

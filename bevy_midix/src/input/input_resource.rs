@@ -10,9 +10,9 @@ use super::{Message, MidirReply};
 
 #[derive(Resource)]
 pub struct MidiInput {
-    pub receiver: Receiver<MidirReply>,
-    pub sender: Sender<Message>,
-    pub ports: Vec<(String, MidiInputPort)>,
+    pub(crate) receiver: Receiver<MidirReply>,
+    pub(crate) sender: Sender<Message>,
+    pub(crate) ports: Vec<(String, MidiInputPort)>,
 }
 
 impl MidiInput {
