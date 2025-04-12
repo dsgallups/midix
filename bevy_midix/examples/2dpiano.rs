@@ -22,7 +22,7 @@ fn main() {
                 ..default()
             }),
             MidiPlugin {
-                input: false,
+                input: None,
                 ..Default::default()
             },
         ))
