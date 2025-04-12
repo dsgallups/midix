@@ -18,7 +18,7 @@ Each value corresponds to some [`Note`] and [`Octave`].
 
 let key_byte = 63;
 
-let key = Key::new(key_byte).unwrap(); // 63 is between 0-127
+let key = Key::from_databyte(key_byte).unwrap(); // 63 is between 0-127
 
 assert_eq!(key.note(), Note::DSharp);
 assert_eq!(key.octave(), Octave::new(4))
