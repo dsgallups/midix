@@ -33,7 +33,7 @@ impl MidiInput {
         let listener = match midir::MidiInput::new(settings.client_name) {
             Ok(input) => input,
             Err(e) => {
-                panic!("Error initializing midi input for port refresh: {e:?}");
+                panic!("Error initializing midi input! {e:?}");
             }
         };
         let ports = listener.ports();
@@ -70,6 +70,17 @@ impl MidiInput {
             MidiInputConnection::new(listener, port, self.settings.port_name).unwrap(),
         ));
         Ok(())
+    }
+
+    pub fn reset(&mut self) {
+        let listener = match midir::MidiInput::new(self.settings.client_name) {
+            Ok(input) => input,
+            Err(e) => {
+                error!("Failed to reset listening state! {e:?}");
+                return;
+            }
+        };
+        self.state = Some(MidiInputState::Listening(listener));
     }
 
     pub fn connect_to_port(&mut self, port: &MidiInputPort) -> Result<(), MidiInputError> {
