@@ -1,5 +1,6 @@
-#![allow(missing_docs)]
-
+#![doc = r#"
+a plugin and types for handling MIDI input
+"#]
 mod settings;
 use crossbeam_channel::TryRecvError;
 pub use settings::*;
@@ -17,10 +18,17 @@ use bevy::prelude::*;
 use midir::MidiInputPort;
 
 // you can't actually have multiple MidiInputs on one device, it's really strange.
-pub enum MidiInputState {
+enum MidiInputState {
     Listening(midir::MidiInput),
     Active(MidiInputConnection),
 }
+
+/// The central resource for interacting with midi inputs
+///
+/// `MidiInput` does many things:
+/// - Fetches a list of ports with connected midi devices
+/// - Allows one to connect to a particular midi device and read output
+/// - Close that connection and search for other devices
 #[derive(Resource)]
 pub struct MidiInput {
     settings: MidiInputSettings,
@@ -29,6 +37,8 @@ pub struct MidiInput {
 }
 
 impl MidiInput {
+    /// Creates a new midi input with the provided settings. This is done automatically
+    /// by [`MidiInputPlugin`].
     pub fn new(settings: MidiInputSettings) -> Self {
         let listener = match midir::MidiInput::new(settings.client_name) {
             Ok(input) => input,
@@ -43,9 +53,18 @@ impl MidiInput {
             ports,
         }
     }
+
+    /// Return a list of ports updated since calling [`MidiInput::new`] or
+    /// [`MidiInput::refresh_ports`]
     pub fn ports(&self) -> &[MidiInputPort] {
         &self.ports
     }
+    /// Attempts to connects to the port at the given index returned by [`MidiInput::ports`]
+    ///
+    /// # Errors
+    /// - If already connected to a device
+    /// - If the index is out of bounds
+    /// - An input connection cannot be established
     pub fn connect_to_index(&mut self, index: usize) -> Result<(), MidiInputError> {
         if self
             .state
@@ -72,6 +91,7 @@ impl MidiInput {
         Ok(())
     }
 
+    /// A method you should call if [`MidiInput::is_listening`] and [`MidiInput::is_active`] are both false.
     pub fn reset(&mut self) {
         let listener = match midir::MidiInput::new(self.settings.client_name) {
             Ok(input) => input,
@@ -82,7 +102,11 @@ impl MidiInput {
         };
         self.state = Some(MidiInputState::Listening(listener));
     }
-
+    /// Attempts to connects to the passed port
+    ///
+    /// # Errors
+    /// - If already connected to a device
+    /// - An input connection cannot be established
     pub fn connect_to_port(&mut self, port: &MidiInputPort) -> Result<(), MidiInputError> {
         if self
             .state
@@ -102,8 +126,14 @@ impl MidiInput {
         ));
         Ok(())
     }
-
-    //pub fn connect_to_port(&mut self, port: )
+    /// Attempts to connects to the passed port
+    ///
+    /// # Errors
+    /// - If already connected to a device
+    /// - If the port ID cannot be currently found
+    ///   - Note that this case can occur if you have not refreshed ports
+    ///     and the device is no longer available.
+    /// - An input connection cannot be established
     pub fn connect_to_id(&mut self, id: String) -> Result<(), MidiInputError> {
         if self
             .state
@@ -125,23 +155,33 @@ impl MidiInput {
         ));
         Ok(())
     }
+    /// True if a device is currently connected
     pub fn is_active(&self) -> bool {
         self.state
             .as_ref()
             .is_some_and(|s| matches!(s, MidiInputState::Active(_)))
     }
+
+    /// True if input is waiting to connect to a device
     pub fn is_listening(&self) -> bool {
         self.state
             .as_ref()
             .is_some_and(|s| matches!(s, MidiInputState::Listening(_)))
     }
 
+    /// Refreshes the available port list
+    ///
+    /// Does nothing if [`MidiInput::is_active`] is true
     pub fn refresh_ports(&mut self) {
         let Some(MidiInputState::Listening(listener)) = &self.state else {
             return;
         };
         self.ports = listener.ports();
     }
+
+    /// Disconnects from the active device
+    ///
+    /// Does nothing if the [`MidiInput::is_listening`] is true.
     pub fn disconnect(&mut self) {
         if self
             .state

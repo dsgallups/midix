@@ -14,7 +14,7 @@ pub struct MidiData {
     /// The underlying message of the event
     pub message: LiveEvent<'static>,
 }
-pub struct MidiInputConnection {
+pub(crate) struct MidiInputConnection {
     data: Receiver<MidiData>,
     conn: midir::MidiInputConnection<()>,
 }

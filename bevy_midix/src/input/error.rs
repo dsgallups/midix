@@ -9,6 +9,7 @@ pub enum MidiInputError {
     #[error("Couldn't reconnect to input port: {0}")]
     ConnectionError(#[from] ConnectError<midir::MidiInput>),
 
+    /// The port, passed by id, was not found.
     #[error("Port not found (id: {0}")]
     PortNotFound(String),
 
@@ -20,10 +21,10 @@ pub enum MidiInputError {
     InvalidState(String),
 }
 impl MidiInputError {
-    pub fn invalid(msg: impl ToString) -> Self {
+    pub(crate) fn invalid(msg: impl ToString) -> Self {
         Self::InvalidState(msg.to_string())
     }
-    pub fn port_not_found(id: impl Into<String>) -> Self {
+    pub(crate) fn port_not_found(id: impl Into<String>) -> Self {
         Self::PortNotFound(id.into())
     }
 }
