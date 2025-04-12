@@ -12,7 +12,7 @@ use bevy_midix::prelude::*;
 ///
 /// i.e.
 /// ```console
-/// cargo run --example piano --release
+/// cargo run --example 2dpiano --release
 /// ```
 fn main() {
     App::new()
@@ -21,7 +21,10 @@ fn main() {
                 level: Level::INFO,
                 ..default()
             }),
-            MidiPlugin::default(),
+            MidiPlugin {
+                input: false,
+                ..Default::default()
+            },
         ))
         .add_systems(Startup, (load_sf2, spawn_piano))
         .add_systems(Update, handle_input)
