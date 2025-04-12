@@ -2,13 +2,14 @@ use super::{MidiInput, MidiInputSettings};
 use bevy::prelude::*;
 
 #[doc = r#"
-Inserts [`MidiInputSettings`] and [`MidiInputConnection`] as resource
+Inserts [`MidiInput`] as a resource.
 
-Input system utilizes the [`PreUpdate`] schedule
+See [`MidiInputSettings`] for configuration options.
 "#]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MidiInputPlugin {
-    settings: MidiInputSettings,
+    /// The settings to apply to [`MidiInput`] on instantiation.
+    pub settings: MidiInputSettings,
 }
 
 impl Plugin for MidiInputPlugin {

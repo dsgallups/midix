@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use midir::Ignore;
+pub use midir::Ignore;
 
 /// Settings for [`MidiInputPlugin`].
 #[derive(Resource, Clone, Copy, Debug)]
