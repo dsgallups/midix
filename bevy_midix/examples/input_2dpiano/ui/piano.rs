@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use bevy::{
-    color::palettes::css::{GREEN, RED},
+    color::palettes::{
+        css::{GREEN, RED},
+        tailwind::YELLOW_500,
+    },
     prelude::*,
 };
 use bevy_midix::prelude::*;
@@ -149,18 +152,16 @@ pub fn handle_midi_device_input(
     if key_events.is_empty() {
         return;
     }
-    error!("Key events: {:?}", key_events);
-    for (mut background_color, key) in &mut keys {
+    keys.par_iter_mut().for_each(|(mut background_color, key)| {
         let Some(is_note_on) = key_events.get(key) else {
-            continue;
+            return;
         };
-        error!("Found key");
         if *is_note_on {
-            *background_color = PRESSED.into();
+            *background_color = YELLOW_500.into();
         } else {
             *background_color = bg_color(key.is_sharp()).into();
         }
-    }
+    });
 }
 
 // handles the case where you are dragging and then you release the mouse on a key.

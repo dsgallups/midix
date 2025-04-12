@@ -1,8 +1,5 @@
 use bevy::{
-    color::palettes::{
-        css::{GREEN, RED},
-        tailwind::{YELLOW_200, YELLOW_300},
-    },
+    color::palettes::{css::GREEN, tailwind::YELLOW_200},
     prelude::*,
 };
 use bevy_midix::input::MidiInput;

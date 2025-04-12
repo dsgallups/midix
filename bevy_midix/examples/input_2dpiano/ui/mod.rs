@@ -1,10 +1,4 @@
-use bevy::{
-    color::palettes::{
-        css::{GREEN, RED},
-        tailwind::{YELLOW_200, YELLOW_300},
-    },
-    prelude::*,
-};
+use bevy::prelude::*;
 use bevy_midix::prelude::*;
 
 mod menu;
