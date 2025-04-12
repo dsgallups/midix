@@ -26,17 +26,17 @@ itertools = "0.14.0"
 strum = { version = "0.27", features = ["derive"] }
 
 [dependencies.bevy]
-version = "0.16.0-rc.3"
+version = "0.16.0-rc.4"
 default-features = false
 features = [
     "multi_threaded",
     "bevy_asset",
     "std",
     "async_executor",
-    "bevy_log",
+    "tracing",
     "bevy_state",
 ]
 
 [dev-dependencies.bevy]
-version = "0.16.0-rc.3"
+version = "0.16.0-rc.4"
 default-features = true

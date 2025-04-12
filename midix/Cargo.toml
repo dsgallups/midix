@@ -17,7 +17,7 @@ bevy = ["dep:bevy"]
 debug = ["bevy"]
 
 [dependencies]
-bevy = { version = "0.16.0-rc.3", optional = true, default-features = false, features = [
+bevy = { version = "0.16.0-rc.4", optional = true, default-features = false, features = [
     "std",
     "async_executor",
 ] }
