@@ -35,7 +35,6 @@ impl Plugin for MidiInputPlugin {
         app.init_resource::<MidiInputPorts>()
             .add_event::<MidiInputEvent>()
             .insert_resource(self.settings)
-            .add_plugins(connection::plugin)
             .add_systems(PostUpdate, handle_port_commands);
     }
 }

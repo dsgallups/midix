@@ -4,7 +4,8 @@ use bevy::{
 };
 use bevy_midix::prelude::*;
 
-mod keyboard_input;
+mod key_input;
+
 mod ui;
 
 /// Waits midi input and plays a sound on press.
@@ -25,8 +26,9 @@ fn main() {
             }),
             MidiPlugin::default(),
         ))
-        .add_plugins((keyboard_input::plugin, ui::plugin))
+        .add_plugins((key_input::plugin, ui::plugin))
         .add_systems(Startup, add_soundfont)
+        .add_systems(PreUpdate, handle_mididata)
         .run();
 }
 
@@ -40,4 +42,18 @@ fn main() {
 fn add_soundfont(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
     // include the soundfont file
     synth.use_soundfont(asset_server.load("soundfont.sf2"));
+}
+
+fn handle_mididata(connections: Query<&MidiInputConnection>, synth: Res<Synth>) {
+    for connection in connections {
+        while let Ok(data) = connection.read() {
+            let LiveEvent::ChannelVoice(event) = data.message else {
+                continue;
+            };
+
+            info!("Data: {:?}", data.message);
+            //todo
+            synth.handle_event(event);
+        }
+    }
 }
