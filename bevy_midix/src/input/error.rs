@@ -1,33 +1,29 @@
 use bevy::prelude::*;
-use midir::ConnectErrorKind; // XXX: do we expose this?
-use std::error::Error;
-use std::fmt::Display;
-use MidiInputError::{ConnectionError, PortRefreshError};
+use midir::ConnectError; // XXX: do we expose this?
+use thiserror::Error;
 
 /// The [`Error`] type for midi input operations, accessible as an [`Event`].
-#[derive(Clone, Debug, Event)]
+#[derive(Debug, Event, Error)]
 pub enum MidiInputError {
     /// There was something wrong connecting to the input
-    ConnectionError(ConnectErrorKind),
+    #[error("Couldn't reconnect to input port: {0}")]
+    ConnectionError(#[from] ConnectError<midir::MidiInput>),
+
+    #[error("Port not found (id: {0}")]
+    PortNotFound(String),
 
     /// Something happened when refreshing the port statuses
+    #[error("Couldn't refersh input ports")]
     PortRefreshError,
+    /// Invalid state
+    #[error("Invalid State: {0}")]
+    InvalidState(String),
 }
-
-impl Error for MidiInputError {}
-impl Display for MidiInputError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        match self {
-            ConnectionError(k) => match k {
-                ConnectErrorKind::InvalidPort => {
-                    write!(f, "Couldn't (re)connect to input port: invalid port")?;
-                }
-                ConnectErrorKind::Other(s) => {
-                    write!(f, "Couldn't (re)connect to input port: {}", s)?;
-                }
-            },
-            PortRefreshError => write!(f, "Couldn't refresh input ports")?,
-        }
-        Ok(())
+impl MidiInputError {
+    pub fn invalid(msg: impl ToString) -> Self {
+        Self::InvalidState(msg.to_string())
+    }
+    pub fn port_not_found(id: impl Into<String>) -> Self {
+        Self::PortNotFound(id.into())
     }
 }

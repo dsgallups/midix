@@ -3,7 +3,6 @@
 
 pub mod asset;
 pub mod input;
-pub mod new_input;
 pub mod output;
 pub mod plugin;
 pub mod synth;
