@@ -10,23 +10,65 @@ use midix_synth::prelude::*;
 use std::sync::{Arc, Mutex};
 use tinyaudio::{run_output_device, OutputDevice, OutputDeviceParameters};
 
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Copy)]
+#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Copy, Default)]
 enum SynthStatus {
+    #[default]
     NotLoaded,
     ShouldLoad,
     Loaded,
 }
+/// A lot of the docs for this struct have been copy/pasted from tiny_audio
+///
+/// Note that usizes are used for all params, but probably shouldn't (32 bit systems).
+/// This is because the synthesizer is using tiny_audio under the hood.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SynthParams {
+    /// Desired amount of audio channels. Must be at least one. Typical values: 1 - mono, 2 - stereo, etc.
+    /// The data provided by the call back is _interleaved_, which means that if you have two channels then
+    /// the sample layout will be like so: `LRLRLR..`, where `L` - a sample of left channel, and `R` a sample
+    /// of right channel.
+    channel_count: usize,
+
+    /// Amount of samples per each channel. Allows you to tweak audio latency, the more the value the more
+    /// latency will be and vice versa. Keep in mind, that your data callback must be able to render the
+    /// samples while previous portion of data is being played, otherwise you'll get a glitchy audio.
+    channel_sample_count: usize,
+
+    /// Sample rate of your audio data. Typical values are: 11025 Hz, 22050 Hz, 44100 Hz (default), 48000 Hz,
+    /// 96000 Hz
+    sample_rate: usize,
+}
+
+impl Default for SynthParams {
+    fn default() -> Self {
+        Self {
+            channel_count: 2,
+            sample_rate: 44100,
+            channel_sample_count: 441,
+        }
+    }
+}
 
 /// The plugin for handling the synthesizer
-pub fn plugin(app: &mut App) {
-    app.add_systems(Startup, spawn_if_not_inserted).add_systems(
-        PreUpdate,
-        (
-            load_audio_font.run_if(in_state(SynthStatus::ShouldLoad)),
-            sync_states.run_if(state_out_of_sync),
-        )
-            .chain(),
-    );
+#[derive(Default, Clone, Copy)]
+pub struct SynthPlugin {
+    params: SynthParams,
+}
+
+impl Plugin for SynthPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_asset::<SoundFont>()
+            .init_state::<SynthStatus>()
+            .insert_resource(Synth::new(self.params))
+            .add_systems(
+                PreUpdate,
+                (
+                    load_audio_font.run_if(in_state(SynthStatus::ShouldLoad)),
+                    sync_states.run_if(state_out_of_sync),
+                )
+                    .chain(),
+            );
+    }
 }
 
 enum SynthState {
@@ -70,12 +112,12 @@ impl Synth {
     /// 3. The sample count for each channel
     ///
     /// A good default is 441
-    pub fn new(channel_count: usize, sample_rate: usize, channel_sample_count: usize) -> Self {
+    pub fn new(params: SynthParams) -> Self {
         Self {
             params: OutputDeviceParameters {
-                channels_count: channel_count,
-                sample_rate,
-                channel_sample_count,
+                channels_count: params.channel_count,
+                sample_rate: params.sample_rate,
+                channel_sample_count: params.channel_sample_count,
             },
             ..Default::default()
         }
@@ -122,13 +164,6 @@ impl Default for Synth {
             _device: None,
         }
     }
-}
-
-fn spawn_if_not_inserted(mut commands: Commands, synth: Option<Res<Synth>>) {
-    if synth.is_some() {
-        return;
-    }
-    commands.init_resource::<Synth>();
 }
 
 fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {

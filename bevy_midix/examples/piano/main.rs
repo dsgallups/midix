@@ -23,6 +23,7 @@ fn main() {
             MidiPlugin::default(),
             ui::plugin,
         ))
+        .add_systems(Startup, load_sf2)
         .run();
 }
 
