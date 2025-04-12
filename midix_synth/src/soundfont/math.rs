@@ -12,11 +12,7 @@ impl SoundFontMath {
     pub(crate) const LOG_NON_AUDIBLE: f32 = -6.907_755_4_f32;
 
     pub(crate) fn max(x: f32, y: f32) -> f32 {
-        if x > y {
-            x
-        } else {
-            y
-        }
+        if x > y { x } else { y }
     }
 
     pub(crate) fn clamp(value: f32, min: f32, max: f32) -> f32 {

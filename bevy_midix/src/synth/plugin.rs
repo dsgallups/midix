@@ -89,7 +89,9 @@ impl Synth {
 
 fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
     let SynthState::LoadHandle { sound_font } = &synth.synthesizer else {
-        warn!("loading the audio font is out of sync. This is an issue with bevy_midix. Please file an issue!");
+        warn!(
+            "loading the audio font is out of sync. This is an issue with bevy_midix. Please file an issue!"
+        );
         return;
     };
     let Some(sound_font) = assets.get(sound_font) else {

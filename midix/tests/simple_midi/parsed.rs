@@ -1,8 +1,8 @@
 use midix::{
+    Dynamic, Note, Octave,
     events::LiveEvent,
     file::{MidiFile, TimedEvent},
     prelude::{Channel, VoiceEvent},
-    Dynamic, Note, Octave,
 };
 
 #[test]

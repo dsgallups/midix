@@ -140,11 +140,7 @@ pub fn cleanup(
 }
 
 fn bg_color(sharp: bool) -> Color {
-    if sharp {
-        Color::BLACK
-    } else {
-        Color::WHITE
-    }
+    if sharp { Color::BLACK } else { Color::WHITE }
 }
 
 const HOVERED: Srgba = GREEN;
