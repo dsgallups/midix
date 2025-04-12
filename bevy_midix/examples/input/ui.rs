@@ -81,11 +81,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ));
         });
 }
-#[derive(Component)]
-struct AvailablePortsText;
 
 #[derive(Component)]
-struct LastMidiEvent;
+struct AvailablePortsText;
 
 fn update_available_ports(
     input: Res<MidiInput>,
@@ -126,3 +124,6 @@ fn update_connection_status(
         }
     }
 }
+
+#[derive(Component)]
+struct LastMidiEvent;
