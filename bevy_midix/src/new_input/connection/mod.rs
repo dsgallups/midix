@@ -1,12 +1,17 @@
 use bevy::prelude::*;
-use crossbeam_channel::Receiver;
-use midir::{ConnectError, MidiInputPort};
+use crossbeam_channel::{Receiver, TryRecvError};
 use midix::events::{FromLiveEventBytes, LiveEvent};
+
+use crate::synth::Synth;
 
 use super::MidiInputError;
 
+pub fn plugin(app: &mut App) {
+    app.add_systems(PreUpdate, handle_mididata);
+}
+
 /// An [`Event`] for incoming midi data.
-#[derive(Resource, Event, Debug)]
+#[derive(Event, Debug)]
 pub struct MidiData {
     /// Returns the timestamp of the data
     pub stamp: Option<u64>,
@@ -17,7 +22,7 @@ pub struct MidiData {
 #[derive(Component)]
 pub struct MidiInputConnection {
     data: Receiver<MidiData>,
-    conn: midir::MidiInputConnection<()>,
+    conn: Option<midir::MidiInputConnection<()>>,
 }
 
 impl MidiInputConnection {
@@ -52,7 +57,28 @@ impl MidiInputConnection {
 
         Ok(Self {
             data: receiver,
-            conn,
+            conn: Some(conn),
         })
+    }
+    pub fn read(&self) -> Result<MidiData, TryRecvError> {
+        self.data.try_recv()
+    }
+    pub fn close(&mut self) {
+        if let Some(conn) = self.conn.take() {
+            conn.close();
+        };
+    }
+}
+
+//todo: move this to the example
+fn handle_mididata(connections: Query<&MidiInputConnection>, synth: Res<Synth>) {
+    for connection in connections {
+        while let Ok(data) = connection.read() {
+            let LiveEvent::ChannelVoice(event) = data.message else {
+                continue;
+            };
+            //todo
+            synth.handle_event(event);
+        }
     }
 }

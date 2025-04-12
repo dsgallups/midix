@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use midir::MidiInputPort;
 
 mod settings;
+use midix::events::LiveEvent;
 pub use settings::*;
 
 mod midir_stuff;
@@ -92,3 +93,37 @@ fn handle_port_commands(
         }
     }
 }
+
+// TODO:
+// In the future, we'll want the input to trigger an event for instant use rather
+// than updating per frame in our schedules.
+// #[derive(Event)]
+// struct SomeTrigger;
+
+// fn sandbox(mut commands: Commands) {
+//     let midir_input = match midir::MidiInput::new("foo") {
+//         Ok(input) => input,
+//         Err(e) => {
+//             error!("Error initializing midi input for port refresh: {e:?}");
+//             return;
+//         }
+//     };
+
+//     let Some(port) = midir_input.find_port_by_id("bar".to_string()) else {
+//         return;
+//     };
+//     let conn = midir_input
+//         .connect(
+//             &port,
+//             "foobar",
+//             {
+//                 move |_timestamp, _data, _| {
+//                     commands.trigger(SomeTrigger);
+//                     //todo
+//                     todo!()
+//                 }
+//             },
+//             (),
+//         )
+//         .unwrap();
+// }
