@@ -6,11 +6,7 @@ use bevy_midix::prelude::*;
 
 mod ui;
 
-#[doc = r#"
-Creates a 2d Piano Keyboard and plays the sound on press.
-
-
-"#]
+///Creates a 2d Piano Keyboard and plays the sound on press.
 fn main() {
     App::new()
         .add_plugins((
@@ -25,7 +21,13 @@ fn main() {
         .add_systems(Startup, load_sf2)
         .run();
 }
-
+/// Note: you need to bring your own soundfont file.
+///
+/// sf2s are generally huge, so I added those to the gitignore.
+///
+/// Take a look here for some soundfonts:
+///
+/// <https://sites.google.com/site/soundfonts4u/>
 fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
     synth.use_soundfont(asset_server.load("soundfont.sf2"));
 }
