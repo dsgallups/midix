@@ -4,7 +4,8 @@ pub use midir::Ignore;
 use crate::asset::{MidiFile, MidiFileLoader};
 
 use super::{
-    Message, MidiData, MidiInput, MidiInputConnection, MidiInputError, MidiInputTask, MidirReply,
+    MidiData, MidiInputConnection, MidiInputError, MidiInputTask, MidirReply, OldMidiInput,
+    UserMessage,
 };
 
 /// Settings for [`MidiInputPlugin`].
@@ -50,7 +51,6 @@ pub struct MidiInputPlugin {
 impl Plugin for MidiInputPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.settings)
-            .init_resource::<MidiInputConnection>()
             .init_asset::<MidiFile>()
             .init_asset_loader::<MidiFileLoader>()
             .add_event::<MidiInputError>()
@@ -63,10 +63,11 @@ impl Plugin for MidiInputPlugin {
 
 // Core system
 fn setup(mut commands: Commands, settings: Res<MidiInputSettings>) {
-    let (m_sender, m_receiver) = crossbeam_channel::unbounded::<Message>();
+    let (m_sender, m_receiver) = crossbeam_channel::unbounded::<UserMessage>();
     let (r_sender, r_receiver) = crossbeam_channel::unbounded::<MidirReply>();
 
     let thread_pool = IoTaskPool::get();
+
     thread_pool
         .spawn(MidiInputTask {
             receiver: m_receiver,
@@ -77,7 +78,7 @@ fn setup(mut commands: Commands, settings: Res<MidiInputSettings>) {
         })
         .detach();
 
-    commands.insert_resource(MidiInput {
+    commands.insert_resource(OldMidiInput {
         sender: m_sender,
         receiver: r_receiver,
         ports: Vec::new(),
@@ -85,7 +86,7 @@ fn setup(mut commands: Commands, settings: Res<MidiInputSettings>) {
 }
 
 fn reply(
-    mut input: ResMut<MidiInput>,
+    mut input: ResMut<OldMidiInput>,
     mut conn: ResMut<MidiInputConnection>,
     mut err: EventWriter<MidiInputError>,
     mut midi: EventWriter<MidiData>,

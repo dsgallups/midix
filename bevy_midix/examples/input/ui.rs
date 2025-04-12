@@ -86,7 +86,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 struct AvailablePortsText;
 
 fn update_available_ports(
-    input: Res<MidiInput>,
+    input: Res<OldMidiInput>,
     mut instructions: Query<&mut TextSpan, With<AvailablePortsText>>,
 ) {
     if input.is_changed() {

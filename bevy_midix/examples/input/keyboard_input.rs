@@ -6,13 +6,13 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, (refresh_inputs, connect));
 }
 
-fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, input: Res<MidiInput>) {
+fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, input: Res<OldMidiInput>) {
     if keys.just_pressed(KeyCode::KeyR) {
         input.refresh_ports();
     }
 }
 
-fn connect(keys: Res<ButtonInput<KeyCode>>, input: Res<MidiInput>) {
+fn connect(keys: Res<ButtonInput<KeyCode>>, input: Res<OldMidiInput>) {
     for (keycode, index) in [
         (KeyCode::Digit0, 0),
         (KeyCode::Digit1, 1),
