@@ -110,7 +110,7 @@ const PRESSED: Srgba = RED;
 fn handle_input(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut keys: Query<(&Interaction, &mut BackgroundColor, &Key), Changed<Interaction>>,
-    mut synth: ResMut<Synth>,
+    synth: Res<Synth>,
 ) {
     for (interaction, mut background_color, key) in &mut keys {
         match *interaction {
@@ -136,7 +136,7 @@ fn handle_input(
 fn on_mouse_up(
     trigger: Trigger<Pointer<Released>>,
     mut keys: Query<(&mut BackgroundColor, &Key)>,
-    mut synth: ResMut<Synth>,
+    synth: Res<Synth>,
 ) {
     let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
     warn!("{key} unpressed");
@@ -151,7 +151,7 @@ fn on_mouse_up(
 fn on_mouse_leave(
     trigger: Trigger<Pointer<Out>>,
     mut keys: Query<(&mut BackgroundColor, &Key)>,
-    mut synth: ResMut<Synth>,
+    synth: Res<Synth>,
 ) {
     let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
     *background_color = BackgroundColor(bg_color(key.is_sharp()));

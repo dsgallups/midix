@@ -56,8 +56,10 @@ impl AssetLoader for SoundFontLoader {
         _load_context: &mut LoadContext<'_>,
     ) -> Result<Self::Asset, Self::Error> {
         let mut bytes = Vec::new();
+        info!("Loading bytes...this might take a while. If taking too long, run with --release or with opt-level = 3!");
         reader.read_to_end(&mut bytes).await?;
 
+        info!("Loaded!");
         let res = SoundFont::new(&mut bytes.as_slice())?;
 
         Ok(res)

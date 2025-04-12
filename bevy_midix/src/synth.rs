@@ -58,6 +58,7 @@ pub struct SynthPlugin {
 impl Plugin for SynthPlugin {
     fn build(&self, app: &mut App) {
         app.init_asset::<SoundFont>()
+            .init_asset_loader::<SoundFontLoader>()
             .init_state::<SynthStatus>()
             .insert_resource(Synth::new(self.params))
             .add_systems(
