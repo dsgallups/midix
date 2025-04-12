@@ -3,7 +3,7 @@ use bevy_midix::prelude::*;
 
 /// TODO: experimenting in here
 pub fn plugin(app: &mut App) {
-    app.add_systems(Update, (refresh_inputs, connect));
+    app.add_systems(Update, (refresh_inputs, connect, disconnect));
 }
 
 fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, mut port_event: EventWriter<MidiInputEvent>) {
@@ -15,8 +15,12 @@ fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, mut port_event: EventWriter<M
 fn connect(
     keys: Res<ButtonInput<KeyCode>>,
     input: Res<MidiInputPorts>,
+    connections: Query<&MidiInputConnection>,
     mut port_event: EventWriter<MidiInputEvent>,
 ) {
+    if !connections.is_empty() {
+        return;
+    }
     for (keycode, index) in [
         (KeyCode::Digit0, 0),
         (KeyCode::Digit1, 1),
@@ -35,5 +39,18 @@ fn connect(
                 port_event.write(MidiInputEvent::ConnectToPort(port.id()));
             }
         }
+    }
+}
+fn disconnect(
+    mut commands: Commands,
+    keys: Res<ButtonInput<KeyCode>>,
+    connections: Query<(Entity, &mut MidiInputConnection)>,
+) {
+    if !keys.just_pressed(KeyCode::Escape) {
+        return;
+    }
+    for (entity, mut connection) in connections {
+        connection.close();
+        commands.entity(entity).despawn();
     }
 }
