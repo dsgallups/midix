@@ -19,7 +19,7 @@ enum SynthStatus {
 
 /// The plugin for handling the synthesizer
 pub fn plugin(app: &mut App) {
-    app.init_resource::<Synth>().add_systems(
+    app.add_systems(Startup, spawn_if_not_inserted).add_systems(
         PreUpdate,
         (
             load_audio_font.run_if(in_state(SynthStatus::ShouldLoad)),
@@ -35,7 +35,7 @@ enum SynthState {
     Loaded(Arc<Mutex<Synthesizer>>),
 }
 impl SynthState {
-    pub fn status_should_be(&self) -> SynthStatus {
+    fn status_should_be(&self) -> SynthStatus {
         match self {
             Self::NotLoaded => SynthStatus::NotLoaded,
             Self::LoadHandle { .. } => SynthStatus::ShouldLoad,
@@ -57,6 +57,29 @@ pub struct Synth {
 }
 
 impl Synth {
+    /// Create a new synth given the following parameters:
+    ///
+    /// 1. The number of output channels
+    ///
+    /// A good default is 2? I actually don't know
+    ///
+    /// 2. The sampling rate for the audio font (if this needs more info, please file an issue for docs)
+    ///
+    /// A good default is 44100
+    ///
+    /// 3. The sample count for each channel
+    ///
+    /// A good default is 441
+    pub fn new(channel_count: usize, sample_rate: usize, channel_sample_count: usize) -> Self {
+        Self {
+            params: OutputDeviceParameters {
+                channels_count: channel_count,
+                sample_rate,
+                channel_sample_count,
+            },
+            ..Default::default()
+        }
+    }
     fn status_should_be(&self) -> SynthStatus {
         self.synthesizer.status_should_be()
     }
@@ -99,6 +122,13 @@ impl Default for Synth {
             _device: None,
         }
     }
+}
+
+fn spawn_if_not_inserted(mut commands: Commands, synth: Option<Res<Synth>>) {
+    if synth.is_some() {
+        return;
+    }
+    commands.init_resource::<Synth>();
 }
 
 fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
