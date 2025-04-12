@@ -3,21 +3,23 @@ Module for the [`MidiPlugin`]
 "#]
 use bevy::prelude::*;
 
-use crate::{input::MidiInputPlugin, output::MidiOutputPlugin, synth::Synth};
+use crate::{input::MidiInputPlugin, output::MidiOutputPlugin, synth::SynthPlugin};
 
-/// Configure the parts you want to include (input, output, synth)
+/// Configure the parts you want to include (input, output, synth).
+///
+/// By default, the output plugin is disabled.
 pub struct MidiPlugin {
     output: bool,
     input: bool,
-    synth: bool,
+    synth: Option<SynthPlugin>,
 }
 
 impl Default for MidiPlugin {
     fn default() -> Self {
         Self {
-            output: true,
+            output: false,
             input: true,
-            synth: true,
+            synth: Some(SynthPlugin::default()),
         }
     }
 }
@@ -31,8 +33,8 @@ impl Plugin for MidiPlugin {
             app.add_plugins(MidiOutputPlugin);
         }
 
-        if self.synth {
-            app.init_resource::<Synth>();
+        if let Some(synth_plugin) = self.synth {
+            app.add_plugins(synth_plugin);
         }
     }
 }

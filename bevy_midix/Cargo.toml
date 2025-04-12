@@ -28,7 +28,14 @@ strum = { version = "0.27", features = ["derive"] }
 [dependencies.bevy]
 version = "0.16.0-rc.3"
 default-features = false
-features = ["multi_threaded", "bevy_asset", "std", "async_executor", "bevy_log"]
+features = [
+    "multi_threaded",
+    "bevy_asset",
+    "std",
+    "async_executor",
+    "bevy_log",
+    "bevy_state",
+]
 
 [dev-dependencies.bevy]
 version = "0.16.0-rc.3"
