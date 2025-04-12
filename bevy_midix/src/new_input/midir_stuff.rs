@@ -3,6 +3,14 @@ use midir::{MidiInputConnection, MidiInputPort};
 
 use super::MidiInputError;
 
+/*
+What we can do actually, is not have this thing.
+We can query MidiInputConnections (have many)
+
+and on portcommand refresh etc. we just make a new MidiInput instance.
+
+*/
+
 enum MidiConnectionInner {
     Listening(midir::MidiInput),
     Connected(MidiInputConnection<()>),

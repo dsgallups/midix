@@ -25,10 +25,10 @@ pub struct MidiInputPlugin {
 }
 
 #[derive(Event)]
-pub(crate) enum PortCommand {
+pub(crate) enum MidiInputEvent {
     RefreshPorts,
-    ConnectToPort(MidiInputPort),
-    DisconnectFromPort,
+    ConnectToPort(String),
+    Disconnect(Entity),
 }
 
 impl Plugin for MidiInputPlugin {
@@ -48,36 +48,46 @@ pub struct MidiInput {
 }
 
 fn handle_port_commands(
-    mut commands: EventReader<PortCommand>,
+    mut commands: Commands,
+    mut events: EventReader<MidiInputEvent>,
     midi_settings: Res<MidiInputSettings>,
     mut midi_input: ResMut<MidiInput>,
-    midir: Res<MidiConnection>,
 ) {
-    if !midir.listening() {
-        warn!("Midix cannot evaluate a portcommand if already connected!");
-        return;
-    }
-    for command in commands.read() {
+    for command in events.read() {
         match command {
-            PortCommand::RefreshPorts => {
-                midi_input.ports = midir.ports().unwrap();
+            MidiInputEvent::RefreshPorts => {
+                let midir_input = match midir::MidiInput::new(midi_settings.client_name) {
+                    Ok(input) => input,
+                    Err(e) => {
+                        error!("Error initializing midi input for port refresh: {e:?}");
+                        continue;
+                    }
+                };
+                midi_input.ports = midir_input.ports();
             }
-            PortCommand::ConnectToPort(port) => {
-                let connection = midir
-                    .0
-                    .connect(
-                        port,
-                        midi_settings.port_name,
-                        move |timestamp, message, _| {
-                            //todo
-                            //todo
-                        },
-                        (),
-                    )
-                    .unwrap();
+            MidiInputEvent::ConnectToPort(port_id) => {
+                let midir_input = match midir::MidiInput::new(midi_settings.client_name) {
+                    Ok(input) => input,
+                    Err(e) => {
+                        error!("Error initializing midi input for port refresh: {e:?}");
+                        continue;
+                    }
+                };
+                let connection = match MidiInputConnection::new(
+                    midir_input,
+                    port_id.clone(),
+                    midi_settings.port_name,
+                ) {
+                    Ok(conn) => conn,
+                    Err(e) => {
+                        error!("{e:?}");
+                        continue;
+                    }
+                };
+                commands.spawn(connection);
             }
-            PortCommand::DisconnectFromPort => {
-                todo!()
+            MidiInputEvent::Disconnect(conn) => {
+                commands.entity(*conn).despawn();
             }
         }
     }
