@@ -35,7 +35,7 @@ fn main() {
 /// used to propagate the event to the piano ui
 #[derive(Event)]
 pub struct ExampleInputEvent {
-    event: ChannelVoiceMessage,
+    pub voice: VoiceEvent,
 }
 
 /// Note: you need to bring your own soundfont file.
@@ -63,6 +63,8 @@ fn handle_mididata(
         info!("Data: {:?}", data.message);
         //todo
         synth.handle_event(event);
-        ev.write(ExampleInputEvent { event });
+        ev.write(ExampleInputEvent {
+            voice: *event.event(),
+        });
     }
 }

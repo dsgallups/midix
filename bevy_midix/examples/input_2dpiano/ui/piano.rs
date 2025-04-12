@@ -1,8 +1,12 @@
+use std::collections::HashMap;
+
 use bevy::{
     color::palettes::css::{GREEN, RED},
     prelude::*,
 };
 use bevy_midix::prelude::*;
+
+use crate::ExampleInputEvent;
 
 #[derive(Component)]
 pub struct Piano;
@@ -82,6 +86,10 @@ pub fn spawn_piano(mut commands: Commands) {
             })
         });
 }
+pub fn cleanup(mut commands: Commands, piano: Query<Entity, With<Piano>>) {
+    let piano = piano.single().unwrap();
+    commands.entity(piano).despawn();
+}
 
 fn bg_color(sharp: bool) -> Color {
     if sharp {
@@ -115,6 +123,42 @@ pub fn handle_input(
             }
             // on_mouse_leave does runs logic that would otherwise be here.
             Interaction::None => {}
+        }
+    }
+}
+
+pub fn handle_midi_device_input(
+    mut ev: EventReader<ExampleInputEvent>,
+
+    mut keys: Query<(&mut BackgroundColor, &Key)>,
+) {
+    let mut key_events = HashMap::new();
+    for event in ev.read() {
+        // we use this functionality because Note On with a velocity of zero is note off.
+        let is_note_on = event.voice.is_note_on();
+        let is_note_off = event.voice.is_note_off();
+        if !is_note_on && !is_note_off {
+            continue;
+        }
+        let key = match event.voice {
+            VoiceEvent::NoteOn { key, .. } | VoiceEvent::NoteOff { key, .. } => key,
+            _ => continue,
+        };
+        key_events.insert(key, is_note_on);
+    }
+    if key_events.is_empty() {
+        return;
+    }
+    error!("Key events: {:?}", key_events);
+    for (mut background_color, key) in &mut keys {
+        let Some(is_note_on) = key_events.get(key) else {
+            continue;
+        };
+        error!("Found key");
+        if *is_note_on {
+            *background_color = PRESSED.into();
+        } else {
+            *background_color = bg_color(key.is_sharp()).into();
         }
     }
 }
