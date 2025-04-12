@@ -26,10 +26,16 @@ fn main() {
             }),
             MidiPlugin::default(),
         ))
+        .add_event::<ExampleInputEvent>()
         .add_plugins((key_input::plugin, ui::plugin))
         .add_systems(Startup, add_soundfont)
         .add_systems(PreUpdate, handle_mididata)
         .run();
+}
+/// used to propagate the event to the piano ui
+#[derive(Event)]
+pub struct ExampleInputEvent {
+    event: ChannelVoiceMessage,
 }
 
 /// Note: you need to bring your own soundfont file.
@@ -44,7 +50,11 @@ fn add_soundfont(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
     synth.use_soundfont(asset_server.load("soundfont.sf2"));
 }
 
-fn handle_mididata(midi_input: Res<MidiInput>, synth: Res<Synth>) {
+fn handle_mididata(
+    midi_input: Res<MidiInput>,
+    synth: Res<Synth>,
+    mut ev: EventWriter<ExampleInputEvent>,
+) {
     while let Ok(data) = midi_input.read() {
         let LiveEvent::ChannelVoice(event) = data.message else {
             continue;
@@ -53,5 +63,6 @@ fn handle_mididata(midi_input: Res<MidiInput>, synth: Res<Synth>) {
         info!("Data: {:?}", data.message);
         //todo
         synth.handle_event(event);
+        ev.write(ExampleInputEvent { event });
     }
 }

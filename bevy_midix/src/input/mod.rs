@@ -157,7 +157,9 @@ impl MidiInput {
         self.state = Some(MidiInputState::Listening(listener));
     }
 
-    /// will return data if connected
+    /// will return data if connected. Note, this CONSUMES the event.
+    ///
+    /// You will need to propagate this data out to other systems if need be.
     pub fn read(&self) -> Result<MidiData, TryRecvError> {
         let Some(MidiInputState::Active(conn)) = &self.state else {
             return Err(TryRecvError::Disconnected);

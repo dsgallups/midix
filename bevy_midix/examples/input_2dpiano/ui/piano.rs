@@ -1,53 +1,13 @@
 use bevy::{
     color::palettes::css::{GREEN, RED},
-    log::{Level, LogPlugin},
     prelude::*,
 };
 use bevy_midix::prelude::*;
 
-///Creates a 2d Piano Keyboard and plays the sound on press.
-///
-/// Note: due to the size of soundfont files and the lack of optimization
-/// for running this example, you should run this with example with `--release`
-///
-/// i.e.
-/// ```console
-/// cargo run --example 2dpiano --release
-/// ```
-fn main() {
-    App::new()
-        .add_plugins((
-            DefaultPlugins.set(LogPlugin {
-                level: Level::INFO,
-                ..default()
-            }),
-            MidiPlugin {
-                input: None,
-                ..Default::default()
-            },
-        ))
-        .add_systems(Startup, (load_sf2, spawn_piano))
-        .add_systems(Update, handle_input)
-        .run();
-}
-/// Note: you need to bring your own soundfont file.
-///
-/// sf2s are generally huge, so I added those to the gitignore.
-///
-/// Take a look here for some soundfonts:
-///
-/// <https://sites.google.com/site/soundfonts4u/>
-fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
-    synth.use_soundfont(asset_server.load("soundfont.sf2"));
-}
-
 #[derive(Component)]
 pub struct Piano;
 
-fn spawn_piano(mut commands: Commands) {
-    commands.spawn(Camera2d);
-    warn!("Spawning piano");
-
+pub fn spawn_piano(mut commands: Commands) {
     let get_note = |i: u8| {
         use Note::*;
         match i % 12 {
@@ -119,10 +79,6 @@ fn spawn_piano(mut commands: Commands) {
                     ))
                     .observe(on_mouse_leave)
                     .observe(on_mouse_up);
-                // .observe(on_mouse_enter)
-                // .observe(on_mouse_down)
-                // .observe(on_mouse_up)
-                // .observe(on_mouse_leave);
             })
         });
 }
@@ -139,7 +95,7 @@ const HOVERED: Srgba = GREEN;
 const PRESSED: Srgba = RED;
 
 // use mouse input over Interaction::Pressed so you can hold down the button and go nuts
-fn handle_input(
+pub fn handle_input(
     mouse_input: Res<ButtonInput<MouseButton>>,
     mut keys: Query<(&Interaction, &mut BackgroundColor, &Key), Changed<Interaction>>,
     synth: Res<Synth>,
