@@ -23,10 +23,7 @@ fn main() {
                 level: Level::INFO,
                 ..default()
             }),
-            MidiPlugin {
-                input: false,
-                ..Default::default()
-            },
+            MidiPlugin::default(),
         ))
         .add_plugins((midi_stuff::plugin, ui::plugin))
         .add_systems(Startup, add_soundfont)

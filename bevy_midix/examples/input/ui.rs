@@ -1,7 +1,7 @@
 use bevy::{
     color::palettes::{
         css::{GREEN, RED},
-        tailwind::YELLOW_300,
+        tailwind::{YELLOW_200, YELLOW_300},
     },
     prelude::*,
 };
@@ -39,6 +39,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..Default::default()
                 },
                 TextColor(Color::WHITE),
+            ));
+            commands.spawn((
+                TextSpan::new("Available Ports: \n"),
+                TextFont {
+                    font: font.clone(),
+                    font_size: 30.,
+                    ..Default::default()
+                },
+                TextColor(YELLOW_200.into()),
             ));
             commands.spawn((
                 TextSpan::default(),
@@ -87,7 +96,7 @@ fn show_available_ports(
 ) {
     if input.is_changed() {
         let mut instructions = instructions.single_mut().unwrap();
-        let mut value = "Available Input Ports:\n".to_string();
+        let mut value = String::new();
 
         for (i, (name, _)) in input.ports().iter().enumerate() {
             value.push_str(&format!("Port {}: {:?}\n", i, name));

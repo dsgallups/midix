@@ -87,6 +87,7 @@ impl MidiInput {
     ///
     /// Change detection is fired when the ports are refreshed.
     pub fn refresh_ports(&self) {
+        info!("Refreshing ports");
         self.sender
             .send(Message::RefreshPorts)
             .expect("Couldn't refresh input ports");
@@ -175,6 +176,7 @@ fn reply(
     mut midi: EventWriter<MidiData>,
 ) {
     while let Ok(msg) = input.receiver.try_recv() {
+        info!("Reply received!\n{}", msg.dbg());
         match msg {
             Reply::AvailablePorts(ports) => {
                 input.ports = ports;
@@ -231,6 +233,27 @@ enum Reply {
     Connected,
     Disconnected,
     Midi(MidiData),
+}
+
+impl Reply {
+    pub fn dbg(&self) -> String {
+        use Reply::*;
+        match self {
+            Reply::AvailablePorts(ports) => {
+                let mut res = "Available Ports:\n".to_string();
+                for (name, port) in ports.iter() {
+                    res.push_str(&format!("Name - {}, port id- {}", name, port.id()));
+                }
+                res
+            }
+            Error(e) => {
+                format!("Error({e:?}")
+            }
+            Connected => "Connected".to_string(),
+            Disconnected => "Disconnected".to_string(),
+            Midi(_) => "Midi Data".to_string(),
+        }
+    }
 }
 
 struct MidiInputTask {
