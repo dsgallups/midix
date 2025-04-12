@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crossbeam_channel::{Receiver, TryRecvError};
+use midir::MidiInputPort;
 use midix::events::{FromLiveEventBytes, LiveEvent};
 
 use super::MidiInputError;
@@ -13,25 +14,21 @@ pub struct MidiData {
     /// The underlying message of the event
     pub message: LiveEvent<'static>,
 }
-#[derive(Component)]
 pub struct MidiInputConnection {
     data: Receiver<MidiData>,
-    conn: Option<midir::MidiInputConnection<()>>,
+    conn: midir::MidiInputConnection<()>,
 }
 
 impl MidiInputConnection {
     pub fn new(
         midir_input: midir::MidiInput,
-        port_id: String,
+        port: &MidiInputPort,
         port_name: &str,
     ) -> Result<Self, MidiInputError> {
         let (sender, receiver) = crossbeam_channel::unbounded::<MidiData>();
-        let Some(port) = midir_input.find_port_by_id(port_id.clone()) else {
-            return Err(MidiInputError::port_not_found(port_id));
-        };
 
         let conn = midir_input.connect(
-            &port,
+            port,
             port_name,
             {
                 move |timestamp, data, _| {
@@ -51,15 +48,14 @@ impl MidiInputConnection {
 
         Ok(Self {
             data: receiver,
-            conn: Some(conn),
+            conn,
         })
     }
     pub fn read(&self) -> Result<MidiData, TryRecvError> {
         self.data.try_recv()
     }
-    pub fn close(&mut self) {
-        if let Some(conn) = self.conn.take() {
-            conn.close();
-        };
+    pub fn close(self) -> midir::MidiInput {
+        let (listener, _) = self.conn.close();
+        listener
     }
 }

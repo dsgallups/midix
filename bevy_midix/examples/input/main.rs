@@ -44,16 +44,14 @@ fn add_soundfont(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
     synth.use_soundfont(asset_server.load("soundfont.sf2"));
 }
 
-fn handle_mididata(connections: Query<&MidiInputConnection>, synth: Res<Synth>) {
-    for connection in connections {
-        while let Ok(data) = connection.read() {
-            let LiveEvent::ChannelVoice(event) = data.message else {
-                continue;
-            };
+fn handle_mididata(midi_input: Res<MidiInput>, synth: Res<Synth>) {
+    while let Ok(data) = midi_input.read() {
+        let LiveEvent::ChannelVoice(event) = data.message else {
+            continue;
+        };
 
-            info!("Data: {:?}", data.message);
-            //todo
-            synth.handle_event(event);
-        }
+        info!("Data: {:?}", data.message);
+        //todo
+        synth.handle_event(event);
     }
 }

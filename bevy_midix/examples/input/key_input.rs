@@ -6,21 +6,13 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, (refresh_inputs, connect, disconnect));
 }
 
-fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, mut port_event: EventWriter<MidiInputEvent>) {
+fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, mut midi_input: ResMut<MidiInput>) {
     if keys.just_pressed(KeyCode::KeyR) {
-        port_event.write(MidiInputEvent::RefreshPorts);
+        midi_input.refresh_ports();
     }
 }
 
-fn connect(
-    keys: Res<ButtonInput<KeyCode>>,
-    input: Res<MidiInputPorts>,
-    connections: Query<&MidiInputConnection>,
-    mut port_event: EventWriter<MidiInputEvent>,
-) {
-    if !connections.is_empty() {
-        return;
-    }
+fn connect(keys: Res<ButtonInput<KeyCode>>, mut input: ResMut<MidiInput>) {
     for (keycode, index) in [
         (KeyCode::Digit0, 0),
         (KeyCode::Digit1, 1),
@@ -34,23 +26,21 @@ fn connect(
         (KeyCode::Digit9, 9),
     ] {
         if keys.just_pressed(keycode) {
-            if let Some(port) = input.ports().get(index) {
-                debug!("Connecting to {}", port.id());
-                port_event.write(MidiInputEvent::ConnectToPort(port.id()));
+            debug!("Connecting to {}", index);
+            match input.connect_to_index(index) {
+                Ok(()) => {
+                    debug!("Connected!");
+                }
+                Err(e) => {
+                    debug!("Couldn't connect: {e:?}");
+                }
             }
         }
     }
 }
-fn disconnect(
-    mut commands: Commands,
-    keys: Res<ButtonInput<KeyCode>>,
-    connections: Query<(Entity, &mut MidiInputConnection)>,
-) {
+fn disconnect(keys: Res<ButtonInput<KeyCode>>, mut input: ResMut<MidiInput>) {
     if !keys.just_pressed(KeyCode::Escape) {
         return;
     }
-    for (entity, mut connection) in connections {
-        connection.close();
-        commands.entity(entity).despawn();
-    }
+    input.disconnect();
 }
