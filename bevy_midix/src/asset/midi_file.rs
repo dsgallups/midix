@@ -7,7 +7,7 @@ TODO
 #![allow(unused_variables)]
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, LoadContext},
+    asset::{AssetLoader, LoadContext, io::Reader},
     prelude::*,
 };
 

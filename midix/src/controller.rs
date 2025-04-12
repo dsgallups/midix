@@ -19,7 +19,7 @@ impl Controller {
 
     /// Get a reference to the underlying byte
     pub fn byte(&self) -> u8 {
-        self.0 .0
+        self.0.0
     }
 }
 

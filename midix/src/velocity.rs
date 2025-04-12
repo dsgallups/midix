@@ -29,7 +29,7 @@ impl Velocity {
 
     /// Get a reference to the underlying byte
     pub fn byte(&self) -> u8 {
-        self.0 .0
+        self.0.0
     }
 
     /// Get the dynamic of the velocity...fortississississimo

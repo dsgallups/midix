@@ -21,7 +21,7 @@ impl Program {
 
     /// Get a reference to the underlying byte for the program.
     pub fn byte(&self) -> u8 {
-        self.0 .0
+        self.0.0
     }
 }
 

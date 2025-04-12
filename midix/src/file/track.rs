@@ -24,7 +24,7 @@ impl<'a> Track<'a> {
         for event in events {
             let delta_ticks = event.delta_ticks();
 
-            let accumulated_ticks = if let Some(ref mut tick_acc) = &mut time_accumulated {
+            let accumulated_ticks = if let Some(tick_acc) = &mut time_accumulated {
                 *tick_acc += delta_ticks;
                 *tick_acc
             } else {

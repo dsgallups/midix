@@ -294,11 +294,12 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bevy"
-version = "0.16.0-rc.3"
+version = "0.16.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e66ee4b3dee30684ad59146b06a09952da817fb6a22ad25ee8c6f1dc5ab15cf5"
+checksum = "fdd1a95f467119c45876e04814e17501ad14af8ff2f94f5721d0b065d6a654ac"
 dependencies = [
  "bevy_internal",
+ "tracing",
 ]
 
 [[package]]
@@ -720,9 +721,9 @@ dependencies = [
 
 [[package]]
 name = "bevy_internal"
-version = "0.16.0-rc.3"
+version = "0.16.0-rc.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4dd5e43ab39f5e93732003e805bd37f2b89f92432eb350655cd3bc56849514af"
+checksum = "efc4a4857e019fb3079d30af3a2d282b8faece3e3a8ccc0608de598478695b47"
 dependencies = [
  "bevy_a11y",
  "bevy_animation",
