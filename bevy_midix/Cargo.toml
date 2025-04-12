@@ -19,16 +19,17 @@ crossbeam-channel = "0.5.15"
 midix = { version = "3.0.0-rc1", features = ["bevy"], path = "../midix" }
 midix_synth = { version = "0.0.1-rc1", path = "../midix_synth" }
 thiserror = "2.0"
+tinyaudio = "1.1.0"
+itertools = "0.14.0"
 
 [dev-dependencies]
-bevy_egui = { version = "0.33", features = ["immutable_ctx"] }
 strum = { version = "0.27", features = ["derive"] }
 
 [dependencies.bevy]
-version = "0.15"
+version = "0.16.0-rc.3"
 default-features = false
-features = ["multi_threaded", "bevy_asset"]
+features = ["multi_threaded", "bevy_asset", "std", "async_executor"]
 
 [dev-dependencies.bevy]
-version = "0.15"
+version = "0.16.0-rc.3"
 default-features = true
