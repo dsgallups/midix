@@ -9,7 +9,7 @@ use bevy_midix::prelude::*;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, setup)
-        .add_systems(Update, show_available_ports);
+        .add_systems(Update, (update_available_ports, update_connection_status));
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -31,7 +31,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     "INSTRUCTIONS\n\
                     R - Refresh ports\n\
                     0 to 9 - Connect to port\n\
-                    Escape - Disconnect from current port\n",
+                    Escape - Disconnect from current port\n\n",
                 ),
                 TextFont {
                     font: font.clone(),
@@ -85,12 +85,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 struct AvailablePortsText;
 
 #[derive(Component)]
-struct ConnectStatus;
-
-#[derive(Component)]
 struct LastMidiEvent;
 
-fn show_available_ports(
+fn update_available_ports(
     input: Res<MidiInput>,
     mut instructions: Query<&mut TextSpan, With<AvailablePortsText>>,
 ) {
@@ -101,7 +98,31 @@ fn show_available_ports(
         for (i, (name, _)) in input.ports().iter().enumerate() {
             value.push_str(&format!("Port {}: {:?}\n", i, name));
         }
+        value.push('\n');
 
         instructions.0 = value;
+    }
+}
+
+#[derive(Component)]
+struct ConnectStatus;
+
+// this should probably be part of Res<MidiInput>
+//
+// and may want to be able to accept input from many midi devices
+fn update_connection_status(
+    connection: Res<MidiInputConnection>,
+    mut status: Query<(&mut TextSpan, &mut TextColor), With<ConnectStatus>>,
+) {
+    if connection.is_changed() {
+        let (mut status, mut color) = status.single_mut().unwrap();
+
+        if connection.is_connected() {
+            status.0 = "Connected".to_string();
+            color.0 = GREEN.into();
+        } else {
+            status.0 = "Disconnected".to_string();
+            color.0 = RED.into();
+        }
     }
 }

@@ -176,7 +176,7 @@ fn reply(
     mut midi: EventWriter<MidiData>,
 ) {
     while let Ok(msg) = input.receiver.try_recv() {
-        info!("Reply received!\n{}", msg.dbg());
+        debug!("Reply received!\n{}", msg.dbg());
         match msg {
             Reply::AvailablePorts(ports) => {
                 input.ports = ports;

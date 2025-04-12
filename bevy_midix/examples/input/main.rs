@@ -4,7 +4,7 @@ use bevy::{
 };
 use bevy_midix::prelude::*;
 
-mod midi_stuff;
+mod keyboard_input;
 mod ui;
 
 /// Waits midi input and plays a sound on press.
@@ -25,7 +25,7 @@ fn main() {
             }),
             MidiPlugin::default(),
         ))
-        .add_plugins((midi_stuff::plugin, ui::plugin))
+        .add_plugins((keyboard_input::plugin, ui::plugin))
         .add_systems(Startup, add_soundfont)
         .run();
 }
