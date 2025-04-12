@@ -9,16 +9,23 @@ use crate::{input::MidiInputPlugin, output::MidiOutputPlugin, synth::SynthPlugin
 ///
 /// By default, the output plugin is disabled.
 pub struct MidiPlugin {
-    output: bool,
-    input: bool,
-    synth: Option<SynthPlugin>,
+    /// Include the output plugin. Disabled by default
+    pub output: bool,
+    /// Include the input plugin. Enabled by default
+    pub input: Option<MidiInputPlugin>,
+    /// Include an ingame synth. Enabled by default
+    ///
+    /// Note: synth is separate from OutputPlugin,
+    ///
+    /// though, it might be a good idea to intertwine these.
+    pub synth: Option<SynthPlugin>,
 }
 
 impl Default for MidiPlugin {
     fn default() -> Self {
         Self {
             output: false,
-            input: true,
+            input: Some(MidiInputPlugin::default()),
             synth: Some(SynthPlugin::default()),
         }
     }
@@ -26,8 +33,8 @@ impl Default for MidiPlugin {
 
 impl Plugin for MidiPlugin {
     fn build(&self, app: &mut App) {
-        if self.input {
-            app.add_plugins(MidiInputPlugin);
+        if let Some(input) = self.input {
+            app.add_plugins(input);
         }
         if self.output {
             app.add_plugins(MidiOutputPlugin);

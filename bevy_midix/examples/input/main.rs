@@ -4,31 +4,34 @@ use bevy::{
 };
 use bevy_midix::prelude::*;
 
+mod key_input;
+
 mod ui;
 
-///Creates a 2d Piano Keyboard and plays the sound on press.
+/// Waits midi input and plays a sound on press.
 ///
 /// Note: due to the size of soundfont files and the lack of optimization
 /// for running this example, you should run this with example with `--release`
 ///
 /// i.e.
 /// ```console
-/// cargo run --example piano --release
+/// cargo run --example 2dpiano --release
 /// ```
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins.set(LogPlugin {
                 level: Level::INFO,
-                filter: "bevy_midix=DEBUG".to_string(),
                 ..default()
             }),
             MidiPlugin::default(),
-            ui::plugin,
         ))
-        .add_systems(Startup, load_sf2)
+        .add_plugins((key_input::plugin, ui::plugin))
+        .add_systems(Startup, add_soundfont)
+        .add_systems(PreUpdate, handle_mididata)
         .run();
 }
+
 /// Note: you need to bring your own soundfont file.
 ///
 /// sf2s are generally huge, so I added those to the gitignore.
@@ -36,6 +39,19 @@ fn main() {
 /// Take a look here for some soundfonts:
 ///
 /// <https://sites.google.com/site/soundfonts4u/>
-fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
+fn add_soundfont(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
+    // include the soundfont file
     synth.use_soundfont(asset_server.load("soundfont.sf2"));
+}
+
+fn handle_mididata(midi_input: Res<MidiInput>, synth: Res<Synth>) {
+    while let Ok(data) = midi_input.read() {
+        let LiveEvent::ChannelVoice(event) = data.message else {
+            continue;
+        };
+
+        info!("Data: {:?}", data.message);
+        //todo
+        synth.handle_event(event);
+    }
 }

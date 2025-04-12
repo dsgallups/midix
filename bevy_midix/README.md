@@ -11,8 +11,7 @@ use bevy_midix::prelude::*;
 
 App::new()
     .add_plugins(DefaultPlugins)
-    .add_plugins(MidiInputPlugin)
-    .add_plugins(MidiOutputPlugin)
+    .add_plugins(MidiPlugin::default())
     .run();
 ```
 
