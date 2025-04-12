@@ -1,22 +1,14 @@
-#![doc = r#"
-Synthesizer resources, setup and plugins
-"#]
+use std::sync::{Arc, Mutex};
 
-use crate::prelude::SoundFont;
-use crate::prelude::*;
 use bevy::prelude::*;
 use itertools::Itertools;
-use midix_synth::prelude::*;
-use std::sync::{Arc, Mutex};
-use tinyaudio::{run_output_device, OutputDevice, OutputDeviceParameters};
+use midix_synth::prelude::{Synthesizer, SynthesizerSettings};
+use tinyaudio::run_output_device;
 
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Copy, Default)]
-enum SynthStatus {
-    #[default]
-    NotLoaded,
-    ShouldLoad,
-    Loaded,
-}
+use crate::asset::{SoundFont, SoundFontLoader};
+
+use super::{Synth, SynthState};
+
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
 /// Note that usizes are used for all params, but probably shouldn't (32 bit systems).
@@ -27,16 +19,16 @@ pub struct SynthParams {
     /// The data provided by the call back is _interleaved_, which means that if you have two channels then
     /// the sample layout will be like so: `LRLRLR..`, where `L` - a sample of left channel, and `R` a sample
     /// of right channel.
-    channel_count: usize,
+    pub channel_count: usize,
 
     /// Amount of samples per each channel. Allows you to tweak audio latency, the more the value the more
     /// latency will be and vice versa. Keep in mind, that your data callback must be able to render the
     /// samples while previous portion of data is being played, otherwise you'll get a glitchy audio.
-    channel_sample_count: usize,
+    pub channel_sample_count: usize,
 
     /// Sample rate of your audio data. Typical values are: 11025 Hz, 22050 Hz, 44100 Hz (default), 48000 Hz,
     /// 96000 Hz
-    sample_rate: usize,
+    pub sample_rate: usize,
 }
 
 impl Default for SynthParams {
@@ -72,10 +64,12 @@ impl Plugin for SynthPlugin {
     }
 }
 
-enum SynthState {
+#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Copy, Default)]
+enum SynthStatus {
+    #[default]
     NotLoaded,
-    LoadHandle { sound_font: Handle<SoundFont> },
-    Loaded(Arc<Mutex<Synthesizer>>),
+    ShouldLoad,
+    Loaded,
 }
 impl SynthState {
     fn status_should_be(&self) -> SynthStatus {
@@ -87,83 +81,9 @@ impl SynthState {
     }
 }
 
-/// Plays audio commands with the provided soundfont
-///
-/// Pass the synth midi events via the `Synth::handle_event` method
-///
-/// see [`ChannelVoiceMessage`] for the list of options
-#[derive(Resource)]
-pub struct Synth {
-    params: OutputDeviceParameters,
-    synthesizer: SynthState,
-    _device: Option<Mutex<OutputDevice>>,
-}
-
 impl Synth {
-    /// Create a new synth given the following parameters:
-    ///
-    /// 1. The number of output channels
-    ///
-    /// A good default is 2? I actually don't know
-    ///
-    /// 2. The sampling rate for the audio font (if this needs more info, please file an issue for docs)
-    ///
-    /// A good default is 44100
-    ///
-    /// 3. The sample count for each channel
-    ///
-    /// A good default is 441
-    pub fn new(params: SynthParams) -> Self {
-        Self {
-            params: OutputDeviceParameters {
-                channels_count: params.channel_count,
-                sample_rate: params.sample_rate,
-                channel_sample_count: params.channel_sample_count,
-            },
-            ..Default::default()
-        }
-    }
     fn status_should_be(&self) -> SynthStatus {
         self.synthesizer.status_should_be()
-    }
-    /// Send an event for the synth to play
-    pub fn handle_event(&self, event: ChannelVoiceMessage) {
-        let SynthState::Loaded(synth) = &self.synthesizer else {
-            error!("An event was passed to the synth, but the soundfont has not been loaded!");
-            return;
-        };
-        // TODO: refacctor midix synth
-        let mut synth = synth.lock().unwrap();
-        let channel = event.channel().to_byte() as i32;
-        let command = (event.status() & 0xF0) as i32;
-        let data1 = event.data_1_byte() as i32;
-        let data2 = event.data_2_byte().unwrap_or(0) as i32;
-        synth.process_midi_message(channel, command, data1, data2);
-    }
-    /// Returns true if the sound font has been loaded!
-    pub fn is_ready(&self) -> bool {
-        matches!(self.synthesizer, SynthState::Loaded(_))
-    }
-
-    /// Provide a handle to the soundfont file
-    pub fn use_soundfont(&mut self, sound_font: Handle<SoundFont>) {
-        self.synthesizer = SynthState::LoadHandle { sound_font };
-        self._device = None;
-    }
-}
-
-impl Default for Synth {
-    fn default() -> Self {
-        let params = OutputDeviceParameters {
-            channels_count: 2,
-            sample_rate: 44100,
-            channel_sample_count: 441,
-        };
-        Self {
-            params,
-            synthesizer: SynthState::NotLoaded,
-            _device: None,
-        }
     }
 }
 
