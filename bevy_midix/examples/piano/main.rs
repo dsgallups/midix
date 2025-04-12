@@ -7,6 +7,14 @@ use bevy_midix::prelude::*;
 mod ui;
 
 ///Creates a 2d Piano Keyboard and plays the sound on press.
+///
+/// Note: due to the size of soundfont files and the lack of optimization
+/// for running this example, you should run this with example with `--release`
+///
+/// i.e.
+/// ```console
+/// cargo run --example piano --release
+/// ```
 fn main() {
     App::new()
         .add_plugins((

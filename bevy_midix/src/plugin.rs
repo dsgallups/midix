@@ -5,7 +5,9 @@ use bevy::prelude::*;
 
 use crate::{input::MidiInputPlugin, output::MidiOutputPlugin, synth::SynthPlugin};
 
-/// Configure the parts you want to include (input, output, synth)
+/// Configure the parts you want to include (input, output, synth).
+///
+/// By default, the output plugin is disabled.
 pub struct MidiPlugin {
     output: bool,
     input: bool,
@@ -15,7 +17,7 @@ pub struct MidiPlugin {
 impl Default for MidiPlugin {
     fn default() -> Self {
         Self {
-            output: true,
+            output: false,
             input: true,
             synth: Some(SynthPlugin::default()),
         }
