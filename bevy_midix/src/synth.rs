@@ -1,3 +1,7 @@
+#![doc = r#"
+Synthesizer resources, setup and plugins
+"#]
+
 use crate::prelude::*;
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -5,20 +9,25 @@ use midix_synth::prelude::*;
 use std::sync::{Arc, Mutex};
 use tinyaudio::{run_output_device, OutputDevice, OutputDeviceParameters};
 
+/// The plugin for handling the synthesizer
 pub fn plugin(app: &mut App) {
     app.init_resource::<Synth>()
         .add_systems(Update, spawn_synth);
 }
 
+/// Plays audio commands with the provided soundfont
+///
+/// Pass the synth midi events via the `Synth::handle_event` method
+///
+/// see [`ChannelVoiceMessage`] for the list of options
 #[derive(Resource)]
-#[allow(dead_code)]
 pub struct Synth {
-    params: OutputDeviceParameters,
     synthesizer: Arc<Mutex<Synthesizer>>,
     _device: Mutex<OutputDevice>,
 }
 
 impl Synth {
+    /// Send an event for the synth to play
     pub fn handle_event(&mut self, event: ChannelVoiceMessage) {
         warn!("Event received: {:?}", event);
         // TODO: refacctor midix synth
@@ -66,7 +75,6 @@ impl Default for Synth {
         .unwrap();
 
         Self {
-            params,
             synthesizer,
             _device: Mutex::new(_device),
         }

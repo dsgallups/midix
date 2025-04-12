@@ -184,7 +184,7 @@ fn reply(
             }
             Reply::Error(e) => {
                 warn!("{}", e);
-                err.send(e);
+                err.write(e);
             }
             Reply::Connected => {
                 conn.connected = true;
