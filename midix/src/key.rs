@@ -18,7 +18,7 @@ Each value corresponds to some [`Note`] and [`Octave`].
 
 let key_byte = 63;
 
-let key = Key::new(key_byte).unwrap(); // 63 is between 0-127
+let key = Key::from_databyte(key_byte).unwrap(); // 63 is between 0-127
 
 assert_eq!(key.note(), Note::DSharp);
 assert_eq!(key.octave(), Octave::new(4))
@@ -32,7 +32,7 @@ impl Key {
     /// Create a new key.
     ///
     /// Checks for correctness (leading 0 bit).
-    pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
+    pub fn from_databyte<B, E>(rep: B) -> Result<Self, std::io::Error>
     where
         B: TryInto<DataByte, Error = E>,
         E: Into<io::Error>,
@@ -42,18 +42,18 @@ impl Key {
 
     /// Create all possible keys (128)
     pub fn all() -> Vec<Self> {
-        (0..128).map(|v| Key::new(v).unwrap()).collect()
+        (0..128).map(|v| Key::from_databyte(v).unwrap()).collect()
     }
 
     /// Create a key from a given note and octave
-    pub fn from_note_and_octave(note: Note, octave: Octave) -> Self {
+    pub fn new(note: Note, octave: Octave) -> Self {
         let octave_byte = (octave.value() + 1) as u8;
 
         let key = note.get_mod_12();
 
         let octave_mult = (octave_byte) * 12;
 
-        Self::new(octave_mult + key).unwrap()
+        Self::from_databyte(octave_mult + key).unwrap()
     }
 
     /// Identifies the note of the key pressed
@@ -84,8 +84,8 @@ impl Key {
     }
 
     /// Returns the underlying byte of the key
-    pub fn byte(&self) -> DataByte {
-        self.0
+    pub fn byte(&self) -> u8 {
+        self.0.0
     }
 }
 
@@ -97,21 +97,21 @@ impl fmt::Display for Key {
 
 #[test]
 fn test_note() {
-    let c = Key::new(12).unwrap();
+    let c = Key::from_databyte(12).unwrap();
 
     assert_eq!(Note::C, c.note());
 
-    let a_sharp = Key::new(94).unwrap();
+    let a_sharp = Key::from_databyte(94).unwrap();
     assert_eq!(Note::ASharp, a_sharp.note());
 }
 
 #[test]
 fn test_octave() {
-    let c = Key::new(12).unwrap();
+    let c = Key::from_databyte(12).unwrap();
 
     assert_eq!(0, c.octave().value());
 
-    let a_sharp = Key::new(94).unwrap();
+    let a_sharp = Key::from_databyte(94).unwrap();
     assert_eq!(6, a_sharp.octave().value());
 }
 
@@ -257,7 +257,7 @@ impl Note {
 
     /// Create a [`Key`] given this note and a provided [`Octave`]
     pub fn with_octave(self, octave: Octave) -> Key {
-        Key::from_note_and_octave(self, octave)
+        Key::new(self, octave)
     }
 }
 impl fmt::Display for Note {
@@ -321,7 +321,7 @@ impl Octave {
 
     /// Create a [`Key`] given this octave and a provided [`Note`]
     pub fn with_note(self, note: Note) -> Key {
-        Key::from_note_and_octave(note, self)
+        Key::new(note, self)
     }
 }
 
@@ -334,15 +334,15 @@ impl fmt::Display for Octave {
 #[test]
 fn key_from_note_octave_pairs() {
     for key_byte in 0..128 {
-        let key = Key::new(key_byte).unwrap();
+        let key = Key::from_databyte(key_byte).unwrap();
 
         let exp_note = key.note();
         let exp_oct = key.octave();
 
-        let made_key = Key::from_note_and_octave(exp_note, exp_oct);
+        let made_key = Key::new(exp_note, exp_oct);
 
         assert_eq!(exp_oct, made_key.octave());
         assert_eq!(exp_note, made_key.note());
-        assert_eq!(key, Key::from_note_and_octave(exp_note, exp_oct));
+        assert_eq!(key, Key::new(exp_note, exp_oct));
     }
 }

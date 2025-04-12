@@ -55,7 +55,7 @@ pub mod prelude {
         events::*,
         file::*,
         file_repr::{chunk::*, meta::*, track::*, *},
-        message::{channel::*, system::*, MidiMessage},
+        message::{MidiMessage, channel::*, system::*},
         *,
     };
 

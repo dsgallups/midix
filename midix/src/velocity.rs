@@ -28,13 +28,13 @@ impl Velocity {
     }
 
     /// Get a reference to the underlying byte
-    pub fn byte(&self) -> DataByte {
-        self.0
+    pub fn byte(&self) -> u8 {
+        self.0.0
     }
 
     /// Get the dynamic of the velocity...fortississississimo
     pub fn dynamic(&self) -> Dynamic {
-        match self.byte().value() {
+        match self.byte() {
             0 => Dynamic::off(),
             1..16 => Dynamic::ppp(),
             16..32 => Dynamic::pp(),

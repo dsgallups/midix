@@ -2,6 +2,7 @@
 Contains [`MidiOutputPlugin`] and other types to handle output
 "#]
 
+use MidiOutputError::{ConnectionError, PortRefreshError, SendDisconnectedError, SendError};
 use bevy::prelude::*;
 use bevy::tasks::IoTaskPool;
 use crossbeam_channel::{Receiver, Sender};
@@ -10,7 +11,6 @@ pub use midir::MidiOutputPort;
 use midix::events::LiveEvent;
 use std::fmt::Display;
 use std::{error::Error, future::Future};
-use MidiOutputError::{ConnectionError, PortRefreshError, SendDisconnectedError, SendError};
 
 #[doc = r#"
 Inserts [`MidiOutputSettings`] and [`MidiOutputConnection`] as resources.
@@ -184,7 +184,7 @@ fn reply(
             }
             Reply::Error(e) => {
                 warn!("{}", e);
-                err.send(e);
+                err.write(e);
             }
             Reply::Connected => {
                 conn.connected = true;

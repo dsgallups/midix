@@ -8,7 +8,7 @@ use std::{io::Read, sync::Arc};
 use thiserror::Error;
 
 use bevy::{
-    asset::{io::Reader, AssetLoader, LoadContext},
+    asset::{AssetLoader, LoadContext, io::Reader},
     prelude::*,
 };
 use midix_synth::{prelude::SoundFontError, soundfont::SoundFont as Sf};
@@ -16,7 +16,7 @@ use midix_synth::{prelude::SoundFontError, soundfont::SoundFont as Sf};
 /// Sound font asset
 #[derive(Asset, TypePath)]
 pub struct SoundFont {
-    file: Arc<Sf>,
+    pub(crate) file: Arc<Sf>,
 }
 
 impl SoundFont {
@@ -26,10 +26,10 @@ impl SoundFont {
 
         Ok(Self { file: sf })
     }
-    /// Provides the interior font
-    pub fn font(&self) -> &Arc<Sf> {
-        &self.file
-    }
+    // /// Provides the interior font
+    // pub fn font(&self) -> &Arc<Sf> {
+    //     &self.file
+    // }
 }
 
 /// Possible errors that can be produced by [`CustomAssetLoader`]
@@ -56,8 +56,12 @@ impl AssetLoader for SoundFontLoader {
         _load_context: &mut LoadContext<'_>,
     ) -> Result<Self::Asset, Self::Error> {
         let mut bytes = Vec::new();
+        info!(
+            "Loading bytes...this might take a while. If taking too long, run with --release or with opt-level = 3!"
+        );
         reader.read_to_end(&mut bytes).await?;
 
+        info!("Loaded!");
         let res = SoundFont::new(&mut bytes.as_slice())?;
 
         Ok(res)

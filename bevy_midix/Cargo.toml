@@ -1,8 +1,8 @@
 [package]
 name = "bevy_midix"
-version = "2.0.0"
+version = "3.0.0-rc1"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/dsgallups/midix"
@@ -15,20 +15,28 @@ exclude = ["assets/*"]
 
 [dependencies]
 midir = "0.10"
-crossbeam-channel = "0.5.8"
-midix = { version = "2.0.0", features = ["bevy"], path = "../midix" }
-midix_synth = { path = "../midix_synth" }
-thiserror = "2.0.9"
+crossbeam-channel = "0.5.15"
+midix = { version = "3.0.0-rc1", features = ["bevy"], path = "../midix" }
+midix_synth = { version = "0.0.1-rc1", path = "../midix_synth" }
+thiserror = "2.0"
+tinyaudio = "1.1.0"
+itertools = "0.14.0"
 
 [dev-dependencies]
-bevy_egui = { version = "0.31.1", features = ["immutable_ctx"] }
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.27", features = ["derive"] }
 
 [dependencies.bevy]
-version = "0.15"
+version = "0.16.0-rc.4"
 default-features = false
-features = ["multi_threaded", "bevy_asset"]
+features = [
+    "multi_threaded",
+    "bevy_asset",
+    "std",
+    "async_executor",
+    "tracing",
+    "bevy_state",
+]
 
 [dev-dependencies.bevy]
-version = "0.15"
+version = "0.16.0-rc.4"
 default-features = true
