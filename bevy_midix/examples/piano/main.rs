@@ -25,3 +25,7 @@ fn main() {
         ))
         .run();
 }
+
+fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
+    synth.use_soundfont(asset_server.load("assets/soundfont.sf2"));
+}

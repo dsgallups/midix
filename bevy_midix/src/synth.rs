@@ -2,6 +2,7 @@
 Synthesizer resources, setup and plugins
 "#]
 
+use crate::prelude::SoundFont;
 use crate::prelude::*;
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -28,7 +29,7 @@ pub struct Synth {
 
 impl Synth {
     /// Send an event for the synth to play
-    pub fn handle_event(&mut self, event: ChannelVoiceMessage) {
+    pub fn handle_event(&self, event: ChannelVoiceMessage) {
         warn!("Event received: {:?}", event);
         // TODO: refacctor midix synth
         let mut synth = self.synthesizer.lock().unwrap();
@@ -37,6 +38,10 @@ impl Synth {
         let data1 = event.data_1_byte() as i32;
         let data2 = event.data_2_byte().unwrap_or(0) as i32;
         synth.process_midi_message(channel, command, data1, data2);
+    }
+
+    pub fn use_soundfont(&mut self, sound_font: Handle<SoundFont>) {
+        todo!()
     }
 }
 
