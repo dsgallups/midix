@@ -16,7 +16,7 @@ use midix_synth::{prelude::SoundFontError, soundfont::SoundFont as Sf};
 /// Sound font asset
 #[derive(Asset, TypePath)]
 pub struct SoundFont {
-    file: Arc<Sf>,
+    pub(crate) file: Arc<Sf>,
 }
 
 impl SoundFont {
@@ -26,10 +26,10 @@ impl SoundFont {
 
         Ok(Self { file: sf })
     }
-    /// Provides the interior font
-    pub fn font(&self) -> &Arc<Sf> {
-        &self.file
-    }
+    // /// Provides the interior font
+    // pub fn font(&self) -> &Arc<Sf> {
+    //     &self.file
+    // }
 }
 
 /// Possible errors that can be produced by [`CustomAssetLoader`]
