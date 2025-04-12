@@ -1,6 +1,6 @@
 [package]
 name = "bevy_midix"
-version = "3.0.0-rc1"
+version = "3.0.0-rc2"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
