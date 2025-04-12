@@ -25,7 +25,11 @@ pub fn plugin(app: &mut App) {
         .add_systems(OnExit(UiState::Active), piano::cleanup)
         .add_systems(
             Update,
-            (piano::handle_input, piano::handle_midi_device_input)
+            (
+                piano::handle_input,
+                piano::handle_midi_device_input,
+                piano::update_command_text,
+            )
                 .run_if(in_state(UiState::Active)),
         );
 }
