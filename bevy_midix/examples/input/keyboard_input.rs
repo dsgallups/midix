@@ -6,13 +6,17 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, (refresh_inputs, connect));
 }
 
-fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, input: Res<OldMidiInput>) {
+fn refresh_inputs(keys: Res<ButtonInput<KeyCode>>, mut port_event: EventWriter<MidiInputEvent>) {
     if keys.just_pressed(KeyCode::KeyR) {
-        input.refresh_ports();
+        port_event.write(MidiInputEvent::RefreshPorts);
     }
 }
 
-fn connect(keys: Res<ButtonInput<KeyCode>>, input: Res<OldMidiInput>) {
+fn connect(
+    keys: Res<ButtonInput<KeyCode>>,
+    input: Res<MidiInputPorts>,
+    mut port_event: EventWriter<MidiInputEvent>,
+) {
     for (keycode, index) in [
         (KeyCode::Digit0, 0),
         (KeyCode::Digit1, 1),
@@ -26,9 +30,9 @@ fn connect(keys: Res<ButtonInput<KeyCode>>, input: Res<OldMidiInput>) {
         (KeyCode::Digit9, 9),
     ] {
         if keys.just_pressed(keycode) {
-            if let Some((name, port)) = input.ports().get(index) {
-                input.connect(port.clone());
-                debug!("Connecting to {name}");
+            if let Some(port) = input.ports().get(index) {
+                debug!("Connecting to {}", port.id());
+                port_event.write(MidiInputEvent::ConnectToPort(port.id()));
             }
         }
     }

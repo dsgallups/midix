@@ -9,7 +9,7 @@ use crossbeam_channel::{Receiver, Sender, TryRecvError};
 pub use midir::MidiInputPort;
 use midix::events::{FromLiveEventBytes, LiveEvent};
 
-use crate::input::{MidiData, MidiInputError};
+use crate::old_input::{MidiData, MidiInputError};
 
 use super::{MidiInputSettings, MidirReply};
 

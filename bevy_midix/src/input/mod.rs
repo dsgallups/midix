@@ -1,19 +1,17 @@
 #![allow(missing_docs)]
 use bevy::prelude::*;
-use midir::MidiInputPort;
 
 mod settings;
-use midix::events::LiveEvent;
 pub use settings::*;
-
-mod midir_stuff;
-pub use midir_stuff::*;
 
 mod connection;
 pub use connection::*;
 
 mod error;
 pub use error::*;
+
+mod ports;
+pub use ports::*;
 
 #[doc = r#"
 Inserts [`MidiInputSettings`] and [`MidiInputConnection`] as resource
@@ -26,7 +24,7 @@ pub struct MidiInputPlugin {
 }
 
 #[derive(Event)]
-pub(crate) enum MidiInputEvent {
+pub enum MidiInputEvent {
     RefreshPorts,
     ConnectToPort(String),
     Disconnect(Entity),
@@ -34,25 +32,19 @@ pub(crate) enum MidiInputEvent {
 
 impl Plugin for MidiInputPlugin {
     fn build(&self, app: &mut App) {
-        let midir_input = MidiConnection::new(self.settings.client_name);
-        app.init_resource::<MidiInput>()
+        app.init_resource::<MidiInputPorts>()
+            .add_event::<MidiInputEvent>()
             .insert_resource(self.settings)
-            .insert_resource(midir_input)
-            //.add_systems(PreUpdate, update_available_ports)
+            .add_plugins(connection::plugin)
             .add_systems(PostUpdate, handle_port_commands);
     }
-}
-
-#[derive(Resource, Default)]
-pub struct MidiInput {
-    ports: Vec<MidiInputPort>,
 }
 
 fn handle_port_commands(
     mut commands: Commands,
     mut events: EventReader<MidiInputEvent>,
     midi_settings: Res<MidiInputSettings>,
-    mut midi_input: ResMut<MidiInput>,
+    mut midi_input: ResMut<MidiInputPorts>,
 ) {
     for command in events.read() {
         match command {

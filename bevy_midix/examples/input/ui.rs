@@ -3,6 +3,7 @@ use bevy::{
         css::{GREEN, RED},
         tailwind::{YELLOW_200, YELLOW_300},
     },
+    ecs::query::QuerySingleError,
     prelude::*,
 };
 use bevy_midix::prelude::*;
@@ -86,15 +87,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 struct AvailablePortsText;
 
 fn update_available_ports(
-    input: Res<OldMidiInput>,
+    input: Res<MidiInputPorts>,
     mut instructions: Query<&mut TextSpan, With<AvailablePortsText>>,
 ) {
     if input.is_changed() {
         let mut instructions = instructions.single_mut().unwrap();
         let mut value = String::new();
 
-        for (i, (name, _)) in input.ports().iter().enumerate() {
-            value.push_str(&format!("Port {}: {:?}\n", i, name));
+        for (i, port) in input.ports().iter().enumerate() {
+            value.push_str(&format!("Port {}: {:?}\n", i, port.id()));
         }
         value.push('\n');
 
@@ -109,19 +110,24 @@ struct ConnectStatus;
 //
 // and may want to be able to accept input from many midi devices
 fn update_connection_status(
-    connection: Res<MidiInputConnection>,
+    connections: Query<&MidiInputConnection>,
     mut status: Query<(&mut TextSpan, &mut TextColor), With<ConnectStatus>>,
 ) {
-    if connection.is_changed() {
-        let (mut status, mut color) = status.single_mut().unwrap();
-
-        if connection.is_connected() {
+    let (mut status, mut color) = status.single_mut().unwrap();
+    match connections.single() {
+        Ok(_s) => {
             status.0 = "Connected".to_string();
             color.0 = GREEN.into();
-        } else {
-            status.0 = "Disconnected".to_string();
-            color.0 = RED.into();
         }
+        Err(e) => match e {
+            QuerySingleError::MultipleEntities(_) => {
+                panic!()
+            }
+            QuerySingleError::NoEntities(_) => {
+                status.0 = "Disconnected".to_string();
+                color.0 = RED.into();
+            }
+        },
     }
 }
 
