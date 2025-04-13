@@ -2,7 +2,6 @@ use core::fmt;
 use std::{
     io,
     ops::{Add, AddAssign, Sub, SubAssign},
-    thread::panicking,
 };
 
 use crate::DataByte;
@@ -64,7 +63,7 @@ impl Key {
         let octave_mult = (octave_byte) * 12;
 
         if octave_mult + note_byte > 127 {
-            panic!("Can't");
+            panic!("Can't make Key. See documentation for details.");
         }
 
         Self(DataByte(octave_mult + note_byte))
