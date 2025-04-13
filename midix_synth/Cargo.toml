@@ -13,3 +13,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 midix = { version = "3.0.0", path = "../midix" }
+tracing = "0.1.41"

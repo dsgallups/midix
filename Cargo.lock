@@ -2736,6 +2736,7 @@ name = "midix_synth"
 version = "0.0.1"
 dependencies = [
  "midix",
+ "tracing",
 ]
 
 [[package]]
