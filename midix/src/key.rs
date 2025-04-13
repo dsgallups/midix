@@ -436,6 +436,32 @@ impl fmt::Display for Octave {
     }
 }
 
+impl Add<i8> for Octave {
+    type Output = Octave;
+    fn add(self, rhs: i8) -> Self::Output {
+        Self::new(self.0 + rhs)
+    }
+}
+
+impl AddAssign<i8> for Octave {
+    fn add_assign(&mut self, rhs: i8) {
+        self.0 = (self.0 + rhs).clamp(-1, 9);
+    }
+}
+
+impl Sub<i8> for Octave {
+    type Output = Octave;
+    fn sub(self, rhs: i8) -> Self::Output {
+        Self::new(self.0 - rhs)
+    }
+}
+
+impl SubAssign<i8> for Octave {
+    fn sub_assign(&mut self, rhs: i8) {
+        self.0 = (self.0 - rhs).clamp(-1, 9);
+    }
+}
+
 #[test]
 fn key_from_note_octave_pairs() {
     for key_byte in 0..128 {

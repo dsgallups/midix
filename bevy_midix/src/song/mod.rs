@@ -1,3 +1,6 @@
+#![doc = r#"
+Components to make songs programatically
+"#]
 use std::time::Duration;
 
 use bevy::prelude::*;
@@ -11,6 +14,9 @@ pub use beat::*;
 
 mod simple_song;
 pub use simple_song::*;
+
+mod section;
+pub use section::*;
 
 /// A component designed to make simple songs.
 ///

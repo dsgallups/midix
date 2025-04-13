@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
-use super::{Beat, ChannelSettings, MidiSong};
+use super::{Beat, ChannelModifier, MidiSong};
 
 /// A builder designed to make simple songs.
 ///
@@ -34,8 +34,8 @@ impl SimpleMidiSong {
     }
 
     /// Set values for a channel
-    pub fn channel(&mut self, channel: Channel) -> ChannelSettings<'_> {
-        ChannelSettings {
+    pub fn channel(&mut self, channel: Channel) -> ChannelModifier<'_> {
+        ChannelModifier {
             song: self,
             channel,
         }
@@ -118,16 +118,16 @@ fn make_simple_song() {
     simple_song
         .beat(1)
         .channel(Channel::One)
-        .play_note(Key::new(Note::A, Octave::new(2)));
+        .play(Key::new(Note::A, Octave::new(2)));
     simple_song
         .beat(2)
         .channel(Channel::One)
-        .play_note(Key::new(Note::B, Octave::new(4)));
+        .play(Key::new(Note::B, Octave::new(4)));
 
     simple_song
         .beat(5)
         .channel(Channel::One)
-        .play_note(Key::new(Note::F, Octave::new(1)));
+        .play(Key::new(Note::F, Octave::new(1)));
 
     let song = simple_song.build();
 
