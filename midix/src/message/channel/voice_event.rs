@@ -69,6 +69,10 @@ impl VoiceEvent {
     pub fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(channel, self)
     }
+    /// Set a new instrument to use for the channel
+    pub fn program_change(program: Program) -> Self {
+        Self::ProgramChange { program }
+    }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {

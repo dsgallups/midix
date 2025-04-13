@@ -2,6 +2,7 @@ use core::fmt;
 use std::{
     io,
     ops::{Add, AddAssign, Sub, SubAssign},
+    thread::panicking,
 };
 
 use crate::DataByte;
@@ -55,14 +56,18 @@ impl Key {
     ///
     /// this is because `Key::GSharp-Key::B` for octave 9 is not representable
     /// in midi.
-    pub fn new(note: Note, octave: Octave) -> Self {
+    pub const fn new(note: Note, octave: Octave) -> Self {
         let octave_byte = (octave.value() + 1) as u8;
 
         let note_byte = note.get_mod_12();
 
         let octave_mult = (octave_byte) * 12;
 
-        Self::from_databyte(octave_mult + note_byte).unwrap()
+        if octave_mult + note_byte > 127 {
+            panic!("Can't");
+        }
+
+        Self(DataByte(octave_mult + note_byte))
     }
 
     /// Identifies the note of the key pressed
@@ -319,7 +324,7 @@ impl Note {
             _ => unreachable!(),
         }
     }
-    fn get_mod_12(&self) -> u8 {
+    const fn get_mod_12(&self) -> u8 {
         use Note::*;
         match self {
             C => 0,
@@ -392,8 +397,13 @@ impl Octave {
         Self(octave as i8 - 1)
     }
     /// Should be a value between [-1, 9]. Clamps between these two values.
-    pub fn new(octave: i8) -> Self {
-        Self(octave.clamp(-1, 9))
+    pub const fn new(mut octave: i8) -> Self {
+        if octave < -1 {
+            octave = -1
+        } else if octave > 9 {
+            octave = 9;
+        }
+        Self(octave)
     }
 
     /// The octave, from `[-1,9]`
