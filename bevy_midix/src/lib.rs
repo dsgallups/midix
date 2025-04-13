@@ -9,6 +9,8 @@ mod settings;
 pub mod synth;
 pub use settings::*;
 
+pub mod song;
+
 /// Re-export of [`midix`]
 pub mod midix {
     pub use midix::*;
@@ -17,5 +19,5 @@ pub mod midix {
 /// Commonly re-exported types
 pub mod prelude {
     pub use crate::MidiSettings;
-    pub use crate::{asset::*, input::*, output::*, plugin::*, synth::*};
+    pub use crate::{asset::*, input::*, output::*, plugin::*, song::*, synth::*};
 }

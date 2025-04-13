@@ -5,6 +5,8 @@ use bevy::{
     prelude::*,
 };
 use bevy_midix::{midix::prelude::*, prelude::*};
+
+mod song;
 fn main() {
     App::new()
         .add_plugins((
@@ -17,8 +19,8 @@ fn main() {
                 ..Default::default()
             },
         ))
-        .add_systems(Startup, load_sf2)
-        .add_systems(Update, make_song)
+        .add_systems(Startup, (load_sf2, song::make_simple_song))
+        .add_systems(Update, play_song)
         .run();
 }
 
@@ -44,7 +46,7 @@ impl Default for VoiceChanger {
     }
 }
 
-fn make_song(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChanger>) {
+fn play_song(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChanger>) {
     if !synth.is_ready() {
         return;
     }
