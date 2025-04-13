@@ -2,19 +2,10 @@ use std::io::Read;
 
 use bevy::prelude::*;
 use midir::{MidiOutputPort, SendError};
-use midix::{MidiMessageBytes, events::LiveEvent};
+use midix::MidiMessageBytes;
 
 use super::MidiOutputError;
 
-/// An [`Event`] for incoming midi data.
-#[derive(Event, Debug)]
-pub struct MidiData {
-    /// Returns the timestamp of the data
-    pub stamp: Option<u64>,
-
-    /// The underlying message of the event
-    pub message: LiveEvent<'static>,
-}
 pub(crate) struct MidiOutputConnection {
     conn: midir::MidiOutputConnection,
 }

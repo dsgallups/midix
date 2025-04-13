@@ -6,7 +6,7 @@ use midix::MidiMessageBytes;
 pub use settings::*;
 
 mod connection;
-pub use connection::*;
+use connection::*;
 
 mod error;
 pub use error::*;

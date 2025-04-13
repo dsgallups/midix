@@ -2,7 +2,7 @@ use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
 };
-use bevy_midix::prelude::*;
+use bevy_midix::{midix::prelude::*, prelude::*};
 
 mod key_input;
 
