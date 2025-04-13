@@ -26,10 +26,6 @@ impl SoundFont {
 
         Ok(Self { file: sf })
     }
-    // /// Provides the interior font
-    // pub fn font(&self) -> &Arc<Sf> {
-    //     &self.file
-    // }
 }
 
 /// Possible errors that can be produced by [`CustomAssetLoader`]

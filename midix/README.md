@@ -1,15 +1,22 @@
-
-Composable, parsable MIDI structures
+# MIDIx
+[<img alt="github" src="https://img.shields.io/badge/github-dsgallups/color-gen?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/dsgallups/midix)
+[<img alt="crates.io" src="https://img.shields.io/crates/v/midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/midix)
+Human readable MIDI structures
 
 
 
 # Overview
 
-`midix` provides a min-copy parser ([`Reader`](crate::prelude::Reader)) to read events from `.mid` files.
+`midix` provides a parser ([`Reader`](crate::prelude::Reader)) to read events from `.mid` files.
 calling [`Reader::read_event`](crate::prelude::Reader::read_event) will yield a [`FileEvent`](crate::prelude::FileEvent).
 
-Additionally, `midix` provides the user with [`LiveEvent::from_bytes`](crate::events::LiveEvent), which will parse
-events from a live MIDI source.
+Additionally, `midix` provides the user with [`LiveEvent::from_bytes`](crate::events::LiveEvent), which will parse events from a live MIDI source.
+
+You may also make your own MIDI representation using the provided structs. If check out
+[`bevy_midix`](https://github.com/dsgallups/midix/bevy_midix) if you'd like to use `midix` in your games!
+
+## Goal
+`midix` is NOT designed to be as fast as possible. It is designed for a user to navigate the MIDI format to read and write to. Instead of working directly with bytes, use language to define what your MIDI is supposed to do.
 
 # Getting Started
 

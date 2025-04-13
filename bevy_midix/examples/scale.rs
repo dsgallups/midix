@@ -1,15 +1,5 @@
-# bevy_MIDIx
-[<img alt="github" src="https://img.shields.io/badge/github-dsgallups/color-gen?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/dsgallups/midix)
-[<img alt="crates.io" src="https://img.shields.io/crates/v/bevy_midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/bevy_midix)
-
-Bevy plugin that uses [`midix`](https://crates.io/crates/midix),
-[`midir`](https://github.com/Boddlnagg/midir), and a [`rustysynth`](https://github.com/sinshu/rustysynth) fork to play midi sounds!
-
-Read from MIDI devices, MIDI files, and programmable input, and output to user audio with a soundfont!
-
-# Example
-```rust, no_run
 use std::time::Duration;
+
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
@@ -88,7 +78,6 @@ impl Default for Scale {
 }
 
 fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
-    // don't do anything until the soundfont has been loaded
     if !synth.is_ready() {
         return;
     }
@@ -97,13 +86,14 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
         return;
     }
     if scale.note_on {
+        info!("Note on {}!", scale.current_key);
         //play note on
         synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
             VoiceEvent::note_on(scale.current_key, Velocity::max()),
         ));
     } else {
-        //turn off the note
+        info!("Note off {}!", scale.current_key);
         synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
             VoiceEvent::note_off(scale.current_key, Velocity::max()),
@@ -113,11 +103,3 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
 
     scale.note_on = !scale.note_on;
 }
-```
-
-See `/examples` for details.
-
-
-# Acknowledgment
-
-This crate was originally forked from [`bevy_midi`](https://github.com/BlackPhlox/bevy_midi). Please check them out if this crate doesn't suit your needs!

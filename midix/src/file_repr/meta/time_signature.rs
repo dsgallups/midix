@@ -37,7 +37,7 @@ impl Default for TimeSignature<'_> {
 }
 
 impl<'a> TimeSignature<'a> {
-    /// 4 bytes; 4/4 time; 24 MIDI clocks/click, 8 32nd notes/ 24 MIDI clocks (24 MIDI clocks = 1 crotchet = 1 beat)
+    /// 4 bytes; 6/8 time; 24 MIDI clocks/click, 8 32nd notes/ 24 MIDI clocks (24 MIDI clocks = 1 crotchet = 1 beat)
     /// is represented by
     /// ```rust
     /// # use midix::prelude::*;

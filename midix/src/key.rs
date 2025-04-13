@@ -1,5 +1,8 @@
 use core::fmt;
-use std::io;
+use std::{
+    io,
+    ops::{Add, AddAssign, Sub, SubAssign},
+};
 
 use crate::DataByte;
 
@@ -46,14 +49,20 @@ impl Key {
     }
 
     /// Create a key from a given note and octave
+    ///
+    /// # Panics
+    /// if you pass in, on `Octave::new(9)` a Key greater than `Key::G`.
+    ///
+    /// this is because `Key::GSharp-Key::B` for octave 9 is not representable
+    /// in midi.
     pub fn new(note: Note, octave: Octave) -> Self {
         let octave_byte = (octave.value() + 1) as u8;
 
-        let key = note.get_mod_12();
+        let note_byte = note.get_mod_12();
 
         let octave_mult = (octave_byte) * 12;
 
-        Self::from_databyte(octave_mult + key).unwrap()
+        Self::from_databyte(octave_mult + note_byte).unwrap()
     }
 
     /// Identifies the note of the key pressed
@@ -93,6 +102,79 @@ impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.note(), self.octave())
     }
+}
+
+impl Add<u8> for Key {
+    type Output = Key;
+    fn add(self, rhs: u8) -> Self::Output {
+        let next = (self.0.0 + rhs).min(127);
+        Self(DataByte(next))
+    }
+}
+
+impl AddAssign<u8> for Key {
+    fn add_assign(&mut self, rhs: u8) {
+        if self.0.0 >= 127 {
+            return;
+        }
+        let next = (self.0.0 + rhs).min(127);
+        self.0.0 = next;
+    }
+}
+
+impl Sub<u8> for Key {
+    type Output = Key;
+    fn sub(self, rhs: u8) -> Self::Output {
+        let next = self.0.0.saturating_sub(rhs);
+        Self(DataByte(next))
+    }
+}
+
+impl SubAssign<u8> for Key {
+    fn sub_assign(&mut self, rhs: u8) {
+        let next = self.0.0.saturating_sub(rhs);
+        self.0.0 = next;
+    }
+}
+
+#[test]
+fn add_to_note() {
+    let key = Key::new(Note::C, Octave::new(9));
+    let plus_one = key + 1;
+    assert_eq!(plus_one, Key::new(Note::CSharp, Octave::new(9)));
+
+    let plus_alot = key + 50;
+    assert_eq!(plus_alot, Key::new(Note::G, Octave::new(9)));
+}
+
+#[test]
+fn add_assign_to_note() {
+    let mut key = Key::new(Note::C, Octave::new(9));
+    key += 1;
+    assert_eq!(key, Key::new(Note::CSharp, Octave::new(9)));
+
+    key += 50;
+    assert_eq!(key, Key::new(Note::G, Octave::new(9)));
+}
+
+#[test]
+fn sub_from_note() {
+    let key = Key::new(Note::C, Octave::new(9));
+    let minus_one = key - 1;
+    assert_eq!(minus_one, Key::new(Note::B, Octave::new(8)));
+
+    let minus_alot = key - 220;
+    assert_eq!(minus_alot, Key::new(Note::C, Octave::new(-1)));
+}
+
+#[test]
+fn subassign_note() {
+    let mut key = Key::new(Note::C, Octave::new(9));
+    key -= 1;
+    assert_eq!(key, Key::new(Note::B, Octave::new(8)));
+
+    key -= 220;
+    assert_eq!(key, Key::new(Note::C, Octave::new(-1)));
 }
 
 #[test]
