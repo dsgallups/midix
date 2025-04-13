@@ -1,6 +1,5 @@
 use midix::{
     Key, Velocity,
-    events::LiveEvent,
     prelude::{Channel, ChannelVoiceMessage, VoiceEvent},
 };
 

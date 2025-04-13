@@ -26,7 +26,7 @@ pub use simple_song::*;
 pub struct MidiSong {
     timer: Timer,
 
-    current_beat: u16,
+    current_beat: usize,
 
     // each indice is a beat
     queue: Vec<Vec<ChannelVoiceMessage>>,
@@ -47,7 +47,6 @@ impl MidiSong {
             current_beat: 0,
             queue: Vec::new(),
         }
-        // the timer will tick every beat
     }
     /// push events for this beat
     pub(crate) fn push_beat_events<I>(&mut self, events: I) -> &mut Self
@@ -56,5 +55,34 @@ impl MidiSong {
     {
         self.queue.push(events.collect());
         self
+    }
+    /// Get the current beat. 0 means the song is at the beginning, waiting to play.
+    pub fn current_beat(&self) -> usize {
+        self.current_beat
+    }
+    /// reset the beat to zero.
+    pub fn restart(&mut self) {
+        self.current_beat = 0;
+        self.timer.reset();
+    }
+    /// Set the current beat number.
+    pub fn skip_to(&mut self, beat: usize) {
+        self.current_beat = beat.saturating_sub(1);
+        self.timer.reset();
+    }
+
+    /// returns true if the current beat is past the end of the song.
+    pub fn finished(&self) -> bool {
+        self.current_beat >= self.queue.len()
+    }
+    /// Pass a [`Timer::delta()`] to get events to play right now.
+    pub fn get_events(&mut self, delta: Duration) -> Option<&[ChannelVoiceMessage]> {
+        self.timer.tick(delta);
+        if self.timer.just_finished() {
+            let res = self.queue.get(self.current_beat).map(|v| v.as_slice());
+            self.current_beat += 1;
+            return res;
+        }
+        None
     }
 }

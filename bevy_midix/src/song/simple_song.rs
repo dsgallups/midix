@@ -1,5 +1,3 @@
-use std::iter;
-
 use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
@@ -15,7 +13,6 @@ use super::{Beat, ChannelSettings, MidiSong};
 /// it will handle the rest.
 pub struct SimpleMidiSong {
     beats_per_minute: f64,
-    beats_per_measure: u16,
 
     pub(crate) channel_presets: FnvHashMap<Channel, Program>,
 
@@ -24,12 +21,12 @@ pub struct SimpleMidiSong {
 }
 
 impl SimpleMidiSong {
-    /// Creates a new simple song with a bpm and beats per measure.
+    /// Creates a new simple song with a bpm.
     ///
-    pub fn new(beats_per_minute: f64, beats_per_measure: u16) -> Self {
+    /// Beats per measure isn't needed. Simple song!
+    pub fn new(beats_per_minute: f64) -> Self {
         Self {
             beats_per_minute,
-            beats_per_measure,
             channel_presets: Default::default(),
             beats: Default::default(),
             last_beat: 0,
@@ -106,7 +103,7 @@ impl SimpleMidiSong {
 #[test]
 fn make_simple_song() {
     use pretty_assertions::assert_eq;
-    let mut simple_song = SimpleMidiSong::new(120., 4);
+    let mut simple_song = SimpleMidiSong::new(120.);
     simple_song
         .beat(1)
         .channel(Channel::One)
