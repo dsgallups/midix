@@ -1,7 +1,10 @@
 #![doc = r#"
 Components to make songs programatically
 "#]
-use std::time::Duration;
+use std::{
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 
 use bevy::prelude::*;
 use midix::prelude::*;
@@ -18,6 +21,8 @@ pub use simple_song::*;
 mod section;
 pub use section::*;
 
+use crate::synth::Synth;
+
 /// A component designed to make simple songs.
 ///
 /// Playing using the beat method, you can play a single tone for a whole beat.
@@ -30,7 +35,7 @@ pub use section::*;
 /// and that's not yet the case.
 #[derive(Component, Resource)]
 pub struct MidiSong {
-    timer: Timer,
+    timer: Arc<RwLock<Timer>>,
 
     current_beat: usize,
 
@@ -49,7 +54,7 @@ impl MidiSong {
         );
 
         Self {
-            timer,
+            timer: Arc::new(RwLock::new(timer)),
             current_beat: 0,
             queue: Vec::new(),
         }
@@ -62,6 +67,9 @@ impl MidiSong {
         self.queue.push(events.collect());
         self
     }
+
+    pub fn pause(&mut self) {}
+
     /// Get the current beat. 0 means the song is at the beginning, waiting to play.
     pub fn current_beat(&self) -> usize {
         self.current_beat
@@ -69,12 +77,14 @@ impl MidiSong {
     /// reset the beat to zero.
     pub fn restart(&mut self) {
         self.current_beat = 0;
-        self.timer.reset();
+        let mut lock = self.timer.write().unwrap();
+        lock.reset();
     }
     /// Set the current beat number.
     pub fn skip_to(&mut self, beat: usize) {
         self.current_beat = beat.saturating_sub(1);
-        self.timer.reset();
+        let mut lock = self.timer.write().unwrap();
+        lock.reset();
     }
 
     /// returns true if the current beat is past the end of the song.
@@ -82,7 +92,7 @@ impl MidiSong {
         self.current_beat >= self.queue.len()
     }
     /// Pass a [`Timer::delta()`] to get events to play right now.
-    pub fn get_events(&mut self, delta: Duration) -> Option<&[ChannelVoiceMessage]> {
+    fn get_events(&mut self, delta: Duration) -> Option<&[ChannelVoiceMessage]> {
         self.timer.tick(delta);
         if self.timer.just_finished() {
             let res = self.queue.get(self.current_beat).map(|v| v.as_slice());
@@ -91,4 +101,8 @@ impl MidiSong {
         }
         None
     }
+}
+
+fn spawn_song_thread(new_song: ResMut<MidiSong>, synth: Option<Res<Synth>>) {
+    //todo: spawna  thread to tick events
 }
