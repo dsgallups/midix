@@ -1,10 +1,10 @@
 use midix::{Program, prelude::Channel};
 
-use super::MidiSong;
+use super::SimpleMidiSong;
 
 /// A struct provided to update the settings of a particular channel for a song
 pub struct ChannelSettings<'a> {
-    pub(crate) song: &'a mut MidiSong,
+    pub(crate) song: &'a mut SimpleMidiSong,
     pub(crate) channel: Channel,
 }
 

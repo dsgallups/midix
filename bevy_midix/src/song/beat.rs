@@ -4,11 +4,11 @@ use midix::{
     prelude::{Channel, ChannelVoiceMessage, VoiceEvent},
 };
 
-use super::MidiSong;
+use super::SimpleMidiSong;
 
 /// A struct to define what goes on within a beat
 pub struct Beat<'a> {
-    pub(crate) song: &'a mut MidiSong,
+    pub(crate) song: &'a mut SimpleMidiSong,
     pub(crate) beat_no: u64,
 }
 

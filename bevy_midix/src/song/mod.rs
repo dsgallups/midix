@@ -1,5 +1,6 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
-use fnv::FnvHashMap;
 use midix::prelude::*;
 
 mod channel_settings;
@@ -8,72 +9,52 @@ pub use channel_settings::*;
 mod beat;
 pub use beat::*;
 
+mod simple_song;
+pub use simple_song::*;
+
 /// A component designed to make simple songs.
 ///
 /// Playing using the beat method, you can play a single tone for a whole beat.
 ///
 /// it will handle the rest.
+///
+/// The methods for creating a [`MidiSong`] are not yet public.
+///
+/// Ideally, a MidiSong should be able to handle all possible notes at any time,
+/// and that's not yet the case.
 #[derive(Component, Resource)]
 pub struct MidiSong {
-    beats_per_minute: f64,
-    beats_per_measure: u16,
+    timer: Timer,
 
-    channel_presets: FnvHashMap<Channel, Program>,
+    current_beat: u16,
 
-    beats: FnvHashMap<u64, Vec<ChannelVoiceMessage>>,
+    // each indice is a beat
+    queue: Vec<Vec<ChannelVoiceMessage>>,
 }
 
 impl MidiSong {
-    /// Creates a new simple song with a bpm and beats per measure.
-    ///
-    pub fn new(beats_per_minute: f64, beats_per_measure: u16) -> Self {
+    /// Set the beats per minute for the song
+    pub(crate) fn new(beats_per_minute: f64) -> Self {
+        let micros_per_beat = 60_000_000. / beats_per_minute;
+
+        let timer = Timer::new(
+            Duration::from_micros(micros_per_beat.round() as u64),
+            TimerMode::Repeating,
+        );
+
         Self {
-            beats_per_minute,
-            beats_per_measure,
-            channel_presets: Default::default(),
-            beats: Default::default(),
+            timer,
+            current_beat: 0,
+            queue: Vec::new(),
         }
+        // the timer will tick every beat
     }
-
-    /// Set values for a channel
-    pub fn channel(&mut self, channel: Channel) -> ChannelSettings<'_> {
-        ChannelSettings {
-            song: self,
-            channel,
-        }
-    }
-
-    /// Do something on beat. Beats start at 1.
-    pub fn beat(&mut self, beat_no: u64) -> Beat<'_> {
-        Beat {
-            song: self,
-            beat_no,
-        }
-    }
-
-    /// Add an event
-    pub fn add_event(&mut self, beat_no: u64, event: ChannelVoiceMessage) {
-        let note_on = event.is_note_on();
-        // here, we will add a note off for the next beat.
-        let current_beat = self.beats.entry(beat_no).or_default();
-        current_beat.push(event);
-
-        if note_on {
-            let next_beat = self.beats.entry(beat_no + 1).or_default();
-            next_beat.push(ChannelVoiceMessage::new(
-                event.channel(),
-                VoiceEvent::note_off(*event.key().unwrap(), Velocity::max()),
-            ));
-        }
-    }
-
-    /// Add a set of events toa beat.
-    pub fn add_events<Msgs>(&mut self, beat_no: u64, events: Msgs)
+    /// push events for this beat
+    pub(crate) fn push_beat_events<I>(&mut self, events: I) -> &mut Self
     where
-        Msgs: IntoIterator<Item = ChannelVoiceMessage>,
+        I: Iterator<Item = ChannelVoiceMessage>,
     {
-        for event in events {
-            self.add_event(beat_no, event);
-        }
+        self.queue.push(events.collect());
+        self
     }
 }
