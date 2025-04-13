@@ -97,6 +97,24 @@ impl Key {
         self.0.0
     }
 }
+/// Efficiently make a key.
+///
+///
+/// ## Example
+/// ```rust
+/// # use midix::prelude::*;
+/// let my_key = key!(C, 2);
+/// assert_eq!(my_key, Key::new(Note::C, Octave::new(2)));
+/// ```
+#[macro_export]
+macro_rules! key {
+    ($note:ident, $oct:literal) => {
+        ::midix::prelude::Key::new(
+            ::midix::prelude::Note::$note,
+            ::midix::prelude::Octave::new($oct),
+        )
+    };
+}
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

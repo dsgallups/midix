@@ -74,6 +74,17 @@ impl SimpleMidiSong {
     pub fn build(mut self) -> MidiSong {
         let mut song = MidiSong::new(self.beats_per_minute);
         let mut next_beat_additions = Vec::new();
+
+        // we'll add the program change for any voices set to next_beat additions
+        if !self.channel_presets.is_empty() {
+            for (channel, program) in self.channel_presets.into_iter() {
+                next_beat_additions.push(ChannelVoiceMessage::new(
+                    channel,
+                    VoiceEvent::program_change(program),
+                ));
+            }
+        }
+
         // need to turn off the last beat
         for i in 1..=(self.last_beat + 1) {
             let Some(events) = self.beats.remove(&i) else {
