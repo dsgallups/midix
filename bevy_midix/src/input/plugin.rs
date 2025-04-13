@@ -1,4 +1,6 @@
-use super::{MidiInput, MidiInputSettings};
+use crate::MidiSettings;
+
+use super::MidiInput;
 use bevy::prelude::*;
 
 #[doc = r#"
@@ -9,7 +11,7 @@ See [`MidiInputSettings`] for configuration options.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MidiInputPlugin {
     /// The settings to apply to [`MidiInput`] on instantiation.
-    pub settings: MidiInputSettings,
+    pub settings: MidiSettings,
 }
 
 impl Plugin for MidiInputPlugin {

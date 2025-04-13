@@ -5,14 +5,17 @@ pub mod asset;
 pub mod input;
 pub mod output;
 pub mod plugin;
+mod settings;
 pub mod synth;
+pub use settings::*;
 
-mod midix {
-    pub use midix::prelude::*;
+/// Re-export of [`midix`]
+pub mod midix {
+    pub use midix::*;
 }
 
 /// Commonly re-exported types
 pub mod prelude {
-    #[allow(ambiguous_glob_reexports)]
-    pub use crate::{asset::*, input::*, midix::*, output::*, plugin::*, synth::*};
+    pub use crate::MidiSettings;
+    pub use crate::{asset::*, input::*, output::*, plugin::*, synth::*};
 }

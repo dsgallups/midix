@@ -3,7 +3,7 @@ use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
 };
-use bevy_midix::prelude::*;
+use bevy_midix::{midix::prelude::*, prelude::*};
 
 ///Creates a 2d Piano Keyboard and plays the sound on press.
 ///

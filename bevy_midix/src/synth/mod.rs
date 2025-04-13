@@ -3,8 +3,8 @@ Synthesizer resources, setup and plugins
 "#]
 
 use crate::prelude::SoundFont;
-use crate::prelude::*;
 use bevy::prelude::*;
+use midix::prelude::ChannelVoiceMessage;
 use midix_synth::prelude::*;
 use std::sync::{Arc, Mutex};
 use tinyaudio::{OutputDevice, OutputDeviceParameters};

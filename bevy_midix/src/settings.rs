@@ -3,7 +3,7 @@ pub use midir::Ignore;
 
 /// Settings for [`MidiInputPlugin`].
 #[derive(Resource, Clone, Copy, Debug)]
-pub struct MidiInputSettings {
+pub struct MidiSettings {
     /// The name of the listening client
     pub client_name: &'static str,
 
@@ -20,7 +20,7 @@ pub struct MidiInputSettings {
     pub ignore: Ignore,
 }
 
-impl Default for MidiInputSettings {
+impl Default for MidiSettings {
     /// Assigns client name and port name to `bevy_midix`
     ///
     /// ignore is set to [`Ignore::None`]
