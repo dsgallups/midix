@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     fmt::{self, Debug},
-    io::{self, ErrorKind, Write},
+    io::{self, ErrorKind, Read, Write},
 };
 
 #[doc = r#"
@@ -33,14 +33,67 @@ pub enum MidiMessageBytes {
     Double(StatusByte, DataByte, DataByte),
 }
 
-impl MidiMessageBytes {
-    /// Write the contents of self into some writer as MIDI bytes
-    pub fn write<W: Write + ?Sized>(&self, writer: &mut W) -> Result<(), io::Error> {
+impl Read for MidiMessageBytes {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         use MidiMessageBytes::*;
         match self {
-            Status(s) => writer.write_all(&[s.0]),
-            Single(s, d) => writer.write_all(&[s.0, d.0]),
-            Double(s, d1, d2) => writer.write_all(&[s.0, d1.0, d2.0]),
+            Status(s) => {
+                let Some(byte) = buf.get_mut(0) else {
+                    return Ok(0);
+                };
+                *byte = s.0;
+                Ok(1)
+            }
+            Single(s, d) => {
+                let Some(byte) = buf.get_mut(0) else {
+                    return Ok(0);
+                };
+                *byte = s.0;
+                let Some(byte) = buf.get_mut(1) else {
+                    return Ok(1);
+                };
+                *byte = d.0;
+                Ok(2)
+            }
+            Double(s, d1, d2) => {
+                let Some(byte) = buf.get_mut(0) else {
+                    return Ok(0);
+                };
+                *byte = s.0;
+                let Some(byte) = buf.get_mut(1) else {
+                    return Ok(1);
+                };
+                *byte = d1.0;
+
+                let Some(byte) = buf.get_mut(1) else {
+                    return Ok(2);
+                };
+                *byte = d2.0;
+                Ok(3)
+            }
+        }
+    }
+}
+
+impl MidiMessageBytes {
+    /// Write the contents of self into some writer as MIDI bytes.
+    ///
+    /// Returns number of bytes written.
+    pub fn write_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+        use MidiMessageBytes::*;
+        match self {
+            Status(s) => {
+                writer.write_all(&[s.0])?;
+                Ok(1)
+            }
+            Single(s, d) => {
+                writer.write_all(&[s.0, d.0])?;
+                Ok(2)
+            }
+            Double(s, d1, d2) => {
+                writer.write_all(&[s.0, d1.0, d2.0])?;
+                Ok(3)
+            }
         }
     }
 
