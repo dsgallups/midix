@@ -1,4 +1,4 @@
-# midix
+# MIDIx central repository
 [<img alt="github" src="https://img.shields.io/badge/github-dsgallups/color-gen?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/dsgallups/midix)
 
 A suite of tools used to read, modify, and manage MIDI-related systems
@@ -31,7 +31,7 @@ Streaming midi-command SoundFont synth (Under heavy development). If you're look
 
 ## Acknowledgments
 
-## `midix`
+### `midix`
 
 This crate is inspired by [`midly`](https://github.com/kovaxis/midly)
 and [`quick-xml`](https://github.com/tafia/quick-xml).
@@ -42,10 +42,10 @@ support file writing.
 
 Thanks to these mainters and contributors for inspiration!
 
-## `bevy_midix`
+### `bevy_midix`
 
 Forked originally from [`bevy_midi`](https://github.com/BlackPhlox/bevy_midi). Huge thank you for the examples and docs!
 
-## `midix_synth`
+### `midix_synth`
 
 Forked originally from [rustysynth](https://github.com/sinshu/rustysynth).
