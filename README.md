@@ -5,15 +5,20 @@ A suite of tools used to read, modify, and manage MIDI-related systems
 
 # Crates
 
-- `midix` - MIDI live/file parsing/type for programmable MIDI
+- `midix`
+
 [<img alt="crates.io" src="https://img.shields.io/crates/v/midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/midix)
 
+MIDI live/file parsing/type for programmable MIDI
 
 
-- `bevy_midix` - MIDI event resource and handlers
+- `bevy_midix`
+
 [<img alt="crates.io" src="https://img.shields.io/crates/v/bevy_midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/bevy_midix)
+- MIDI event resource and handlers
 
 - `midix_synth` - Streaming midi-command SoundFont synth (Under heavy development)
+
 
 ## MIDIx feature roadmap
 - `no_std`

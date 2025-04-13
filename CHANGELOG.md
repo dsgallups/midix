@@ -20,7 +20,7 @@ See examples for details.
 
 Note, especially for linux users:
 
-I have unsafely implemented `Sync` for these resources. I have **"assumed"** that users will NOT have a second
+I have unsafely implemented `Sync` for these resources. This is because `midir` uses `alsa` for midi IO under the hood for this target. I have **assumed** that users will NOT have a second
 `midir::MidiInput` or `midir::MidiOutput` instance in their programs. I have not run into issues testing on my
 own linux device, but this implementation *MAY* be frivolous. If you find `UB`, please let me know ASAP so I can
 work on finding an alternative. I expect UB to represent itself as these plugins not listening nor active,
