@@ -1,4 +1,8 @@
-use midix::{Key, prelude::Channel};
+use midix::{
+    Key, Velocity,
+    events::LiveEvent,
+    prelude::{Channel, ChannelVoiceMessage, VoiceEvent},
+};
 
 use super::MidiSong;
 
@@ -27,7 +31,11 @@ pub struct ChannelBeat<'b, 's> {
 impl ChannelBeat<'_, '_> {
     /// play a note for this channel. Does not override other notes that will be played.
     pub fn play_note(&mut self, key: Key) -> &mut Self {
-        todo!()
+        let event =
+            ChannelVoiceMessage::new(self.channel, VoiceEvent::note_on(key, Velocity::max()));
+
+        self.beat.song.add_event(self.beat.beat_no, event);
+        self
     }
 
     /// play some notes for this channel. Does not override other notes that will be played.
@@ -35,6 +43,10 @@ impl ChannelBeat<'_, '_> {
     where
         Keys: IntoIterator<Item = Key>,
     {
-        todo!()
+        let events = keys.into_iter().map(|key| {
+            ChannelVoiceMessage::new(self.channel, VoiceEvent::note_on(key, Velocity::max()))
+        });
+        self.beat.song.add_events(self.beat.beat_no, events);
+        self
     }
 }

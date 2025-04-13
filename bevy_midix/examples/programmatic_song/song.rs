@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_midix::{midix::prelude::*, prelude::*};
-pub fn make_simple_song() {
+pub fn make_simple_song(mut commands: Commands) {
     // new song with 120 beats per minute
     //
     // and 4 beats per measure.
@@ -18,4 +18,6 @@ pub fn make_simple_song() {
         Key::new(Note::E, Octave::new(3)),
         Key::new(Note::G, Octave::new(5)),
     ]);
+
+    commands.insert_resource(song);
 }
