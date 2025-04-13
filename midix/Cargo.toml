@@ -1,6 +1,6 @@
 [package]
 name = "midix"
-version = "3.0.0-rc2"
+version = "3.0.0"
 edition = "2024"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 description = "Human-readable MIDI decoder and encoder for real-time MIDI events"

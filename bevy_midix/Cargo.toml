@@ -1,6 +1,6 @@
 [package]
 name = "bevy_midix"
-version = "3.0.0-rc2"
+version = "3.0.0"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -16,8 +16,8 @@ exclude = ["assets/*"]
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.15"
-midix = { version = "3.0.0-rc2", features = ["bevy"], path = "../midix" }
-midix_synth = { version = "0.0.1-rc1", path = "../midix_synth" }
+midix = { version = "3.0.0", features = ["bevy"], path = "../midix" }
+midix_synth = { version = "0.0.1", path = "../midix_synth" }
 thiserror = "2.0"
 tinyaudio = "1.1.0"
 itertools = "0.14.0"
