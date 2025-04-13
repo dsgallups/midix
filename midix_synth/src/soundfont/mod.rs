@@ -79,8 +79,8 @@ impl SoundFont {
     fn sanity_check(&self) -> Result<(), SoundFontError> {
         // https://github.com/sinshu/rustysynth/issues/22
         // https://github.com/sinshu/rustysynth/issues/33
-        for instrument in &self.instruments {
-            for region in &instrument.regions {
+        for (i, instrument) in self.instruments.iter().enumerate() {
+            for (j, region) in instrument.regions.iter().enumerate() {
                 let start = region.get_sample_start();
                 let end = region.get_sample_end();
                 let start_loop = region.get_sample_start_loop();
@@ -93,8 +93,10 @@ impl SoundFont {
                     || end < start
                     || end_loop < start_loop
                 {
+                    let name = instrument.get_name();
                     warn!(
-                        "Something is wrong with this soundfont. The following conditions should all be false:\n\
+                        "\nSomething is wrong with this soundfont ({name}, {i}, region {j})\n\
+                        The following conditions should all be false:\n\
                         start < 0: {}\n\
                         start_loop < 0: {}\n\
                         end >= self.wave_data.len(): {}\n\
