@@ -18,7 +18,7 @@ fn main() {
             },
         ))
         .add_systems(Startup, load_sf2)
-        .add_systems(Update, iterate_voices)
+        .add_systems(Update, make_song)
         .run();
 }
 
@@ -26,7 +26,7 @@ fn main() {
 ///
 /// <https://sites.google.com/site/soundfonts4u/>
 fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
-    synth.use_soundfont(asset_server.load("soundfont.sf2"));
+    synth.use_soundfont(asset_server.load("8bitsf.sf2"));
 }
 
 struct VoiceChanger {
@@ -36,7 +36,7 @@ struct VoiceChanger {
 
 impl Default for VoiceChanger {
     fn default() -> Self {
-        let timer = Timer::new(Duration::from_millis(500), TimerMode::Repeating);
+        let timer = Timer::new(Duration::from_millis(1000), TimerMode::Repeating);
         VoiceChanger {
             timer,
             voice_number: 0,
@@ -44,7 +44,7 @@ impl Default for VoiceChanger {
     }
 }
 
-fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChanger>) {
+fn make_song(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChanger>) {
     if !synth.is_ready() {
         return;
     }
@@ -53,12 +53,7 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
         return;
     }
     const BASE_OCTAVE: i8 = 4;
-    const C_CHORD: [Key; 4] = [
-        Key::new(Note::C, Octave::new(BASE_OCTAVE)),
-        Key::new(Note::E, Octave::new(BASE_OCTAVE)),
-        Key::new(Note::G, Octave::new(BASE_OCTAVE)),
-        Key::new(Note::C, Octave::new(BASE_OCTAVE + 1)),
-    ];
+    const C_CHORD: [Key; 1] = [Key::new(Note::C, Octave::new(BASE_OCTAVE))];
     info!("Voice {}!", scale.voice_number);
     for key in C_CHORD {
         synth.handle_event(ChannelVoiceMessage::new(
