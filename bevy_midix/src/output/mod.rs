@@ -1,9 +1,7 @@
 #![doc = r#"
 A plugin and types for handling MIDI output
 "#]
-mod settings;
 use midix::MidiMessageBytes;
-pub use settings::*;
 
 mod connection;
 use connection::*;
@@ -17,7 +15,8 @@ pub use plugin::*;
 use bevy::prelude::*;
 use midir::{MidiOutputPort, SendError};
 
-// you can't actually have multiple MidiInputs on one device, it's really strange.
+use crate::MidiSettings;
+
 enum MidiOutputState {
     Listening(midir::MidiOutput),
     Active(MidiOutputConnection),
@@ -30,15 +29,15 @@ enum MidiOutputState {
 /// MidiOutput exists in the external program, then UB is possible.
 ///
 /// Therefore, the assumption is, that when using this crate, that the user
-/// will NOT instantiate another [`midir::MidiInput`] at any point while
-/// [`MidiInput`] has been inserted as a resource
+/// will NOT instantiate another [`midir::MidiOutput`] at any point while
+/// [`MidiOutput`] has been inserted as a resource
 unsafe impl Sync for MidiOutputState {}
 
-/// The central resource for interacting with midi inputs
+/// The central resource for interacting with midi output devices
 ///
-/// `MidiInput` does many things:
+/// `MidiOutput` does many things:
 /// - Fetches a list of ports with connected midi devices
-/// - Allows one to connect to a particular midi device and read output
+/// - Allows one to connect to a particular midi device and send output
 /// - Close that connection and search for other devices
 #[derive(Resource)]
 pub struct MidiOutput {
@@ -48,13 +47,13 @@ pub struct MidiOutput {
 }
 
 impl MidiOutput {
-    /// Creates a new midi input with the provided settings. This is done automatically
-    /// by [`MidiInputPlugin`].
+    /// Creates a new midi output with the provided settings. This is done automatically
+    /// by [`MidiOutputPlugin`].
     pub fn new(settings: MidiSettings) -> Self {
         let listener = match midir::MidiOutput::new(settings.client_name) {
-            Ok(input) => input,
+            Ok(output) => output,
             Err(e) => {
-                panic!("Error initializing midi input! {e:?}");
+                panic!("Error initializing midi output! {e:?}");
             }
         };
         let ports = listener.ports();
@@ -65,17 +64,17 @@ impl MidiOutput {
         }
     }
 
-    /// Return a list of ports updated since calling [`MidiInput::new`] or
-    /// [`MidiInput::refresh_ports`]
+    /// Return a list of ports updated since calling [`MidiOutput::new`] or
+    /// [`MidiOutput::refresh_ports`]
     pub fn ports(&self) -> &[MidiOutputPort] {
         &self.ports
     }
-    /// Attempts to connects to the port at the given index returned by [`MidiInput::ports`]
+    /// Attempts to connects to the port at the given index returned by [`MidiOutput::ports`]
     ///
     /// # Errors
     /// - If already connected to a device
     /// - If the index is out of bounds
-    /// - An input connection cannot be established
+    /// - An output connection cannot be established
     pub fn connect_to_index(&mut self, index: usize) -> Result<(), MidiOutputError> {
         if self
             .state
@@ -102,10 +101,10 @@ impl MidiOutput {
         Ok(())
     }
 
-    /// A method you should call if [`MidiInput::is_listening`] and [`MidiInput::is_active`] are both false.
+    /// A method you should call if [`MidiOutput::is_listening`] and [`MidiOutput::is_active`] are both false.
     pub fn reset(&mut self) {
         let listener = match midir::MidiOutput::new(self.settings.client_name) {
-            Ok(input) => input,
+            Ok(output) => output,
             Err(e) => {
                 error!("Failed to reset listening state! {e:?}");
                 return;
@@ -117,7 +116,7 @@ impl MidiOutput {
     ///
     /// # Errors
     /// - If already connected to a device
-    /// - An input connection cannot be established
+    /// - An output connection cannot be established
     pub fn connect_to_port(&mut self, port: &MidiOutputPort) -> Result<(), MidiOutputError> {
         if self
             .state
@@ -144,7 +143,7 @@ impl MidiOutput {
     /// - If the port ID cannot be currently found
     ///   - Note that this case can occur if you have not refreshed ports
     ///     and the device is no longer available.
-    /// - An input connection cannot be established
+    /// - An output connection cannot be established
     pub fn connect_to_id(&mut self, id: String) -> Result<(), MidiOutputError> {
         if self
             .state
@@ -173,7 +172,7 @@ impl MidiOutput {
             .is_some_and(|s| matches!(s, MidiOutputState::Active(_)))
     }
 
-    /// True if input is waiting to connect to a device
+    /// True if output is waiting to connect to a device
     pub fn is_listening(&self) -> bool {
         self.state
             .as_ref()
@@ -182,7 +181,7 @@ impl MidiOutput {
 
     /// Refreshes the available port list
     ///
-    /// Does nothing if [`MidiInput::is_active`] is true
+    /// Does nothing if [`MidiOutput::is_active`] is true
     pub fn refresh_ports(&mut self) {
         let Some(MidiOutputState::Listening(listener)) = &self.state else {
             return;
@@ -192,7 +191,7 @@ impl MidiOutput {
 
     /// Disconnects from the active device
     ///
-    /// Does nothing if the [`MidiInput::is_listening`] is true.
+    /// Does nothing if the [`MidiOutput::is_listening`] is true.
     pub fn disconnect(&mut self) {
         if self
             .state
@@ -208,9 +207,9 @@ impl MidiOutput {
         self.state = Some(MidiOutputState::Listening(listener));
     }
 
-    /// will return data if connected. Note, this CONSUMES the event.
+    /// Sends valid midi bytes to the midi output.
     ///
-    /// You will need to propagate this data out to other systems if need be.
+    /// Errors if [`MidiOutput::is_listening`] is true.
     pub fn send(&mut self, message: impl Into<MidiMessageBytes>) -> Result<(), SendError> {
         let Some(MidiOutputState::Active(conn)) = &mut self.state else {
             return Err(SendError::Other("Disconnected."));

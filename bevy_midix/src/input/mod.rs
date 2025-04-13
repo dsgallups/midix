@@ -1,9 +1,7 @@
 #![doc = r#"
 a plugin and types for handling MIDI input
 "#]
-mod settings;
 use crossbeam_channel::TryRecvError;
-pub use settings::*;
 
 mod connection;
 pub use connection::*;
@@ -16,6 +14,8 @@ pub use plugin::*;
 
 use bevy::prelude::*;
 use midir::MidiInputPort;
+
+use crate::MidiSettings;
 
 // you can't actually have multiple MidiInputs on one device, it's really strange.
 enum MidiInputState {
@@ -42,7 +42,7 @@ unsafe impl Sync for MidiInputState {}
 /// - Close that connection and search for other devices
 #[derive(Resource)]
 pub struct MidiInput {
-    settings: MidiInputSettings,
+    settings: MidiSettings,
     state: Option<MidiInputState>,
     ports: Vec<MidiInputPort>,
 }
@@ -50,7 +50,7 @@ pub struct MidiInput {
 impl MidiInput {
     /// Creates a new midi input with the provided settings. This is done automatically
     /// by [`MidiInputPlugin`].
-    pub fn new(settings: MidiInputSettings) -> Self {
+    pub fn new(settings: MidiSettings) -> Self {
         let listener = match midir::MidiInput::new(settings.client_name) {
             Ok(input) => input,
             Err(e) => {

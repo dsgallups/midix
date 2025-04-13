@@ -2,13 +2,13 @@ use super::{MidiOutput, MidiSettings};
 use bevy::prelude::*;
 
 #[doc = r#"
-Inserts [`MidiInput`] as a resource.
+Inserts [`MidiOutput`] as a resource.
 
-See [`MidiInputSettings`] for configuration options.
+See [`MidiSettings`] for configuration options.
 "#]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MidiOutputPlugin {
-    /// The settings to apply to [`MidiInput`] on instantiation.
+    /// The settings to apply to [`MidiOutput`] on instantiation.
     pub settings: MidiSettings,
 }
 
