@@ -45,15 +45,3 @@ impl Plugin for MidiPlugin {
         }
     }
 }
-/*
-
-We should have it such that
-user can load sf2 file in asset server
-
-user can, on startup, get a handle to that.
-
-Then say
-synth.use_soundfont(handle: Handle<SoundFont>);
-
-
-*/
