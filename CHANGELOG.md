@@ -1,3 +1,16 @@
+# 3.1.0 (April 13, 2025)
+## `bevy_midix`
+- Added `iterate_voices` example
+- Added `soundfont.sf2` to assets
+
+## `midix`
+- `Key::new` is now const
+- `Octave::new` is now const
+
+## `midix_synth`
+- if the sanity check fails (soundfont data is readable but appears invalid), it will warn, not error.
+
+
 # 3.0.0 (April 13, 2025)
 Welcome to v3. `midix` introduces significant updates and improvements for MIDI handling and integration!
 
