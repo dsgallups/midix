@@ -3,3 +3,4 @@ bevy_midix/target
 midix/target
 .DS_Store
 *.sf2
+!bevy_midix/assets/soundfont.sf2

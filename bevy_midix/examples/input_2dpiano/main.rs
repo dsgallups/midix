@@ -38,10 +38,6 @@ pub struct ExampleInputEvent {
     pub voice: VoiceEvent,
 }
 
-/// Note: you need to bring your own soundfont file.
-///
-/// sf2s are generally huge, so I added those to the gitignore.
-///
 /// Take a look here for some soundfonts:
 ///
 /// <https://sites.google.com/site/soundfonts4u/>

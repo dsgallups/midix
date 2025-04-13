@@ -2,6 +2,7 @@
 
 use std::io::Read;
 use std::sync::Arc;
+use tracing::warn;
 
 pub mod generator;
 pub mod instrument;
@@ -77,10 +78,47 @@ impl SoundFont {
 
     fn sanity_check(&self) -> Result<(), SoundFontError> {
         // https://github.com/sinshu/rustysynth/issues/22
-        for instrument in self.instruments.iter() {
-            for region in instrument.regions.iter() {
-                if region.get_sample_end_loop() < region.get_sample_start_loop() {
-                    return Err(SoundFontError::SanityCheckFailed);
+        // https://github.com/sinshu/rustysynth/issues/33
+        for (i, instrument) in self.instruments.iter().enumerate() {
+            for (j, region) in instrument.regions.iter().enumerate() {
+                let start = region.get_sample_start();
+                let end = region.get_sample_end();
+                let start_loop = region.get_sample_start_loop();
+                let end_loop = region.get_sample_end_loop();
+
+                if start < 0
+                    || start_loop < 0
+                    || end as usize >= self.wave_data.len()
+                    || end_loop as usize >= self.wave_data.len()
+                    || end < start
+                    || end_loop < start_loop
+                {
+                    let name = instrument.get_name();
+                    warn!(
+                        "\nSomething is wrong with this soundfont ({name}, {i}, region {j})\n\
+                        The following conditions should all be false:\n\
+                        start < 0: {}\n\
+                        start_loop < 0: {}\n\
+                        end >= self.wave_data.len(): {}\n\
+                        end_loop >= self.wave_data.len() {}\n\
+                        end < start: {}\n\
+                        end_loop < start_loop: {}\n\
+                        \n\
+                        Variables:\n\
+                        start: {start}\n\
+                        end: {end}\n\
+                        start_loop:{start_loop}\n\
+                        end_loop:{end_loop}\n\
+                        wave_data.len(): {}\n",
+                        start < 0,
+                        start_loop < 0,
+                        end as usize >= self.wave_data.len(),
+                        end_loop as usize >= self.wave_data.len(),
+                        end < start,
+                        end_loop < start_loop,
+                        self.wave_data.len(),
+                    );
+                    //return Err(SoundFontError::SanityCheckFailed);
                 }
             }
         }

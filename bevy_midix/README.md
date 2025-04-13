@@ -31,10 +31,6 @@ fn main() {
         .add_systems(Update, scale_me)
         .run();
 }
-/// Note: you need to bring your own soundfont file.
-///
-/// sf2s are generally huge, so I added those to the gitignore.
-///
 /// Take a look here for some soundfonts:
 ///
 /// <https://sites.google.com/site/soundfonts4u/>

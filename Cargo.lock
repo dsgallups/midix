@@ -840,7 +840,7 @@ dependencies = [
 
 [[package]]
 name = "bevy_midix"
-version = "3.0.0-rc2"
+version = "3.0.0"
 dependencies = [
  "bevy",
  "crossbeam-channel",
@@ -2723,7 +2723,7 @@ dependencies = [
 
 [[package]]
 name = "midix"
-version = "3.0.0-rc2"
+version = "3.0.0"
 dependencies = [
  "bevy",
  "num_enum",
@@ -2733,9 +2733,10 @@ dependencies = [
 
 [[package]]
 name = "midix_synth"
-version = "0.0.1-rc1"
+version = "0.0.1"
 dependencies = [
  "midix",
+ "tracing",
 ]
 
 [[package]]
