@@ -1,11 +1,18 @@
 # midix
+[<img alt="github" src="https://img.shields.io/badge/github-dsgallups/color-gen?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/dsgallups/midix)
 
 A suite of tools used to read, modify, and manage MIDI-related systems
 
 # Crates
 
-- `midix` - MIDI live/file parsing
+- `midix` - MIDI live/file parsing/type for programmable MIDI
+[<img alt="crates.io" src="https://img.shields.io/crates/v/midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/midix)
+
+
+
 - `bevy_midix` - MIDI event resource and handlers
+[<img alt="crates.io" src="https://img.shields.io/crates/v/bevy_midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/bevy_midix)
+
 - `midix_synth` - Streaming midi-command SoundFont synth (Under heavy development)
 
 ## MIDIx feature roadmap
