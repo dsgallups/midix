@@ -1,6 +1,6 @@
 # bevy_MIDIx
 Bevy plugin that uses [`midix`](https://crates.io/crates/midix),
-[`midir`](https://github.com/Boddlnagg/midir).
+[`midir`](https://github.com/Boddlnagg/midir), and a [`rustysynth`](https://github.com/sinshu/rustysynth) fork to play midi sounds!
 
 Read from MIDI devices, MIDI files, and programmable input, and output to user audio with a soundfont!
 
@@ -85,6 +85,7 @@ impl Default for Scale {
 }
 
 fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
+    // don't do anything until the soundfont has been loaded
     if !synth.is_ready() {
         return;
     }
