@@ -7,7 +7,7 @@ Bevy plugin that uses [`midix`](https://crates.io/crates/midix),
 
 Read from MIDI devices, MIDI files, and programmable input, and output to user audio with a soundfont!
 
-# Example
+## Example
 ```rust, no_run
 use std::time::Duration;
 use bevy::{
@@ -118,6 +118,6 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
 See `/examples` for details.
 
 
-# Acknowledgment
+## Acknowledgment
 
 This crate was originally forked from [`bevy_midi`](https://github.com/BlackPhlox/bevy_midi). Please check them out if this crate doesn't suit your needs!

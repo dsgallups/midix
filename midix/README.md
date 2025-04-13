@@ -1,11 +1,12 @@
 # MIDIx
 [<img alt="github" src="https://img.shields.io/badge/github-dsgallups/color-gen?style=for-the-badge&labelColor=555555&logo=github" height="20">](https://github.com/dsgallups/midix)
 [<img alt="crates.io" src="https://img.shields.io/crates/v/midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/midix)
+
 Human readable MIDI structures
 
 
 
-# Overview
+## Overview
 
 `midix` provides a parser ([`Reader`](crate::prelude::Reader)) to read events from `.mid` files.
 calling [`Reader::read_event`](crate::prelude::Reader::read_event) will yield a [`FileEvent`](crate::prelude::FileEvent).
@@ -13,16 +14,16 @@ calling [`Reader::read_event`](crate::prelude::Reader::read_event) will yield a 
 Additionally, `midix` provides the user with [`LiveEvent::from_bytes`](crate::events::LiveEvent), which will parse events from a live MIDI source.
 
 You may also make your own MIDI representation using the provided structs. If check out
-[`bevy_midix`](https://github.com/dsgallups/midix/bevy_midix) if you'd like to use `midix` in your games!
+[`bevy_midix`](https://crates.io/crates/bevy_midix) if you'd like to use `midix` in your games!
 
 ## Goal
 `midix` is NOT designed to be as fast as possible. It is designed for a user to navigate the MIDI format to read and write to. Instead of working directly with bytes, use language to define what your MIDI is supposed to do.
 
-# Getting Started
+## Getting Started
 
 MIDI can be interpreted in two main ways: through `LiveEvent`s and regular file `Events`.
 
-# Example
+### Example
 To read from a file, use the [`Reader`](crate::prelude::Reader):
 ```rust
 use midix::prelude::*;
@@ -77,17 +78,17 @@ assert_eq!(velocity.byte(), 96);
 ```
 
 
-# Semantic Versioning and Support
-`midix` will adhere to semantic versioning.
+## Semantic Versioning and Support
+`midix` will adhere to semantic versioning. This means that I've opted to use major versions, even if this crate does not consider itself feature complete (you might get a midix `v29.3.1` someday)
 
 ## General feature schedule
 The SUPPORT.md file denotes the length of time major revisions are supported.
 
 When the major version of the crate is incremented, new features for the previous version(s)
-will likely be neglected. If you need a feature for an older version before the end
+will likely be neglected. If you need a non-breaking feature for an older version before the end
 of its maintenence period, please let me know!
 
-# Feature roadmap
+## Feature roadmap
 - `no_std`
 - Streamer (midir ext)
 - Interfaces between `MidiSource` and `Midi` (some representable MIDI type, like a file, events, etc.)
@@ -95,7 +96,7 @@ of its maintenence period, please let me know!
   - Streamer (async timed stream event via midir)
   - MidiFile
 
-# Acknowledgments
+## Acknowledgments
 A lot of the documentation is copied directly from
 [this documentation](http://www.music.mcgill.ca/~ich/classes/mumt306/StandardMIDIfileformat.html).
 
