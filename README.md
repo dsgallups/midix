@@ -3,6 +3,8 @@
 
 A suite of tools used to read, modify, and manage MIDI-related systems
 
+## Ecosystem
+
 ### `midix`
 
 [<img alt="crates.io" src="https://img.shields.io/crates/v/midix.svg?style=for-the-badge&color=fc8d62&logo=rust" height="20">](https://crates.io/crates/midix)
