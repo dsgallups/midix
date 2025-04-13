@@ -8,7 +8,7 @@
 - `Octave::new` is now const
 
 ## `midix_synth`
-- if the sanity check fails, it will warn, not error.
+- if the sanity check fails (soundfont data is readable but appears invalid), it will warn, not error.
 
 
 # 3.0.0 (April 13, 2025)
