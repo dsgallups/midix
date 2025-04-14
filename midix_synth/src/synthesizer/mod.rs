@@ -268,16 +268,22 @@ impl Synthesizer {
                                 if voice.exclusive_class == exclusive_class
                                     && voice.channel == channel
                                 {
-                                    voice.start(&region_pair, channel, key, velocity);
+                                    //this is identical to what existed before. Instant drop.
+                                    *voice = Voice::new(
+                                        &self.settings,
+                                        &region_pair,
+                                        channel,
+                                        key,
+                                        velocity,
+                                    );
                                 }
                             }
                         }
 
                         // If the number of active voices is less than the limit, use a free one.
                         // TODO(dsgallups): store synthesizer settings
-                        let mut voice = Voice::new(&self.settings);
-
-                        voice.start(&region_pair, channel, key, velocity);
+                        let voice =
+                            Voice::new(&self.settings, &region_pair, channel, key, velocity);
 
                         self.voices.push(voice);
 

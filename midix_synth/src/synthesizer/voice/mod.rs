@@ -20,8 +20,6 @@ use super::Channel;
 
 #[non_exhaustive]
 pub(crate) struct Voice {
-    // UNUSED?
-    sample_rate: i32,
     block_size: usize,
 
     vol_env: VolumeEnvelope,
@@ -52,7 +50,6 @@ pub(crate) struct Voice {
     pub(crate) exclusive_class: i32,
     pub(crate) channel: u8,
     pub(crate) key: u8,
-    pub(crate) velocity: u8,
 
     note_gain: f32,
 
@@ -84,16 +81,86 @@ pub(crate) struct Voice {
 }
 
 impl Voice {
-    pub(crate) fn new(settings: &SynthesizerSettings) -> Self {
+    pub(crate) fn new(
+        settings: &SynthesizerSettings,
+        region: &RegionPair,
+        channel: u8,
+        key: u8,
+        velocity: u8,
+    ) -> Self {
+        // this is used elsewhere...really thinking we should
+        // just use the region
+        let exclusive_class = region.get_exclusive_class();
+
+        let note_gain = if velocity > 0 {
+            // According to the Polyphone's implementation, the initial attenuation should be reduced to 40%.
+            // I'm not sure why, but this indeed improves the loudness variability.
+            let sample_attenuation = 0.4_f32 * region.get_initial_attenuation();
+            let filter_attenuation = 0.5_f32 * region.get_initial_filter_q();
+            let decibels = 2_f32 * utils::linear_to_decibels(velocity as f32 / 127_f32)
+                - sample_attenuation
+                - filter_attenuation;
+            utils::decibels_to_linear(decibels)
+        } else {
+            0_f32
+        };
+
+        let cutoff = region.get_initial_filter_cutoff_frequency();
+        let resonance = utils::decibels_to_linear(region.get_initial_filter_q());
+
+        let vib_lfo_to_pitch = 0.01_f32 * region.get_vibrato_lfo_to_pitch() as f32;
+        let mod_lfo_to_pitch = 0.01_f32 * region.get_modulation_lfo_to_pitch() as f32;
+        let mod_env_to_pitch = 0.01_f32 * region.get_modulation_envelope_to_pitch() as f32;
+
+        let mod_lfo_to_cutoff = region.get_modulation_lfo_to_filter_cutoff_frequency();
+        let mod_env_to_cutoff = region.get_modulation_envelope_to_filter_cutoff_frequency();
+        //todo: derivable and cheap.
+        let dynamic_cutoff = mod_lfo_to_cutoff != 0 || mod_env_to_cutoff != 0;
+
+        let mod_lfo_to_volume = region.get_modulation_lfo_to_volume();
+        let dynamic_volume = mod_lfo_to_volume > 0.05_f32;
+
+        let instrument_pan = region.get_pan().clamp(-50., 50.);
+
+        let instrument_reverb = 0.01_f32 * region.get_reverb_effects_send();
+        let instrument_chorus = 0.01_f32 * region.get_chorus_effects_send();
+
+        let vol_env = VolumeEnvelope::new(settings, region, key);
+        let mod_env = ModulationEnvelope::new(settings, region, key, velocity);
+
+        let vib_lfo = Lfo::new(
+            settings,
+            region.get_delay_vibrato_lfo(),
+            region.get_frequency_vibrato_lfo(),
+        );
+        let mod_lfo = Lfo::new(
+            settings,
+            region.get_delay_modulation_lfo(),
+            region.get_frequency_modulation_lfo(),
+        );
+
+        let oscillator = Oscillator::new(settings, region);
+
+        let mut filter = BiQuadFilter::new(settings);
+        filter.clear_buffer();
+        filter.set_low_pass_filter(cutoff, resonance);
+
+        let smoothed_cutoff = cutoff;
+
+        let voice_state = VoiceState::PLAYING;
+        //???
+        let voice_length = 0;
+
+        //???
+        let min_voice_length = (settings.sample_rate / 500) as usize;
         Self {
-            sample_rate: settings.sample_rate,
             block_size: settings.block_size,
-            vol_env: VolumeEnvelope::new(settings),
-            mod_env: ModulationEnvelope::new(settings),
-            vib_lfo: Lfo::new(settings),
-            mod_lfo: Lfo::new(settings),
-            oscillator: Oscillator::new(settings),
-            filter: BiQuadFilter::new(settings),
+            vol_env,
+            mod_env,
+            vib_lfo,
+            mod_lfo,
+            oscillator,
+            filter,
             block: vec![0_f32; settings.block_size],
             previous_mix_gain_left: 0_f32,
             previous_mix_gain_right: 0_f32,
@@ -103,81 +170,28 @@ impl Voice {
             previous_chorus_send: 0_f32,
             current_reverb_send: 0_f32,
             current_chorus_send: 0_f32,
-            exclusive_class: 0,
-            channel: 0,
-            key: 0,
-            velocity: 0,
-            note_gain: 0_f32,
-            cutoff: 0_f32,
-            resonance: 0_f32,
-            vib_lfo_to_pitch: 0_f32,
-            mod_lfo_to_pitch: 0_f32,
-            mod_env_to_pitch: 0_f32,
-            mod_lfo_to_cutoff: 0,
-            mod_env_to_cutoff: 0,
-            dynamic_cutoff: false,
-            mod_lfo_to_volume: 0_f32,
-            dynamic_volume: false,
-            instrument_pan: 0_f32,
-            instrument_reverb: 0_f32,
-            instrument_chorus: 0_f32,
-            smoothed_cutoff: 0_f32,
-            voice_state: 0,
-            voice_length: 0,
-            min_voice_length: (settings.sample_rate / 500) as usize,
+            exclusive_class,
+            channel,
+            key,
+            note_gain,
+            cutoff,
+            resonance,
+            vib_lfo_to_pitch,
+            mod_lfo_to_pitch,
+            mod_env_to_pitch,
+            mod_lfo_to_cutoff,
+            mod_env_to_cutoff,
+            dynamic_cutoff,
+            mod_lfo_to_volume,
+            dynamic_volume,
+            instrument_pan,
+            instrument_reverb,
+            instrument_chorus,
+            smoothed_cutoff,
+            voice_state,
+            voice_length,
+            min_voice_length,
         }
-    }
-
-    pub(crate) fn start(&mut self, region: &RegionPair, channel: u8, key: u8, velocity: u8) {
-        self.exclusive_class = region.get_exclusive_class();
-        self.channel = channel;
-        self.key = key;
-        self.velocity = velocity;
-
-        if velocity > 0 {
-            // According to the Polyphone's implementation, the initial attenuation should be reduced to 40%.
-            // I'm not sure why, but this indeed improves the loudness variability.
-            let sample_attenuation = 0.4_f32 * region.get_initial_attenuation();
-            let filter_attenuation = 0.5_f32 * region.get_initial_filter_q();
-            let decibels = 2_f32 * utils::linear_to_decibels(velocity as f32 / 127_f32)
-                - sample_attenuation
-                - filter_attenuation;
-            self.note_gain = utils::decibels_to_linear(decibels);
-        } else {
-            self.note_gain = 0_f32;
-        }
-
-        self.cutoff = region.get_initial_filter_cutoff_frequency();
-        self.resonance = utils::decibels_to_linear(region.get_initial_filter_q());
-
-        self.vib_lfo_to_pitch = 0.01_f32 * region.get_vibrato_lfo_to_pitch() as f32;
-        self.mod_lfo_to_pitch = 0.01_f32 * region.get_modulation_lfo_to_pitch() as f32;
-        self.mod_env_to_pitch = 0.01_f32 * region.get_modulation_envelope_to_pitch() as f32;
-
-        self.mod_lfo_to_cutoff = region.get_modulation_lfo_to_filter_cutoff_frequency();
-        self.mod_env_to_cutoff = region.get_modulation_envelope_to_filter_cutoff_frequency();
-        self.dynamic_cutoff = self.mod_lfo_to_cutoff != 0 || self.mod_env_to_cutoff != 0;
-
-        self.mod_lfo_to_volume = region.get_modulation_lfo_to_volume();
-        self.dynamic_volume = self.mod_lfo_to_volume > 0.05_f32;
-
-        self.instrument_pan = region.get_pan().clamp(-50., 50.);
-
-        self.instrument_reverb = 0.01_f32 * region.get_reverb_effects_send();
-        self.instrument_chorus = 0.01_f32 * region.get_chorus_effects_send();
-
-        RegionEx::start_volume_envelope(&mut self.vol_env, region, key);
-        RegionEx::start_modulation_envelope(&mut self.mod_env, region, key, velocity);
-        RegionEx::start_vibrato(&mut self.vib_lfo, region);
-        RegionEx::start_modulation(&mut self.mod_lfo, region);
-        RegionEx::start_oscillator(&mut self.oscillator, region);
-        self.filter.clear_buffer();
-        self.filter.set_low_pass_filter(self.cutoff, self.resonance);
-
-        self.smoothed_cutoff = self.cutoff;
-
-        self.voice_state = VoiceState::PLAYING;
-        self.voice_length = 0;
     }
 
     pub(crate) fn end(&mut self) {
@@ -190,6 +204,8 @@ impl Voice {
     ///
     /// End is *supposed* to begin playing a release sound. this is the
     /// evil twin.
+    ///
+    /// This also means it will drop on the next process call.
     pub(crate) fn kill(&mut self) {
         self.note_gain = 0_f32;
     }

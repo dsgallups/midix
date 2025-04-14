@@ -1,5 +1,7 @@
 use crate::prelude::*;
 
+use super::RegionPair;
+
 #[non_exhaustive]
 pub struct Lfo {
     sample_rate: i32,
@@ -15,30 +17,23 @@ pub struct Lfo {
 }
 
 impl Lfo {
-    pub fn new(settings: &SynthesizerSettings) -> Self {
+    pub fn new(settings: &SynthesizerSettings, delay: f32, frequency: f32) -> Self {
+        let mut active = false;
+        let mut slf_delay = 0.;
+        let mut period = 0.;
+        if frequency > 1.0E-3_f32 {
+            active = true;
+            slf_delay = delay as f64;
+            period = 1.0_f64 / frequency as f64;
+        }
         Self {
             sample_rate: settings.sample_rate,
             block_size: settings.block_size,
-            active: false,
-            delay: 0_f64,
-            period: 0_f64,
+            active,
+            delay: slf_delay,
+            period,
             processed_sample_count: 0,
             value: 0_f32,
-        }
-    }
-
-    pub fn start(&mut self, delay: f32, frequency: f32) {
-        if frequency > 1.0E-3_f32 {
-            self.active = true;
-
-            self.delay = delay as f64;
-            self.period = 1.0_f64 / frequency as f64;
-
-            self.processed_sample_count = 0;
-            self.value = 0_f32;
-        } else {
-            self.active = false;
-            self.value = 0_f32;
         }
     }
 
