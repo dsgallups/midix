@@ -1,6 +1,5 @@
 use crate::{prelude::*, utils};
 
-#[non_exhaustive]
 pub struct RegionPair<'a> {
     pub preset: &'a PresetRegion,
     pub instrument: &'a InstrumentRegion,
@@ -29,22 +28,6 @@ impl<'a> RegionPair<'a> {
 
     pub fn get_sample_end_loop(&self) -> i32 {
         self.instrument.get_sample_end_loop()
-    }
-
-    pub fn get_start_address_offset(&self) -> i32 {
-        self.instrument.get_start_address_offset()
-    }
-
-    pub fn get_end_address_offset(&self) -> i32 {
-        self.instrument.get_end_address_offset()
-    }
-
-    pub fn get_start_loop_address_offset(&self) -> i32 {
-        self.instrument.get_start_loop_address_offset()
-    }
-
-    pub fn get_end_loop_address_offset(&self) -> i32 {
-        self.instrument.get_end_loop_address_offset()
     }
 
     pub fn get_modulation_lfo_to_pitch(&self) -> i32 {

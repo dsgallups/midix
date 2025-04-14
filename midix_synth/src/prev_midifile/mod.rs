@@ -16,8 +16,7 @@ use crate::prelude::*;
 #[derive(Clone, Copy)]
 #[non_exhaustive]
 pub(crate) struct Message {
-    pub(crate) channel: u8,
-    pub(crate) command: u8,
+    pub(crate) status: u8,
     pub(crate) data1: u8,
     pub(crate) data2: u8,
 }
@@ -31,15 +30,13 @@ impl Message {
 
     pub(crate) fn common1(status: u8, data1: u8) -> Self {
         Self {
-            channel: status & 0x0F,
-            command: status & 0xF0,
+            status,
             data1,
             data2: 0,
         }
     }
 
     pub(crate) fn common2(status: u8, data1: u8, data2: u8, loop_type: MidiFileLoopType) -> Self {
-        let channel = status & 0x0F;
         let command = status & 0xF0;
 
         if command == 0xB0 {
@@ -73,63 +70,75 @@ impl Message {
         }
 
         Self {
-            channel,
-            command,
+            status,
             data1,
             data2,
         }
     }
 
-    pub(crate) fn tempo_change(tempo: i32) -> Self {
-        Self {
-            channel: Message::TEMPO_CHANGE,
-            command: (tempo >> 16) as u8,
-            data1: (tempo >> 8) as u8,
-            data2: tempo as u8,
-        }
+    pub(crate) fn tempo_change(_tempo: i32) -> Self {
+        // Self {
+        //     channel: Message::TEMPO_CHANGE,
+        //     command: (tempo >> 16) as u8,
+        //     data1: (tempo >> 8) as u8,
+        //     data2: tempo as u8,
+        // }
+        //broken
+
+        unimplemented!()
     }
 
     pub(crate) fn loop_start() -> Self {
-        Self {
-            channel: Message::LOOP_START,
-            command: 0,
-            data1: 0,
-            data2: 0,
-        }
+        // Self {
+        //     channel: Message::LOOP_START,
+        //     command: 0,
+        //     data1: 0,
+        //     data2: 0,
+        // }
+        //broken
+
+        unimplemented!()
     }
 
     pub(crate) fn loop_end() -> Self {
-        Self {
-            channel: Message::LOOP_END,
-            command: 0,
-            data1: 0,
-            data2: 0,
-        }
+        //broken
+        // Self {
+        //     channel: Message::LOOP_END,
+        //     command: 0,
+        //     data1: 0,
+        //     data2: 0,
+        // }
+
+        unimplemented!()
     }
 
     pub(crate) fn end_of_track() -> Self {
-        Self {
-            channel: Message::END_OF_TRACK,
-            command: 0,
-            data1: 0,
-            data2: 0,
-        }
+        //broken
+        // Self {
+        //     channel: Message::END_OF_TRACK,
+        //     command: 0,
+        //     data1: 0,
+        //     data2: 0,
+        // }
+        unimplemented!()
     }
 
     pub(crate) fn get_message_type(&self) -> u8 {
-        match self.channel {
-            Message::TEMPO_CHANGE => Message::TEMPO_CHANGE,
-            Message::LOOP_START => Message::LOOP_START,
-            Message::LOOP_END => Message::LOOP_END,
-            Message::END_OF_TRACK => Message::END_OF_TRACK,
-            _ => Message::NORMAL,
-        }
+        // match self.channel {
+        //     Message::TEMPO_CHANGE => Message::TEMPO_CHANGE,
+        //     Message::LOOP_START => Message::LOOP_START,
+        //     Message::LOOP_END => Message::LOOP_END,
+        //     Message::END_OF_TRACK => Message::END_OF_TRACK,
+        //     _ => Message::NORMAL,
+        // }
+        unimplemented!()
     }
 
     pub(crate) fn get_tempo(&self) -> f64 {
-        60000000.0
-            / (((self.command as i32) << 16) | ((self.data1 as i32) << 8) | (self.data2 as i32))
-                as f64
+        // 60000000.0
+        //     / (((self.command as i32) << 16) | ((self.data1 as i32) << 8) | (self.data2 as i32))
+        //         as f64
+        unimplemented!()
     }
 }
 

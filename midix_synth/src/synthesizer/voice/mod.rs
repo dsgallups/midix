@@ -23,6 +23,7 @@ use super::Channel;
 
 #[non_exhaustive]
 pub(crate) struct Voice {
+    // UNUSED?
     sample_rate: i32,
     block_size: usize,
 

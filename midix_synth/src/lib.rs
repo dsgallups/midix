@@ -6,7 +6,7 @@ pub mod synthesizer;
 
 mod utils;
 
-//pub mod prev_midifile;
+pub mod prev_midifile;
 
 pub mod prelude {
     //midifile::*,
