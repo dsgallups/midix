@@ -65,7 +65,6 @@ impl RegionEx {
         velocity: u8,
     ) {
         // According to the implementation of TinySoundFont, the attack time should be adjusted by the velocity.
-
         let delay = region.get_delay_modulation_envelope();
         let attack = region.get_attack_modulation_envelope() * ((145 - velocity) as f32 / 144_f32);
         let hold = region.get_hold_modulation_envelope()

@@ -21,13 +21,14 @@ pub struct VolumeEnvelope {
     release_level: f32,
 
     processed_sample_count: usize,
-    stage: i32,
+    stage: EnvelopeStage,
     value: f32,
 
     priority: f32,
 }
 
 impl VolumeEnvelope {
+    /// we should probably combine new and start
     pub fn new(settings: &SynthesizerSettings) -> Self {
         Self {
             sample_rate: settings.sample_rate,
@@ -41,7 +42,7 @@ impl VolumeEnvelope {
             sustain_level: 0_f32,
             release_level: 0_f32,
             processed_sample_count: 0,
-            stage: 0,
+            stage: EnvelopeStage::Delay,
             value: 0_f32,
             priority: 0_f32,
         }
@@ -71,14 +72,14 @@ impl VolumeEnvelope {
         self.release_level = 0_f32;
 
         self.processed_sample_count = 0;
-        self.stage = EnvelopeStage::DELAY;
+        self.stage = EnvelopeStage::Delay;
         self.value = 0_f32;
 
         self.process(0);
     }
 
     pub fn release(&mut self) {
-        self.stage = EnvelopeStage::RELEASE;
+        self.stage = EnvelopeStage::Release;
         self.release_start_time = self.processed_sample_count as f64 / self.sample_rate as f64;
         self.release_level = self.value;
     }
@@ -88,49 +89,57 @@ impl VolumeEnvelope {
 
         let current_time = self.processed_sample_count as f64 / self.sample_rate as f64;
 
-        while self.stage <= EnvelopeStage::HOLD {
+        // interesting...
+        //
+        // Maybe we can refactor this to not loop
+        while self.stage <= EnvelopeStage::Hold {
             let end_time = match self.stage {
-                EnvelopeStage::DELAY => self.attack_start_time,
-                EnvelopeStage::ATTACK => self.hold_start_time,
-                EnvelopeStage::HOLD => self.decay_start_time,
+                EnvelopeStage::Delay => self.attack_start_time,
+                EnvelopeStage::Attack => self.hold_start_time,
+                EnvelopeStage::Hold => self.decay_start_time,
                 _ => panic!("Invalid envelope stage."),
             };
 
             if current_time < end_time {
                 break;
             } else {
-                self.stage += 1;
+                self.stage = self.stage.next();
             }
         }
+        use EnvelopeStage::*;
+        match self.stage {
+            Delay => {
+                self.value = 0_f32;
+                self.priority = 4_f32 + self.value;
+                true
+            }
+            Attack => {
+                self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
+                self.priority = 3_f32 + self.value;
+                true
+            }
+            Hold => {
+                self.value = 1_f32;
+                self.priority = 2_f32 + self.value;
+                true
+            }
+            Decay => {
+                self.value =
+                    (utils::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
+                        as f32)
+                        .max(self.sustain_level);
 
-        if self.stage == EnvelopeStage::DELAY {
-            self.value = 0_f32;
-            self.priority = 4_f32 + self.value;
-            true
-        } else if self.stage == EnvelopeStage::ATTACK {
-            self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
-            self.priority = 3_f32 + self.value;
-            true
-        } else if self.stage == EnvelopeStage::HOLD {
-            self.value = 1_f32;
-            self.priority = 2_f32 + self.value;
-            true
-        } else if self.stage == EnvelopeStage::DECAY {
-            self.value =
-                (utils::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
-                    as f32)
-                    .max(self.sustain_level);
-
-            self.priority = 1_f32 + self.value;
-            self.value > utils::NON_AUDIBLE
-        } else if self.stage == EnvelopeStage::RELEASE {
-            self.value = (self.release_level as f64
-                * utils::exp_cutoff(self.release_slope * (current_time - self.release_start_time)))
-                as f32;
-            self.priority = self.value;
-            self.value > utils::NON_AUDIBLE
-        } else {
-            panic!("Invalid envelope stage.");
+                self.priority = 1_f32 + self.value;
+                self.value > utils::NON_AUDIBLE
+            }
+            Release => {
+                self.value = (self.release_level as f64
+                    * utils::exp_cutoff(
+                        self.release_slope * (current_time - self.release_start_time),
+                    )) as f32;
+                self.priority = self.value;
+                self.value > utils::NON_AUDIBLE
+            }
         }
     }
 
