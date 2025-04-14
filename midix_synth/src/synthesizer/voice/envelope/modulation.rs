@@ -87,7 +87,7 @@ impl ModulationEnvelope {
         self.release_level = self.value;
     }
 
-    pub fn process(&mut self, sample_count: usize) -> bool {
+    pub fn process(&mut self, sample_count: usize) -> Option<f32> {
         self.processed_sample_count += sample_count;
 
         let current_time = self.processed_sample_count as f64 / self.sample_rate as f64;
@@ -107,36 +107,25 @@ impl ModulationEnvelope {
             }
         }
         match self.stage {
-            EnvelopeStage::Delay => {
-                self.value = 0.;
-                true
-            }
+            EnvelopeStage::Delay => Some(0.),
             EnvelopeStage::Attack => {
-                self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
-                true
+                Some((self.attack_slope * (current_time - self.attack_start_time)) as f32)
             }
-            EnvelopeStage::Hold => {
-                self.value = 1.;
-                true
-            }
+            EnvelopeStage::Hold => Some(1.),
             EnvelopeStage::Decay => {
-                self.value = ((self.decay_slope * (self.decay_end_time - current_time)) as f32)
+                let val = ((self.decay_slope * (self.decay_end_time - current_time)) as f32)
                     .max(self.sustain_level);
 
-                self.value > utils::NON_AUDIBLE
+                (val > utils::NON_AUDIBLE).then_some(val)
             }
             EnvelopeStage::Release => {
-                self.value = ((self.release_level as f64
+                let val = ((self.release_level as f64
                     * self.release_slope
                     * (self.release_end_time - current_time)) as f32)
                     .max(0.);
 
-                self.value > utils::NON_AUDIBLE
+                (val > utils::NON_AUDIBLE).then_some(val)
             }
         }
-    }
-
-    pub fn get_value(&self) -> f32 {
-        self.value
     }
 }

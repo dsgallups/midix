@@ -80,12 +80,13 @@ impl VolumeEnvelope {
     }
 
     pub fn release(&mut self) {
+        //TODO: make this algebraic
         self.stage = EnvelopeStage::Release;
         self.release_start_time = self.processed_sample_count as f64 / self.sample_rate as f64;
         self.release_level = self.value;
     }
 
-    pub fn process(&mut self, sample_count: usize) -> bool {
+    pub fn process(&mut self, sample_count: usize) -> Option<f32> {
         self.processed_sample_count += sample_count;
 
         let current_time = self.processed_sample_count as f64 / self.sample_rate as f64;
@@ -108,42 +109,27 @@ impl VolumeEnvelope {
             }
         }
         match self.stage {
-            EnvelopeStage::Delay => {
-                self.value = 0_f32;
-                //self.priority = 4_f32 + self.value;
-                true
-            }
+            EnvelopeStage::Delay => Some(0.),
             EnvelopeStage::Attack => {
-                self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
-                //self.priority = 3_f32 + self.value;
-                true
+                Some((self.attack_slope * (current_time - self.attack_start_time)) as f32)
             }
-            EnvelopeStage::Hold => {
-                self.value = 1_f32;
-                //self.priority = 2_f32 + self.value;
-                true
-            }
+            EnvelopeStage::Hold => Some(1_f32),
             EnvelopeStage::Decay => {
-                self.value =
+                let val =
                     (utils::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
                         as f32)
                         .max(self.sustain_level);
 
-                //self.priority = 1_f32 + self.value;
-                self.value > utils::NON_AUDIBLE
+                (val > utils::NON_AUDIBLE).then_some(val)
             }
             EnvelopeStage::Release => {
-                self.value = (self.release_level as f64
+                let val = (self.release_level as f64
                     * utils::exp_cutoff(
                         self.release_slope * (current_time - self.release_start_time),
                     )) as f32;
                 //self.priority = self.value;
-                self.value > utils::NON_AUDIBLE
+                (val > utils::NON_AUDIBLE).then_some(val)
             }
         }
-    }
-
-    pub fn get_value(&self) -> f32 {
-        self.value
     }
 }

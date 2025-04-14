@@ -229,18 +229,19 @@ impl Voice {
 
         self.release_if_necessary(channel_info);
 
-        if !self.vol_env.process(self.block_size) {
+        let Some(vol_env) = self.vol_env.process(self.block_size) else {
             return false;
-        }
+        };
 
-        self.mod_env.process(self.block_size);
+        let Some(mod_env) = self.mod_env.process(self.block_size) else {
+            return false;
+        };
         let vib_lfo = self.vib_lfo.process();
         let mod_lfo = self.mod_lfo.process();
 
         let vib_pitch_change =
             (0.01_f32 * channel_info.get_modulation() + self.vib_lfo_to_pitch) * vib_lfo;
-        let mod_pitch_change =
-            self.mod_lfo_to_pitch * mod_lfo + self.mod_env_to_pitch * self.mod_env.get_value();
+        let mod_pitch_change = self.mod_lfo_to_pitch * mod_lfo + self.mod_env_to_pitch * mod_env;
         let channel_pitch_change = channel_info.get_tune() + channel_info.get_pitch_bend();
         let pitch = self.key as f32 + vib_pitch_change + mod_pitch_change + channel_pitch_change;
         if !self.oscillator.process(data, &mut self.block[..], pitch) {
@@ -248,8 +249,8 @@ impl Voice {
         }
 
         if self.dynamic_cutoff {
-            let cents = self.mod_lfo_to_cutoff as f32 * mod_lfo
-                + self.mod_env_to_cutoff as f32 * self.mod_env.get_value();
+            let cents =
+                self.mod_lfo_to_cutoff as f32 * mod_lfo + self.mod_env_to_cutoff as f32 * mod_env;
             let factor = utils::cents_to_multiplying_factor(cents);
             let new_cutoff = factor * self.cutoff;
 
@@ -273,7 +274,7 @@ impl Voice {
         let ve = channel_info.get_volume() * channel_info.get_expression();
         let channel_gain = ve * ve;
 
-        let mut mix_gain = self.note_gain * channel_gain * self.vol_env.get_value();
+        let mut mix_gain = self.note_gain * channel_gain * vol_env;
         if self.dynamic_volume {
             let decibels = self.mod_lfo_to_volume * mod_lfo;
             mix_gain *= utils::decibels_to_linear(decibels);
