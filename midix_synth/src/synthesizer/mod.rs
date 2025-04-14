@@ -276,6 +276,7 @@ impl Synthesizer {
                                         key,
                                         velocity,
                                     );
+                                    return;
                                 }
                             }
                         }
