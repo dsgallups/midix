@@ -42,9 +42,9 @@ impl Lfo {
         }
     }
 
-    pub fn process(&mut self) {
+    pub fn process(&mut self) -> f32 {
         if !self.active {
-            return;
+            return self.value;
         }
 
         self.processed_sample_count += self.block_size;
@@ -63,9 +63,10 @@ impl Lfo {
                 self.value = (4_f64 * (phase - 1.0)) as f32;
             }
         }
-    }
-
-    pub fn get_value(&self) -> f32 {
         self.value
     }
+
+    // pub fn get_value(&self) -> f32 {
+    //     self.value
+    // }
 }

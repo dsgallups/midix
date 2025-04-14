@@ -8,9 +8,6 @@ pub(super) use region::*;
 mod oscillator;
 use oscillator::*;
 
-mod collection;
-pub(super) use collection::*;
-
 mod bi_quad_filter;
 use bi_quad_filter::*;
 
@@ -189,10 +186,24 @@ impl Voice {
         }
     }
 
+    /// Note stops immediately without a release sound.
+    ///
+    /// End is *supposed* to begin playing a release sound. this is the
+    /// evil twin.
     pub(crate) fn kill(&mut self) {
         self.note_gain = 0_f32;
     }
 
+    /// this is only called in one place: render_block. If I return false,
+    /// I will die.
+    ///
+    /// When do I die?
+    ///
+    /// 1. if my note_gain is less than NON_audible
+    /// 2. if my volume envelope determines I am no longer audible
+    /// 3. mod env is just hanging around, so it's definitely not supposed to
+    ///    return a bool
+    ///
     pub(crate) fn process(&mut self, data: &[i16], channels: &[Channel]) -> bool {
         if self.note_gain < utils::NON_AUDIBLE {
             return false;
@@ -207,13 +218,13 @@ impl Voice {
         }
 
         self.mod_env.process(self.block_size);
-        self.vib_lfo.process();
-        self.mod_lfo.process();
+        let vib_lfo = self.vib_lfo.process();
+        let mod_lfo = self.mod_lfo.process();
 
-        let vib_pitch_change = (0.01_f32 * channel_info.get_modulation() + self.vib_lfo_to_pitch)
-            * self.vib_lfo.get_value();
-        let mod_pitch_change = self.mod_lfo_to_pitch * self.mod_lfo.get_value()
-            + self.mod_env_to_pitch * self.mod_env.get_value();
+        let vib_pitch_change =
+            (0.01_f32 * channel_info.get_modulation() + self.vib_lfo_to_pitch) * vib_lfo;
+        let mod_pitch_change =
+            self.mod_lfo_to_pitch * mod_lfo + self.mod_env_to_pitch * self.mod_env.get_value();
         let channel_pitch_change = channel_info.get_tune() + channel_info.get_pitch_bend();
         let pitch = self.key as f32 + vib_pitch_change + mod_pitch_change + channel_pitch_change;
         if !self.oscillator.process(data, &mut self.block[..], pitch) {
@@ -221,7 +232,7 @@ impl Voice {
         }
 
         if self.dynamic_cutoff {
-            let cents = self.mod_lfo_to_cutoff as f32 * self.mod_lfo.get_value()
+            let cents = self.mod_lfo_to_cutoff as f32 * mod_lfo
                 + self.mod_env_to_cutoff as f32 * self.mod_env.get_value();
             let factor = utils::cents_to_multiplying_factor(cents);
             let new_cutoff = factor * self.cutoff;
@@ -248,7 +259,7 @@ impl Voice {
 
         let mut mix_gain = self.note_gain * channel_gain * self.vol_env.get_value();
         if self.dynamic_volume {
-            let decibels = self.mod_lfo_to_volume * self.mod_lfo.get_value();
+            let decibels = self.mod_lfo_to_volume * mod_lfo;
             mix_gain *= utils::decibels_to_linear(decibels);
         }
 
@@ -294,14 +305,6 @@ impl Voice {
             self.oscillator.release();
 
             self.voice_state = VoiceState::RELEASED;
-        }
-    }
-
-    pub(crate) fn get_priority(&self) -> f32 {
-        if self.note_gain < utils::NON_AUDIBLE {
-            0_f32
-        } else {
-            self.vol_env.get_priority()
         }
     }
 }

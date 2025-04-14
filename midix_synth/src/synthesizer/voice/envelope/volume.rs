@@ -13,6 +13,7 @@ pub struct VolumeEnvelope {
     attack_start_time: f64,
     hold_start_time: f64,
     decay_start_time: f64,
+
     release_start_time: f64,
 
     sustain_level: f32,
@@ -21,8 +22,6 @@ pub struct VolumeEnvelope {
     processed_sample_count: usize,
     stage: EnvelopeStage,
     value: f32,
-
-    priority: f32,
 }
 
 impl VolumeEnvelope {
@@ -42,7 +41,6 @@ impl VolumeEnvelope {
             processed_sample_count: 0,
             stage: EnvelopeStage::Delay,
             value: 0_f32,
-            priority: 0_f32,
         }
     }
 
@@ -56,6 +54,7 @@ impl VolumeEnvelope {
         release: f32,
     ) {
         self.attack_slope = 1_f64 / attack as f64;
+        //diff 1
         self.decay_slope = -9.226_f64 / decay as f64;
         self.release_slope = -9.226_f64 / release as f64;
 
@@ -107,17 +106,17 @@ impl VolumeEnvelope {
         match self.stage {
             EnvelopeStage::Delay => {
                 self.value = 0_f32;
-                self.priority = 4_f32 + self.value;
+                //self.priority = 4_f32 + self.value;
                 true
             }
             EnvelopeStage::Attack => {
                 self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
-                self.priority = 3_f32 + self.value;
+                //self.priority = 3_f32 + self.value;
                 true
             }
             EnvelopeStage::Hold => {
                 self.value = 1_f32;
-                self.priority = 2_f32 + self.value;
+                //self.priority = 2_f32 + self.value;
                 true
             }
             EnvelopeStage::Decay => {
@@ -126,7 +125,7 @@ impl VolumeEnvelope {
                         as f32)
                         .max(self.sustain_level);
 
-                self.priority = 1_f32 + self.value;
+                //self.priority = 1_f32 + self.value;
                 self.value > utils::NON_AUDIBLE
             }
             EnvelopeStage::Release => {
@@ -134,7 +133,7 @@ impl VolumeEnvelope {
                     * utils::exp_cutoff(
                         self.release_slope * (current_time - self.release_start_time),
                     )) as f32;
-                self.priority = self.value;
+                //self.priority = self.value;
                 self.value > utils::NON_AUDIBLE
             }
         }
@@ -142,9 +141,5 @@ impl VolumeEnvelope {
 
     pub fn get_value(&self) -> f32 {
         self.value
-    }
-
-    pub fn get_priority(&self) -> f32 {
-        self.priority
     }
 }

@@ -17,7 +17,7 @@ use array_math::*;
 
 mod channel;
 use channel::*;
-use voice::{RegionPair, VoiceCollection};
+use voice::{RegionPair, Voice};
 
 use std::cmp;
 use std::collections::HashMap;
@@ -33,12 +33,14 @@ pub struct Synthesizer {
     pub(crate) block_size: usize,
     pub(crate) maximum_polyphony: usize,
 
+    settings: SynthesizerSettings,
+
     preset_lookup: HashMap<i32, usize>,
     default_preset: usize,
 
     channels: Vec<Channel>,
 
-    voices: VoiceCollection,
+    voices: Vec<Voice>,
 
     block_left: Vec<f32>,
     block_right: Vec<f32>,
@@ -97,8 +99,6 @@ impl Synthesizer {
             channels.push(Channel::new(i == Synthesizer::PERCUSSION_CHANNEL));
         }
 
-        let voices = VoiceCollection::new(settings);
-
         let block_left: Vec<f32> = vec![0_f32; settings.block_size];
         let block_right: Vec<f32> = vec![0_f32; settings.block_size];
 
@@ -122,7 +122,8 @@ impl Synthesizer {
             preset_lookup,
             default_preset,
             channels,
-            voices,
+            settings: *settings,
+            voices: Vec::with_capacity(settings.maximum_polyphony),
             block_left,
             block_right,
             inverse_block_size,
@@ -198,7 +199,7 @@ impl Synthesizer {
             return;
         }
 
-        for voice in self.voices.get_active_voices().iter_mut() {
+        for voice in self.voices.iter_mut() {
             if voice.channel == channel && voice.key == key {
                 voice.end();
             }
@@ -258,9 +259,29 @@ impl Synthesizer {
                     if instrument_region.contains(key, velocity) {
                         let region_pair = RegionPair::new(preset_region, instrument_region);
 
-                        if let Some(value) = self.voices.request_new(instrument_region, channel) {
-                            value.start(&region_pair, channel, key, velocity)
+                        // If an exclusive class is assigned to the region, find a voice with the same class.
+                        // If found, reuse it to avoid playing multiple voices with the same class at a time.
+                        let exclusive_class = instrument_region.get_exclusive_class();
+
+                        if exclusive_class != 0 {
+                            for voice in self.voices.iter_mut() {
+                                if voice.exclusive_class == exclusive_class
+                                    && voice.channel == channel
+                                {
+                                    voice.start(&region_pair, channel, key, velocity);
+                                }
+                            }
                         }
+
+                        // If the number of active voices is less than the limit, use a free one.
+                        // TODO(dsgallups): store synthesizer settings
+                        let mut voice = Voice::new(&self.settings);
+
+                        voice.start(&region_pair, channel, key, velocity);
+
+                        self.voices.push(voice);
+
+                        // there's some logic here about finding lowest priority of voice, but I'm unsure of the use-case
                     }
                 }
             }
@@ -276,7 +297,7 @@ impl Synthesizer {
         if immediate {
             self.voices.clear();
         } else {
-            for voice in self.voices.get_active_voices().iter_mut() {
+            for voice in self.voices.iter_mut() {
                 voice.end();
             }
         }
@@ -290,13 +311,13 @@ impl Synthesizer {
     /// * `immediate` - If `true`, notes will stop immediately without the release sound.
     pub fn note_off_all_channel(&mut self, channel: u8, immediate: bool) {
         if immediate {
-            for voice in self.voices.get_active_voices().iter_mut() {
+            for voice in self.voices.iter_mut() {
                 if voice.channel == channel {
                     voice.kill();
                 }
             }
         } else {
-            for voice in self.voices.get_active_voices().iter_mut() {
+            for voice in self.voices.iter_mut() {
                 if voice.channel == channel {
                     voice.end();
                 }
@@ -379,12 +400,14 @@ impl Synthesizer {
     }
 
     fn render_block(&mut self) {
+        // the idea here is that if the voice cannot process, drop it.
+        // A voice will not be able to process if it's been killed and is ready for release.
         self.voices
-            .process(&self.sound_font.wave_data, &self.channels);
+            .retain_mut(|voice| voice.process(&self.sound_font.wave_data, &self.channels));
 
         self.block_left.fill(0_f32);
         self.block_right.fill(0_f32);
-        for voice in self.voices.get_active_voices().iter_mut() {
+        for voice in self.voices.iter_mut() {
             let previous_gain_left = self.master_volume * voice.previous_mix_gain_left;
             let current_gain_left = self.master_volume * voice.current_mix_gain_left;
             Synthesizer::write_block(
@@ -413,7 +436,7 @@ impl Synthesizer {
             let chorus_output_right = &mut effects.chorus_output_right[..];
             chorus_input_left.fill(0_f32);
             chorus_input_right.fill(0_f32);
-            for voice in self.voices.get_active_voices().iter_mut() {
+            for voice in self.voices.iter_mut() {
                 let previous_gain_left = voice.previous_chorus_send * voice.previous_mix_gain_left;
                 let current_gain_left = voice.current_chorus_send * voice.current_mix_gain_left;
                 Synthesizer::write_block(
@@ -456,7 +479,7 @@ impl Synthesizer {
             let reverb_output_left = &mut effects.reverb_output_left[..];
             let reverb_output_right = &mut effects.reverb_output_right[..];
             reverb_input.fill(0_f32);
-            for voice in self.voices.get_active_voices().iter_mut() {
+            for voice in self.voices.iter_mut() {
                 let previous_gain = reverb.get_input_gain()
                     * voice.previous_reverb_send
                     * (voice.previous_mix_gain_left + voice.previous_mix_gain_right);
