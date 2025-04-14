@@ -11,7 +11,6 @@ pub mod zone;
 
 mod info;
 pub use info::*;
-pub(super) mod math;
 mod parameters;
 mod sampledata;
 use parameters::SoundFontParameters;

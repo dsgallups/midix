@@ -5,7 +5,6 @@ use std::f32::consts;
 mod envelope;
 use envelope::*;
 mod region;
-use math::SoundFontMath;
 pub(super) use region::*;
 
 mod oscillator;
@@ -20,7 +19,7 @@ use bi_quad_filter::*;
 mod loop_mode;
 use loop_mode::*;
 
-use crate::prelude::*;
+use crate::{math, prelude::*};
 
 use super::Channel;
 
@@ -144,16 +143,16 @@ impl Voice {
             // I'm not sure why, but this indeed improves the loudness variability.
             let sample_attenuation = 0.4_f32 * region.get_initial_attenuation();
             let filter_attenuation = 0.5_f32 * region.get_initial_filter_q();
-            let decibels = 2_f32 * SoundFontMath::linear_to_decibels(velocity as f32 / 127_f32)
+            let decibels = 2_f32 * math::linear_to_decibels(velocity as f32 / 127_f32)
                 - sample_attenuation
                 - filter_attenuation;
-            self.note_gain = SoundFontMath::decibels_to_linear(decibels);
+            self.note_gain = math::decibels_to_linear(decibels);
         } else {
             self.note_gain = 0_f32;
         }
 
         self.cutoff = region.get_initial_filter_cutoff_frequency();
-        self.resonance = SoundFontMath::decibels_to_linear(region.get_initial_filter_q());
+        self.resonance = math::decibels_to_linear(region.get_initial_filter_q());
 
         self.vib_lfo_to_pitch = 0.01_f32 * region.get_vibrato_lfo_to_pitch() as f32;
         self.mod_lfo_to_pitch = 0.01_f32 * region.get_modulation_lfo_to_pitch() as f32;
@@ -166,7 +165,8 @@ impl Voice {
         self.mod_lfo_to_volume = region.get_modulation_lfo_to_volume();
         self.dynamic_volume = self.mod_lfo_to_volume > 0.05_f32;
 
-        self.instrument_pan = SoundFontMath::clamp(region.get_pan(), -50_f32, 50_f32);
+        self.instrument_pan = region.get_pan().clamp(-50., 50.);
+
         self.instrument_reverb = 0.01_f32 * region.get_reverb_effects_send();
         self.instrument_chorus = 0.01_f32 * region.get_chorus_effects_send();
 
@@ -195,7 +195,7 @@ impl Voice {
     }
 
     pub(crate) fn process(&mut self, data: &[i16], channels: &[Channel]) -> bool {
-        if self.note_gain < SoundFontMath::NON_AUDIBLE {
+        if self.note_gain < math::NON_AUDIBLE {
             return false;
         }
 
@@ -224,13 +224,14 @@ impl Voice {
         if self.dynamic_cutoff {
             let cents = self.mod_lfo_to_cutoff as f32 * self.mod_lfo.get_value()
                 + self.mod_env_to_cutoff as f32 * self.mod_env.get_value();
-            let factor = SoundFontMath::cents_to_multiplying_factor(cents);
+            let factor = math::cents_to_multiplying_factor(cents);
             let new_cutoff = factor * self.cutoff;
 
             // The cutoff change is limited within x0.5 and x2 to reduce pop noise.
             let lower_limit = 0.5_f32 * self.smoothed_cutoff;
             let upper_limit = 2_f32 * self.smoothed_cutoff;
-            self.smoothed_cutoff = SoundFontMath::clamp(new_cutoff, lower_limit, upper_limit);
+
+            self.smoothed_cutoff = new_cutoff.clamp(lower_limit, upper_limit);
 
             self.filter
                 .set_low_pass_filter(self.smoothed_cutoff, self.resonance);
@@ -249,7 +250,7 @@ impl Voice {
         let mut mix_gain = self.note_gain * channel_gain * self.vol_env.get_value();
         if self.dynamic_volume {
             let decibels = self.mod_lfo_to_volume * self.mod_lfo.get_value();
-            mix_gain *= SoundFontMath::decibels_to_linear(decibels);
+            mix_gain *= math::decibels_to_linear(decibels);
         }
 
         let angle =
@@ -257,7 +258,7 @@ impl Voice {
         if angle <= 0_f32 {
             self.current_mix_gain_left = mix_gain;
             self.current_mix_gain_right = 0_f32;
-        } else if angle >= SoundFontMath::HALF_PI {
+        } else if angle >= math::HALF_PI {
             self.current_mix_gain_left = 0_f32;
             self.current_mix_gain_right = mix_gain;
         } else {
@@ -265,16 +266,11 @@ impl Voice {
             self.current_mix_gain_right = mix_gain * angle.sin();
         }
 
-        self.current_reverb_send = SoundFontMath::clamp(
-            channel_info.get_reverb_send() + self.instrument_reverb,
-            0_f32,
-            1_f32,
-        );
-        self.current_chorus_send = SoundFontMath::clamp(
-            channel_info.get_chorus_send() + self.instrument_chorus,
-            0_f32,
-            1_f32,
-        );
+        self.current_reverb_send =
+            (channel_info.get_reverb_send() + self.instrument_reverb).clamp(0., 1.);
+
+        self.current_chorus_send =
+            (channel_info.get_chorus_send() + self.instrument_chorus).clamp(0., 1.);
 
         if self.voice_length == 0 {
             self.previous_mix_gain_left = self.current_mix_gain_left;
@@ -303,7 +299,7 @@ impl Voice {
     }
 
     pub(crate) fn get_priority(&self) -> f32 {
-        if self.note_gain < SoundFontMath::NON_AUDIBLE {
+        if self.note_gain < math::NON_AUDIBLE {
             0_f32
         } else {
             self.vol_env.get_priority()

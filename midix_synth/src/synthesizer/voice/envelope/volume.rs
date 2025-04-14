@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
-use math::SoundFontMath;
-
-use crate::prelude::*;
+use crate::{math, prelude::*};
 
 use super::EnvelopeStage;
 
@@ -67,7 +65,9 @@ impl VolumeEnvelope {
         self.decay_start_time = self.hold_start_time + hold as f64;
         self.release_start_time = 0_f64;
 
-        self.sustain_level = SoundFontMath::clamp(sustain, 0_f32, 1_f32);
+        //saw this twice. wtf
+        self.sustain_level = sustain.clamp(0., 1.);
+
         self.release_level = 0_f32;
 
         self.processed_sample_count = 0;
@@ -116,20 +116,19 @@ impl VolumeEnvelope {
             self.priority = 2_f32 + self.value;
             true
         } else if self.stage == EnvelopeStage::DECAY {
-            self.value = (SoundFontMath::exp_cutoff(
-                self.decay_slope * (current_time - self.decay_start_time),
-            ) as f32)
-                .max(self.sustain_level);
+            self.value =
+                (math::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
+                    as f32)
+                    .max(self.sustain_level);
 
             self.priority = 1_f32 + self.value;
-            self.value > SoundFontMath::NON_AUDIBLE
+            self.value > math::NON_AUDIBLE
         } else if self.stage == EnvelopeStage::RELEASE {
             self.value = (self.release_level as f64
-                * SoundFontMath::exp_cutoff(
-                    self.release_slope * (current_time - self.release_start_time),
-                )) as f32;
+                * math::exp_cutoff(self.release_slope * (current_time - self.release_start_time)))
+                as f32;
             self.priority = self.value;
-            self.value > SoundFontMath::NON_AUDIBLE
+            self.value > math::NON_AUDIBLE
         } else {
             panic!("Invalid envelope stage.");
         }

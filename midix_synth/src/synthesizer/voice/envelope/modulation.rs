@@ -1,8 +1,6 @@
 #![allow(dead_code)]
 
-use math::SoundFontMath;
-
-use crate::prelude::*;
+use crate::{math, prelude::*};
 
 use super::EnvelopeStage;
 
@@ -69,7 +67,8 @@ impl ModulationEnvelope {
         self.decay_end_time = self.decay_start_time + decay as f64;
         self.release_end_time = release as f64;
 
-        self.sustain_level = SoundFontMath::clamp(sustain, 0_f32, 1_f32);
+        self.sustain_level = sustain.clamp(0., 1.);
+
         self.release_level = 0_f32;
 
         self.processed_sample_count = 0;
@@ -118,14 +117,14 @@ impl ModulationEnvelope {
             self.value = ((self.decay_slope * (self.decay_end_time - current_time)) as f32)
                 .max(self.sustain_level);
 
-            self.value > SoundFontMath::NON_AUDIBLE
+            self.value > math::NON_AUDIBLE
         } else if self.stage == EnvelopeStage::RELEASE {
             self.value = ((self.release_level as f64
                 * self.release_slope
                 * (self.release_end_time - current_time)) as f32)
                 .max(0.);
 
-            self.value > SoundFontMath::NON_AUDIBLE
+            self.value > math::NON_AUDIBLE
         } else {
             panic!("Invalid envelope stage.");
         }

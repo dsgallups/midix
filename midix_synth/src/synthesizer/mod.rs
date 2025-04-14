@@ -6,7 +6,6 @@ mod chorus;
 use chorus::*;
 
 mod reverb;
-use math::SoundFontMath;
 use reverb::*;
 
 mod settings;
@@ -26,7 +25,7 @@ use std::cmp;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::prelude::*;
+use crate::{math, prelude::*};
 
 /// An instance of the SoundFont synthesizer.
 #[non_exhaustive]
@@ -496,7 +495,7 @@ impl Synthesizer {
         destination: &mut [f32],
         inverse_block_size: f32,
     ) {
-        if previous_gain.max(current_gain) < SoundFontMath::NON_AUDIBLE {
+        if previous_gain.max(current_gain) < math::NON_AUDIBLE {
             return;
         }
 
