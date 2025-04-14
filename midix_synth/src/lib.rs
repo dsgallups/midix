@@ -4,7 +4,7 @@ pub(crate) mod reader;
 pub mod soundfont;
 pub mod synthesizer;
 
-mod math;
+mod utils;
 
 //pub mod prev_midifile;
 

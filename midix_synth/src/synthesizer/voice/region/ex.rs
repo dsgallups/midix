@@ -2,7 +2,7 @@
 
 use voice::{ModulationEnvelope, VolumeEnvelope};
 
-use crate::{math, prelude::*, synthesizer::voice::Oscillator};
+use crate::{prelude::*, synthesizer::voice::Oscillator, utils};
 
 use super::{Lfo, RegionPair};
 
@@ -43,16 +43,16 @@ impl RegionEx {
         let delay = region.get_delay_volume_envelope();
         let attack = region.get_attack_volume_envelope();
         let hold = region.get_hold_volume_envelope()
-            * math::key_number_to_multiplying_factor(
+            * utils::key_number_to_multiplying_factor(
                 region.get_key_number_to_volume_envelope_hold(),
                 key,
             );
         let decay = region.get_decay_volume_envelope()
-            * math::key_number_to_multiplying_factor(
+            * utils::key_number_to_multiplying_factor(
                 region.get_key_number_to_volume_envelope_decay(),
                 key,
             );
-        let sustain = math::decibels_to_linear(-region.get_sustain_volume_envelope());
+        let sustain = utils::decibels_to_linear(-region.get_sustain_volume_envelope());
         let release = region.get_release_volume_envelope().max(0.01_f32);
 
         envelope.start(delay, attack, hold, decay, sustain, release);
@@ -69,12 +69,12 @@ impl RegionEx {
         let delay = region.get_delay_modulation_envelope();
         let attack = region.get_attack_modulation_envelope() * ((145 - velocity) as f32 / 144_f32);
         let hold = region.get_hold_modulation_envelope()
-            * math::key_number_to_multiplying_factor(
+            * utils::key_number_to_multiplying_factor(
                 region.get_key_number_to_modulation_envelope_hold(),
                 key,
             );
         let decay = region.get_decay_modulation_envelope()
-            * math::key_number_to_multiplying_factor(
+            * utils::key_number_to_multiplying_factor(
                 region.get_key_number_to_modulation_envelope_decay(),
                 key,
             );

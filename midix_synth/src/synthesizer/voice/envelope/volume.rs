@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::{math, prelude::*};
+use crate::{prelude::*, utils};
 
 use super::EnvelopeStage;
 
@@ -117,18 +117,18 @@ impl VolumeEnvelope {
             true
         } else if self.stage == EnvelopeStage::DECAY {
             self.value =
-                (math::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
+                (utils::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
                     as f32)
                     .max(self.sustain_level);
 
             self.priority = 1_f32 + self.value;
-            self.value > math::NON_AUDIBLE
+            self.value > utils::NON_AUDIBLE
         } else if self.stage == EnvelopeStage::RELEASE {
             self.value = (self.release_level as f64
-                * math::exp_cutoff(self.release_slope * (current_time - self.release_start_time)))
+                * utils::exp_cutoff(self.release_slope * (current_time - self.release_start_time)))
                 as f32;
             self.priority = self.value;
-            self.value > math::NON_AUDIBLE
+            self.value > utils::NON_AUDIBLE
         } else {
             panic!("Invalid envelope stage.");
         }

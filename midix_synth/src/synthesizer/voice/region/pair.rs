@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::{math, prelude::*};
+use crate::{prelude::*, utils};
 
 #[non_exhaustive]
 pub struct RegionPair<'a> {
@@ -62,7 +62,7 @@ impl<'a> RegionPair<'a> {
     }
 
     pub fn get_initial_filter_cutoff_frequency(&self) -> f32 {
-        math::cents_to_hertz(
+        utils::cents_to_hertz(
             self.gs(GeneratorType::INITIAL_FILTER_CUTOFF_FREQUENCY as usize) as f32,
         )
     }
@@ -96,37 +96,41 @@ impl<'a> RegionPair<'a> {
     }
 
     pub fn get_delay_modulation_lfo(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::DELAY_MODULATION_LFO as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::DELAY_MODULATION_LFO as usize) as f32)
     }
 
     pub fn get_frequency_modulation_lfo(&self) -> f32 {
-        math::cents_to_hertz(self.gs(GeneratorType::FREQUENCY_MODULATION_LFO as usize) as f32)
+        utils::cents_to_hertz(self.gs(GeneratorType::FREQUENCY_MODULATION_LFO as usize) as f32)
     }
 
     pub fn get_delay_vibrato_lfo(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::DELAY_VIBRATO_LFO as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::DELAY_VIBRATO_LFO as usize) as f32)
     }
 
     pub fn get_frequency_vibrato_lfo(&self) -> f32 {
-        math::cents_to_hertz(self.gs(GeneratorType::FREQUENCY_VIBRATO_LFO as usize) as f32)
+        utils::cents_to_hertz(self.gs(GeneratorType::FREQUENCY_VIBRATO_LFO as usize) as f32)
     }
 
     pub fn get_delay_modulation_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::DELAY_MODULATION_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(
+            self.gs(GeneratorType::DELAY_MODULATION_ENVELOPE as usize) as f32
+        )
     }
 
     pub fn get_attack_modulation_envelope(&self) -> f32 {
-        math::timecents_to_seconds(
+        utils::timecents_to_seconds(
             self.gs(GeneratorType::ATTACK_MODULATION_ENVELOPE as usize) as f32
         )
     }
 
     pub fn get_hold_modulation_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::HOLD_MODULATION_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::HOLD_MODULATION_ENVELOPE as usize) as f32)
     }
 
     pub fn get_decay_modulation_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::DECAY_MODULATION_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(
+            self.gs(GeneratorType::DECAY_MODULATION_ENVELOPE as usize) as f32
+        )
     }
 
     pub fn get_sustain_modulation_envelope(&self) -> f32 {
@@ -134,7 +138,7 @@ impl<'a> RegionPair<'a> {
     }
 
     pub fn get_release_modulation_envelope(&self) -> f32 {
-        math::timecents_to_seconds(
+        utils::timecents_to_seconds(
             self.gs(GeneratorType::RELEASE_MODULATION_ENVELOPE as usize) as f32
         )
     }
@@ -148,19 +152,19 @@ impl<'a> RegionPair<'a> {
     }
 
     pub fn get_delay_volume_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::DELAY_VOLUME_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::DELAY_VOLUME_ENVELOPE as usize) as f32)
     }
 
     pub fn get_attack_volume_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::ATTACK_VOLUME_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::ATTACK_VOLUME_ENVELOPE as usize) as f32)
     }
 
     pub fn get_hold_volume_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::HOLD_VOLUME_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::HOLD_VOLUME_ENVELOPE as usize) as f32)
     }
 
     pub fn get_decay_volume_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::DECAY_VOLUME_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::DECAY_VOLUME_ENVELOPE as usize) as f32)
     }
 
     pub fn get_sustain_volume_envelope(&self) -> f32 {
@@ -168,7 +172,7 @@ impl<'a> RegionPair<'a> {
     }
 
     pub fn get_release_volume_envelope(&self) -> f32 {
-        math::timecents_to_seconds(self.gs(GeneratorType::RELEASE_VOLUME_ENVELOPE as usize) as f32)
+        utils::timecents_to_seconds(self.gs(GeneratorType::RELEASE_VOLUME_ENVELOPE as usize) as f32)
     }
 
     pub fn get_key_number_to_volume_envelope_hold(&self) -> i32 {

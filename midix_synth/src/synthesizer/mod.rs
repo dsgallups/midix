@@ -25,7 +25,7 @@ use std::cmp;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::{math, prelude::*};
+use crate::{prelude::*, utils};
 
 /// An instance of the SoundFont synthesizer.
 #[non_exhaustive]
@@ -495,7 +495,7 @@ impl Synthesizer {
         destination: &mut [f32],
         inverse_block_size: f32,
     ) {
-        if previous_gain.max(current_gain) < math::NON_AUDIBLE {
+        if previous_gain.max(current_gain) < utils::NON_AUDIBLE {
             return;
         }
 

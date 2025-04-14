@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::{math, prelude::*};
+use crate::{prelude::*, utils};
 
 use super::EnvelopeStage;
 
@@ -117,14 +117,14 @@ impl ModulationEnvelope {
             self.value = ((self.decay_slope * (self.decay_end_time - current_time)) as f32)
                 .max(self.sustain_level);
 
-            self.value > math::NON_AUDIBLE
+            self.value > utils::NON_AUDIBLE
         } else if self.stage == EnvelopeStage::RELEASE {
             self.value = ((self.release_level as f64
                 * self.release_slope
                 * (self.release_end_time - current_time)) as f32)
                 .max(0.);
 
-            self.value > math::NON_AUDIBLE
+            self.value > utils::NON_AUDIBLE
         } else {
             panic!("Invalid envelope stage.");
         }

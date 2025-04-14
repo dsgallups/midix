@@ -19,7 +19,7 @@ use bi_quad_filter::*;
 mod loop_mode;
 use loop_mode::*;
 
-use crate::{math, prelude::*};
+use crate::{prelude::*, utils};
 
 use super::Channel;
 
@@ -143,16 +143,16 @@ impl Voice {
             // I'm not sure why, but this indeed improves the loudness variability.
             let sample_attenuation = 0.4_f32 * region.get_initial_attenuation();
             let filter_attenuation = 0.5_f32 * region.get_initial_filter_q();
-            let decibels = 2_f32 * math::linear_to_decibels(velocity as f32 / 127_f32)
+            let decibels = 2_f32 * utils::linear_to_decibels(velocity as f32 / 127_f32)
                 - sample_attenuation
                 - filter_attenuation;
-            self.note_gain = math::decibels_to_linear(decibels);
+            self.note_gain = utils::decibels_to_linear(decibels);
         } else {
             self.note_gain = 0_f32;
         }
 
         self.cutoff = region.get_initial_filter_cutoff_frequency();
-        self.resonance = math::decibels_to_linear(region.get_initial_filter_q());
+        self.resonance = utils::decibels_to_linear(region.get_initial_filter_q());
 
         self.vib_lfo_to_pitch = 0.01_f32 * region.get_vibrato_lfo_to_pitch() as f32;
         self.mod_lfo_to_pitch = 0.01_f32 * region.get_modulation_lfo_to_pitch() as f32;
@@ -195,7 +195,7 @@ impl Voice {
     }
 
     pub(crate) fn process(&mut self, data: &[i16], channels: &[Channel]) -> bool {
-        if self.note_gain < math::NON_AUDIBLE {
+        if self.note_gain < utils::NON_AUDIBLE {
             return false;
         }
 
@@ -224,7 +224,7 @@ impl Voice {
         if self.dynamic_cutoff {
             let cents = self.mod_lfo_to_cutoff as f32 * self.mod_lfo.get_value()
                 + self.mod_env_to_cutoff as f32 * self.mod_env.get_value();
-            let factor = math::cents_to_multiplying_factor(cents);
+            let factor = utils::cents_to_multiplying_factor(cents);
             let new_cutoff = factor * self.cutoff;
 
             // The cutoff change is limited within x0.5 and x2 to reduce pop noise.
@@ -250,7 +250,7 @@ impl Voice {
         let mut mix_gain = self.note_gain * channel_gain * self.vol_env.get_value();
         if self.dynamic_volume {
             let decibels = self.mod_lfo_to_volume * self.mod_lfo.get_value();
-            mix_gain *= math::decibels_to_linear(decibels);
+            mix_gain *= utils::decibels_to_linear(decibels);
         }
 
         let angle =
@@ -258,7 +258,7 @@ impl Voice {
         if angle <= 0_f32 {
             self.current_mix_gain_left = mix_gain;
             self.current_mix_gain_right = 0_f32;
-        } else if angle >= math::HALF_PI {
+        } else if angle >= utils::HALF_PI {
             self.current_mix_gain_left = 0_f32;
             self.current_mix_gain_right = mix_gain;
         } else {
@@ -299,7 +299,7 @@ impl Voice {
     }
 
     pub(crate) fn get_priority(&self) -> f32 {
-        if self.note_gain < math::NON_AUDIBLE {
+        if self.note_gain < utils::NON_AUDIBLE {
             0_f32
         } else {
             self.vol_env.get_priority()
