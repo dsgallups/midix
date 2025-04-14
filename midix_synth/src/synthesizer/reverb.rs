@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::cmp;
 
 #[non_exhaustive]

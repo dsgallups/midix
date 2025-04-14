@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::prelude::*;
 
 /// Specifies a set of parameters for synthesis.

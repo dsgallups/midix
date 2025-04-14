@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 #[derive(PartialEq, Eq)]
 enum DataType {
     None,

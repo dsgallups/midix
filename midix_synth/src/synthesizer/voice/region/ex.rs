@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use voice::{ModulationEnvelope, VolumeEnvelope};
 
 use crate::{prelude::*, synthesizer::voice::Oscillator, utils};

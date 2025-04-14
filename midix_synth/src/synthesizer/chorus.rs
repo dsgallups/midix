@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::f64::consts;
 
 #[non_exhaustive]

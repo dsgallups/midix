@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::f32::consts;
 
 use crate::prelude::*;

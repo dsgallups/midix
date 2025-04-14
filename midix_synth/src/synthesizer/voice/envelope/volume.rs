@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::{prelude::*, utils};
 
 use super::EnvelopeStage;
@@ -106,24 +104,23 @@ impl VolumeEnvelope {
                 self.stage = self.stage.next();
             }
         }
-        use EnvelopeStage::*;
         match self.stage {
-            Delay => {
+            EnvelopeStage::Delay => {
                 self.value = 0_f32;
                 self.priority = 4_f32 + self.value;
                 true
             }
-            Attack => {
+            EnvelopeStage::Attack => {
                 self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
                 self.priority = 3_f32 + self.value;
                 true
             }
-            Hold => {
+            EnvelopeStage::Hold => {
                 self.value = 1_f32;
                 self.priority = 2_f32 + self.value;
                 true
             }
-            Decay => {
+            EnvelopeStage::Decay => {
                 self.value =
                     (utils::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
                         as f32)
@@ -132,7 +129,7 @@ impl VolumeEnvelope {
                 self.priority = 1_f32 + self.value;
                 self.value > utils::NON_AUDIBLE
             }
-            Release => {
+            EnvelopeStage::Release => {
                 self.value = (self.release_level as f64
                     * utils::exp_cutoff(
                         self.release_slope * (current_time - self.release_start_time),
