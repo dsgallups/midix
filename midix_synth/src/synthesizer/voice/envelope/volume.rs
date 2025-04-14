@@ -116,11 +116,11 @@ impl VolumeEnvelope {
             self.priority = 2_f32 + self.value;
             true
         } else if self.stage == EnvelopeStage::DECAY {
-            self.value = SoundFontMath::max(
-                SoundFontMath::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
-                    as f32,
-                self.sustain_level,
-            );
+            self.value = (SoundFontMath::exp_cutoff(
+                self.decay_slope * (current_time - self.decay_start_time),
+            ) as f32)
+                .max(self.sustain_level);
+
             self.priority = 1_f32 + self.value;
             self.value > SoundFontMath::NON_AUDIBLE
         } else if self.stage == EnvelopeStage::RELEASE {

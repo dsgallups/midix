@@ -55,9 +55,9 @@ pub(crate) struct Voice {
     pub(crate) current_chorus_send: f32,
 
     pub(crate) exclusive_class: i32,
-    pub(crate) channel: i32,
-    pub(crate) key: i32,
-    pub(crate) velocity: i32,
+    pub(crate) channel: u8,
+    pub(crate) key: u8,
+    pub(crate) velocity: u8,
 
     note_gain: f32,
 
@@ -133,7 +133,7 @@ impl Voice {
         }
     }
 
-    pub(crate) fn start(&mut self, region: &RegionPair, channel: i32, key: i32, velocity: i32) {
+    pub(crate) fn start(&mut self, region: &RegionPair, channel: u8, key: u8, velocity: u8) {
         self.exclusive_class = region.get_exclusive_class();
         self.channel = channel;
         self.key = key;
@@ -170,10 +170,10 @@ impl Voice {
         self.instrument_reverb = 0.01_f32 * region.get_reverb_effects_send();
         self.instrument_chorus = 0.01_f32 * region.get_chorus_effects_send();
 
-        RegionEx::start_volume_envelope(&mut self.vol_env, region, key, velocity);
+        RegionEx::start_volume_envelope(&mut self.vol_env, region, key);
         RegionEx::start_modulation_envelope(&mut self.mod_env, region, key, velocity);
-        RegionEx::start_vibrato(&mut self.vib_lfo, region, key, velocity);
-        RegionEx::start_modulation(&mut self.mod_lfo, region, key, velocity);
+        RegionEx::start_vibrato(&mut self.vib_lfo, region);
+        RegionEx::start_modulation(&mut self.mod_lfo, region);
         RegionEx::start_oscillator(&mut self.oscillator, region);
         self.filter.clear_buffer();
         self.filter.set_low_pass_filter(self.cutoff, self.resonance);

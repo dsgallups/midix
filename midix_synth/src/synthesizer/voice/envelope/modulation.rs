@@ -115,18 +115,16 @@ impl ModulationEnvelope {
             self.value = 1_f32;
             true
         } else if self.stage == EnvelopeStage::DECAY {
-            self.value = SoundFontMath::max(
-                (self.decay_slope * (self.decay_end_time - current_time)) as f32,
-                self.sustain_level,
-            );
+            self.value = ((self.decay_slope * (self.decay_end_time - current_time)) as f32)
+                .max(self.sustain_level);
+
             self.value > SoundFontMath::NON_AUDIBLE
         } else if self.stage == EnvelopeStage::RELEASE {
-            self.value = SoundFontMath::max(
-                (self.release_level as f64
-                    * self.release_slope
-                    * (self.release_end_time - current_time)) as f32,
-                0_f32,
-            );
+            self.value = ((self.release_level as f64
+                * self.release_slope
+                * (self.release_end_time - current_time)) as f32)
+                .max(0.);
+
             self.value > SoundFontMath::NON_AUDIBLE
         } else {
             panic!("Invalid envelope stage.");

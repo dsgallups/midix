@@ -63,11 +63,9 @@ impl Synth {
         };
         // TODO: refacctor midix synth
         let mut synth = synth.lock().unwrap();
-        let channel = event.channel().to_byte() as i32;
-        let command = (event.status() & 0xF0) as i32;
-        let data1 = event.data_1_byte() as i32;
-        let data2 = event.data_2_byte().unwrap_or(0) as i32;
-        synth.process_midi_message(channel, command, data1, data2);
+        let data1 = event.data_1_byte();
+        let data2 = event.data_2_byte().unwrap_or(0);
+        synth.process_midi_message(event.status(), data1, data2);
     }
     /// Returns true if the sound font has been loaded!
     pub fn is_ready(&self) -> bool {

@@ -143,8 +143,11 @@ impl Synthesizer {
     /// * `command` - The type of the message.
     /// * `data1` - The first data part of the message.
     /// * `data2` - The second data part of the message.
-    pub fn process_midi_message(&mut self, channel: i32, command: i32, data1: i32, data2: i32) {
-        if !(0 <= channel && channel < self.channels.len() as i32) {
+    pub fn process_midi_message(&mut self, status: u8, data1: u8, data2: u8) {
+        let channel = status & 0x0F;
+        let command = status & 0xF0;
+
+        if channel as usize >= self.channels.len() {
             return;
         }
 
@@ -169,10 +172,13 @@ impl Synthesizer {
                 0x40 => channel_info.set_hold_pedal(data2), // Hold Pedal
                 0x5B => channel_info.set_reverb_send(data2), // Reverb Send
                 0x5D => channel_info.set_chorus_send(data2), // Chorus Send
-                0x63 => channel_info.set_nrpn_coarse(data2), // NRPN Coarse
-                0x62 => channel_info.set_nrpn_fine(data2), // NRPN Fine
+                //Note, this used to not use data 2
+                0x63 => channel_info.set_nrpn_coarse(), // NRPN Coarse
+                //Note: this used to not use data 2
+                0x62 => channel_info.set_nrpn_fine(), // NRPN Fine
                 0x65 => channel_info.set_rpn_coarse(data2), // RPN Coarse
                 0x64 => channel_info.set_rpn_fine(data2), // RPN Fine
+
                 0x78 => self.note_off_all_channel(channel, true), // All Sound Off
                 0x79 => self.reset_all_controllers_channel(channel), // Reset All Controllers
                 0x7B => self.note_off_all_channel(channel, false), // All Note Off
@@ -190,8 +196,8 @@ impl Synthesizer {
     ///
     /// * `channel` - The channel of the note.
     /// * `key` - The key of the note.
-    pub fn note_off(&mut self, channel: i32, key: i32) {
-        if !(0 <= channel && channel < self.channels.len() as i32) {
+    pub fn note_off(&mut self, channel: u8, key: u8) {
+        if channel as usize >= self.channels.len() {
             return;
         }
 
@@ -209,19 +215,20 @@ impl Synthesizer {
     /// * `channel` - The channel of the note.
     /// * `key` - The key of the note.
     /// * `velocity` - The velocity of the note.
-    pub fn note_on(&mut self, channel: i32, key: i32, velocity: i32) {
+    pub fn note_on(&mut self, channel: u8, key: u8, velocity: u8) {
         if velocity == 0 {
             self.note_off(channel, key);
             return;
         }
 
-        if !(0 <= channel && channel < self.channels.len() as i32) {
+        if channel as usize >= self.channels.len() {
             return;
         }
 
         let channel_info = &self.channels[channel as usize];
 
-        let preset_id = (channel_info.get_bank_number() << 16) | channel_info.get_patch_number();
+        let preset_id = ((channel_info.get_bank_number() as i32) << 16)
+            | channel_info.get_patch_number() as i32;
 
         let mut preset = self.default_preset;
         match self.preset_lookup.get(&preset_id) {
@@ -230,8 +237,10 @@ impl Synthesizer {
                 // Try fallback to the GM sound set.
                 // Normally, the given patch number + the bank number 0 will work.
                 // For drums (bank number >= 128), it seems to be better to select the standard set (128:0).
+                //
+                // todo: dsgallups
                 let gm_preset_id = if channel_info.get_bank_number() < 128 {
-                    channel_info.get_patch_number()
+                    channel_info.get_patch_number() as i32
                 } else {
                     128 << 16
                 };
@@ -282,7 +291,7 @@ impl Synthesizer {
     ///
     /// * `channel` - The channel in which the notes will be stopped.
     /// * `immediate` - If `true`, notes will stop immediately without the release sound.
-    pub fn note_off_all_channel(&mut self, channel: i32, immediate: bool) {
+    pub fn note_off_all_channel(&mut self, channel: u8, immediate: bool) {
         if immediate {
             for voice in self.voices.get_active_voices().iter_mut() {
                 if voice.channel == channel {
@@ -310,8 +319,8 @@ impl Synthesizer {
     /// # Arguments
     ///
     /// * `channel` - The channel to be reset.
-    pub fn reset_all_controllers_channel(&mut self, channel: i32) {
-        if !(0 <= channel && channel < self.channels.len() as i32) {
+    pub fn reset_all_controllers_channel(&mut self, channel: u8) {
+        if channel as usize >= self.channels.len() {
             return;
         }
 
@@ -487,7 +496,7 @@ impl Synthesizer {
         destination: &mut [f32],
         inverse_block_size: f32,
     ) {
-        if SoundFontMath::max(previous_gain, current_gain) < SoundFontMath::NON_AUDIBLE {
+        if previous_gain.max(current_gain) < SoundFontMath::NON_AUDIBLE {
             return;
         }
 

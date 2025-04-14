@@ -4,7 +4,7 @@ pub(crate) mod reader;
 pub mod soundfont;
 pub mod synthesizer;
 
-pub mod prev_midifile;
+//pub mod prev_midifile;
 
 pub mod prelude {
     //midifile::*,
