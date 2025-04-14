@@ -228,9 +228,8 @@ impl Synthesizer {
         let preset_id = ((channel_info.get_bank_number() as i32) << 16)
             | channel_info.get_patch_number() as i32;
 
-        let mut preset = self.default_preset;
-        match self.preset_lookup.get(&preset_id) {
-            Some(value) => preset = *value,
+        let preset = match self.preset_lookup.get(&preset_id) {
+            Some(value) => *value,
             None => {
                 // Try fallback to the GM sound set.
                 // Normally, the given patch number + the bank number 0 will work.
@@ -245,12 +244,13 @@ impl Synthesizer {
 
                 // If no corresponding preset was found. Use the default one...
                 if let Some(value) = self.preset_lookup.get(&gm_preset_id) {
-                    preset = *value
+                    *value
+                } else {
+                    self.default_preset
                 }
             }
-        }
+        };
 
-        // TODO(dsgallups): refactor
         let preset = &self.sound_font.presets[preset];
         for preset_region in preset.regions.iter() {
             if preset_region.contains(key, velocity) {
@@ -280,14 +280,13 @@ impl Synthesizer {
                             }
                         }
 
-                        // If the number of active voices is less than the limit, use a free one.
-                        // TODO(dsgallups): store synthesizer settings
-                        let voice =
-                            Voice::new(&self.settings, &region_pair, channel, key, velocity);
-
-                        self.voices.push(voice);
-
-                        // there's some logic here about finding lowest priority of voice, but I'm unsure of the use-case
+                        self.voices.push(Voice::new(
+                            &self.settings,
+                            &region_pair,
+                            channel,
+                            key,
+                            velocity,
+                        ));
                     }
                 }
             }
@@ -317,17 +316,13 @@ impl Synthesizer {
     /// * `immediate` - If `true`, notes will stop immediately without the release sound.
     pub fn note_off_all_channel(&mut self, channel: u8, immediate: bool) {
         if immediate {
-            for voice in self.voices.iter_mut() {
-                if voice.channel == channel {
-                    voice.kill();
-                }
-            }
+            self.voices.retain(|voice| voice.channel != channel);
         } else {
-            for voice in self.voices.iter_mut() {
+            self.voices.iter_mut().for_each(|voice| {
                 if voice.channel == channel {
                     voice.end();
                 }
-            }
+            });
         }
     }
 
@@ -419,8 +414,8 @@ impl Synthesizer {
             Synthesizer::write_block(
                 previous_gain_left,
                 current_gain_left,
-                &voice.block[..],
-                &mut self.block_left[..],
+                &voice.block,
+                &mut self.block_left,
                 self.inverse_block_size,
             );
             let previous_gain_right = self.master_volume * voice.previous_mix_gain_right;
@@ -428,8 +423,8 @@ impl Synthesizer {
             Synthesizer::write_block(
                 previous_gain_right,
                 current_gain_right,
-                &voice.block[..],
-                &mut self.block_right[..],
+                &voice.block,
+                &mut self.block_right,
                 self.inverse_block_size,
             );
         }

@@ -1,7 +1,5 @@
 use crate::prelude::*;
 
-use super::RegionPair;
-
 #[non_exhaustive]
 pub struct Lfo {
     sample_rate: i32,
@@ -60,8 +58,4 @@ impl Lfo {
         }
         self.value
     }
-
-    // pub fn get_value(&self) -> f32 {
-    //     self.value
-    // }
 }

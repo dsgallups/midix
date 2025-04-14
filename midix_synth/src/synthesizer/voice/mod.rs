@@ -200,15 +200,15 @@ impl Voice {
         }
     }
 
-    /// Note stops immediately without a release sound.
-    ///
-    /// End is *supposed* to begin playing a release sound. this is the
-    /// evil twin.
-    ///
-    /// This also means it will drop on the next process call.
-    pub(crate) fn kill(&mut self) {
-        self.note_gain = 0_f32;
-    }
+    // /// Note stops immediately without a release sound.
+    // ///
+    // /// End is *supposed* to begin playing a release sound. this is the
+    // /// evil twin.
+    // ///
+    // /// This also means it will drop on the next process call.
+    // pub(crate) fn kill(&mut self) {
+    //     self.note_gain = 0_f32;
+    // }
 
     /// this is only called in one place: render_block. If I return false,
     /// I will die.

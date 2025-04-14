@@ -1,5 +1,3 @@
-#[allow(unused)]
-#[non_exhaustive]
 pub(crate) struct ArrayMath {}
 
 impl ArrayMath {

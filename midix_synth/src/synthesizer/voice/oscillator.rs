@@ -9,11 +9,7 @@ use crate::prelude::*;
 
 #[non_exhaustive]
 pub(crate) struct Oscillator {
-    synthesizer_sample_rate: i32,
-
     loop_mode: i32,
-    sample_sample_rate: i32,
-    start: i32,
     end: i32,
     start_loop: i32,
     end_loop: i32,
@@ -44,13 +40,6 @@ impl Oscillator {
         let coarse_tune = region.get_coarse_tune();
         let fine_tune = region.get_fine_tune();
         let scale_tuning = region.get_scale_tuning();
-        let loop_mode = loop_mode;
-        let sample_sample_rate = sample_rate;
-        let start = start;
-        let end = end;
-        let start_loop = start_loop;
-        let end_loop = end_loop;
-        let root_key = root_key;
 
         let tune = coarse_tune as f32 + 0.01_f32 * fine_tune as f32;
         let pitch_change_scale = 0.01_f32 * scale_tuning as f32;
@@ -59,10 +48,7 @@ impl Oscillator {
         let position_fp = (start as i64) << Oscillator::FRAC_BITS;
 
         Self {
-            synthesizer_sample_rate: settings.sample_rate,
             loop_mode,
-            sample_sample_rate,
-            start,
             end,
             start_loop,
             end_loop,
@@ -73,35 +59,6 @@ impl Oscillator {
             looping,
             position_fp,
         }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn start(
-        &mut self,
-        loop_mode: i32,
-        sample_rate: i32,
-        start: i32,
-        end: i32,
-        start_loop: i32,
-        end_loop: i32,
-        root_key: i32,
-        coarse_tune: i32,
-        fine_tune: i32,
-        scale_tuning: i32,
-    ) {
-        self.loop_mode = loop_mode;
-        self.sample_sample_rate = sample_rate;
-        self.start = start;
-        self.end = end;
-        self.start_loop = start_loop;
-        self.end_loop = end_loop;
-        self.root_key = root_key;
-
-        self.tune = coarse_tune as f32 + 0.01_f32 * fine_tune as f32;
-        self.pitch_change_scale = 0.01_f32 * scale_tuning as f32;
-        self.sample_rate_ratio = sample_rate as f32 / self.synthesizer_sample_rate as f32;
-        self.looping = self.loop_mode != LoopMode::NO_LOOP;
-        self.position_fp = (start as i64) << Oscillator::FRAC_BITS;
     }
 
     pub(crate) fn release(&mut self) {
