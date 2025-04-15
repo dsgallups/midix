@@ -46,6 +46,9 @@ pub struct MidiOutput {
     ports: Vec<MidiOutputPort>,
 }
 
+unsafe impl Send for MidiOutput {}
+unsafe impl Sync for MidiOutput {}
+
 impl MidiOutput {
     /// Creates a new midi output with the provided settings. This is done automatically
     /// by [`MidiOutputPlugin`].

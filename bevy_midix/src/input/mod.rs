@@ -33,6 +33,7 @@ enum MidiInputState {
 /// will NOT instantiate another [`midir::MidiInput`] at any point while
 /// [`MidiInput`] has been inserted as a resource
 unsafe impl Sync for MidiInputState {}
+unsafe impl Send for MidiInputState {}
 
 /// The central resource for interacting with midi inputs
 ///
@@ -46,6 +47,9 @@ pub struct MidiInput {
     state: Option<MidiInputState>,
     ports: Vec<MidiInputPort>,
 }
+
+unsafe impl Send for MidiInput {}
+unsafe impl Sync for MidiInput {}
 
 impl MidiInput {
     /// Creates a new midi input with the provided settings. This is done automatically
