@@ -1,6 +1,6 @@
 [package]
 name = "midix_synth"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2024"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 description = "SoundFont compatible MIDI synthesizer for midix"
@@ -12,5 +12,4 @@ categories = ["multimedia::audio", "multimedia"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-midix = { version = "3.1.0", path = "../midix" }
 tracing = "0.1.41"

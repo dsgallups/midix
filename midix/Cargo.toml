@@ -1,6 +1,6 @@
 [package]
 name = "midix"
-version = "3.1.0"
+version = "3.1.1"
 edition = "2024"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 description = "MIDI structures designed for humans"
@@ -17,12 +17,12 @@ bevy = ["dep:bevy"]
 debug = ["bevy"]
 
 [dependencies]
-bevy = { version = "0.16.0-rc.4", optional = true, default-features = false, features = [
+bevy = { version = "0.16.0-rc.5", optional = true, default-features = false, features = [
     "std",
     "async_executor",
 ] }
 num_enum = "0.7.3"
-thiserror = "2.0.9"
+thiserror = "2.0"
 
 [dev-dependencies]
 pretty_assertions = { default-features = false, features = [
