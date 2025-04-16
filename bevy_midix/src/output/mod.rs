@@ -46,7 +46,26 @@ pub struct MidiOutput {
     ports: Vec<MidiOutputPort>,
 }
 
+/// SAFETY:
+///
+/// `JsValue`s in WASM cannot be `Send`: <https://github.com/rustwasm/wasm-bindgen/pull/955>
+///
+/// Quote:
+/// > The JsValue type wraps a slab/heap of js objects which is managed by
+/// > the wasm-bindgen shim, and everything here is not actually able to cross
+/// > any thread boundaries.
+///
+/// Therefore, `MidiOutput` nor `MidiInput` should not be able to implement Send and Sync.
+///
+/// HOWEVER: Because the main scheduler does not run on worker threads, it is safe,
+/// for the wasm target, to implement Send (until this issue is resolved.)
+/// <https://github.com/bevyengine/bevy/issues/4078>
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 unsafe impl Send for MidiOutput {}
+/// SAFETY:
+///
+/// See [`MidiOutput`]'s Send implementation
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 unsafe impl Sync for MidiOutput {}
 
 impl MidiOutput {
