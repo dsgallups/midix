@@ -4,3 +4,6 @@ midix/target
 .DS_Store
 *.sf2
 !bevy_midix/assets/soundfont.sf2
+midix_wasm_example/target
+!midix_wasm_example/assets/soundfont.sf2
+midix_wasm_example/dist
