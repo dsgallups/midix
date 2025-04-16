@@ -25,7 +25,7 @@ pub use sample_header::*;
 use crate::prelude::*;
 
 /// Reperesents a SoundFont.
-#[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct SoundFont {
     pub(crate) info: SoundFontInfo,
     pub(crate) bits_per_sample: i32,

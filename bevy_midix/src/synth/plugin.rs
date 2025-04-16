@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use bevy::prelude::*;
 use itertools::Itertools;
@@ -98,12 +98,10 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
         return;
     };
 
-    let sound_font = Arc::clone(&sound_font.file);
-
     let (sender, receiver) = crossbeam_channel::unbounded::<SynthCommand>();
     let synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
 
-    let mut synthesizer = Synthesizer::new(&sound_font, &synth_settings).unwrap();
+    let mut synthesizer = Synthesizer::new(sound_font.file.clone(), &synth_settings).unwrap();
 
     let mut left = vec![0f32; synth.params.channel_sample_count];
     let mut right = vec![0f32; synth.params.channel_sample_count];

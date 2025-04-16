@@ -10,6 +10,7 @@ use crate::prelude::*;
 
 /// Represents a preset in the SoundFont.
 #[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct Preset {
     pub(crate) name: String,
     pub(crate) patch_number: i32,

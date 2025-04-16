@@ -5,7 +5,7 @@ use std::io::Read;
 use crate::prelude::*;
 
 /// The information of a SoundFont.
-#[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct SoundFontInfo {
     pub(crate) version: SoundFontVersion,
     pub(crate) target_sound_engine: String,

@@ -21,14 +21,13 @@ use voice::{RegionPair, Voice};
 
 use std::cmp;
 use std::collections::HashMap;
-use std::sync::Arc;
 
 use crate::{prelude::*, utils};
 
 /// An instance of the SoundFont synthesizer.
 #[non_exhaustive]
 pub struct Synthesizer {
-    pub(crate) sound_font: Arc<SoundFont>,
+    pub(crate) sound_font: SoundFont,
     pub(crate) sample_rate: i32,
     pub(crate) block_size: usize,
     pub(crate) maximum_polyphony: usize,
@@ -67,7 +66,7 @@ impl Synthesizer {
     /// * `sound_font` - The SoundFont instance.
     /// * `settings` - The settings for synthesis.
     pub fn new(
-        sound_font: &Arc<SoundFont>,
+        sound_font: SoundFont,
         settings: &SynthesizerSettings,
     ) -> Result<Self, SynthesizerError> {
         settings.validate()?;
@@ -115,7 +114,7 @@ impl Synthesizer {
         };
 
         Ok(Self {
-            sound_font: Arc::clone(sound_font),
+            sound_font,
             sample_rate: settings.sample_rate,
             block_size: settings.block_size,
             maximum_polyphony: settings.maximum_polyphony,

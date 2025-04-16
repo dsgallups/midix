@@ -6,7 +6,7 @@ use std::io::Read;
 use crate::prelude::*;
 
 /// Reperesents the version of a SoundFont.
-#[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct SoundFontVersion {
     pub(crate) major: i16,
     pub(crate) minor: i16,
