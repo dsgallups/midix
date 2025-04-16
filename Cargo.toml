@@ -1,3 +1,4 @@
 [workspace]
 resolver = "2"
 members = ["midix", "bevy_midix", "midix_synth"]
+exclude = ["midix_wasm_example"]

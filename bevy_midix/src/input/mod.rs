@@ -33,6 +33,7 @@ enum MidiInputState {
 /// will NOT instantiate another [`midir::MidiInput`] at any point while
 /// [`MidiInput`] has been inserted as a resource
 unsafe impl Sync for MidiInputState {}
+unsafe impl Send for MidiInputState {}
 
 /// The central resource for interacting with midi inputs
 ///
@@ -46,6 +47,28 @@ pub struct MidiInput {
     state: Option<MidiInputState>,
     ports: Vec<MidiInputPort>,
 }
+
+/// SAFETY:
+///
+/// `JsValue`s in WASM cannot be `Send`: <https://github.com/rustwasm/wasm-bindgen/pull/955>
+///
+/// Quote:
+/// > The JsValue type wraps a slab/heap of js objects which is managed by
+/// > the wasm-bindgen shim, and everything here is not actually able to cross
+/// > any thread boundaries.
+///
+/// Therefore, `MidiOutput` nor `MidiInput` should not be able to implement Send and Sync.
+///
+/// HOWEVER: Because the main scheduler does not run on worker threads, it is safe,
+/// for the wasm target, to implement Send (until this issue is resolved.)
+/// <https://github.com/bevyengine/bevy/issues/4078>
+#[cfg(all(target_arch = "wasm32", target_os = "unknown", feature = "web"))]
+unsafe impl Send for MidiInput {}
+/// SAFETY:
+///
+/// See [`MidiInput`]'s Send implementation
+#[cfg(all(target_arch = "wasm32", target_os = "unknown", feature = "web"))]
+unsafe impl Sync for MidiInput {}
 
 impl MidiInput {
     /// Creates a new midi input with the provided settings. This is done automatically
