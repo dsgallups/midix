@@ -1,4 +1,5 @@
 use bevy::{
+    asset::AssetMetaCheck,
     log::{Level, LogPlugin},
     prelude::*,
 };
@@ -26,6 +27,10 @@ fn main() {
                 })
                 .set(LogPlugin {
                     level: Level::INFO,
+                    ..default()
+                })
+                .set(AssetPlugin {
+                    meta_check: AssetMetaCheck::Never,
                     ..default()
                 }),
             MidiPlugin::default(),
