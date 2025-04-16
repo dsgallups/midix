@@ -55,7 +55,6 @@ pub struct Synthesizer {
 
 impl Synthesizer {
     /// The number of channels.
-    pub const CHANNEL_COUNT: usize = 16;
     /// The percussion channel.
     pub const PERCUSSION_CHANNEL: usize = 9;
 
@@ -75,28 +74,31 @@ impl Synthesizer {
 
         let mut min_preset_id = i32::MAX;
         let mut default_preset: usize = 0;
-        for i in 0..sound_font.presets.len() {
-            let preset = &sound_font.presets[i];
 
-            // The preset ID is Int32, where the upper 16 bits represent the bank number
-            // and the lower 16 bits represent the patch number.
-            // This ID is used to search for presets by the combination of bank number
-            // and patch number.
-            let preset_id = (preset.bank_number << 16) | preset.patch_number;
-            preset_lookup.insert(preset_id, i);
+        sound_font
+            .presets
+            .iter()
+            .enumerate()
+            .for_each(|(i, preset)| {
+                // The preset ID is Int32, where the upper 16 bits represent the bank number
+                // and the lower 16 bits represent the patch number.
+                // This ID is used to search for presets by the combination of bank number
+                // and patch number.
+                let preset_id = (preset.bank_number << 16) | preset.patch_number;
+                preset_lookup.insert(preset_id, i);
 
-            // The preset with the minimum ID number will be default.
-            // If the SoundFont is GM compatible, the piano will be chosen.
-            if preset_id < min_preset_id {
-                default_preset = i;
-                min_preset_id = preset_id;
-            }
-        }
+                // The preset with the minimum ID number will be default.
+                // If the SoundFont is GM compatible, the piano will be chosen.
+                if preset_id < min_preset_id {
+                    default_preset = i;
+                    min_preset_id = preset_id;
+                }
+            });
 
-        let mut channels: Vec<Channel> = Vec::new();
-        for i in 0..Synthesizer::CHANNEL_COUNT {
-            channels.push(Channel::new(i == Synthesizer::PERCUSSION_CHANNEL));
-        }
+        const CHANNEL_COUNT: usize = 16;
+        let channels: Vec<Channel> = (0..CHANNEL_COUNT)
+            .map(|i| Channel::new(i == Synthesizer::PERCUSSION_CHANNEL))
+            .collect();
 
         let block_left: Vec<f32> = vec![0_f32; settings.block_size];
         let block_right: Vec<f32> = vec![0_f32; settings.block_size];
