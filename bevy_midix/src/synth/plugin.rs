@@ -7,7 +7,7 @@ use tinyaudio::run_output_device;
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
-use super::{Synth, SynthState};
+use super::{Synth, SynthCommand, SynthState};
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
@@ -100,29 +100,29 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
 
     let sound_font = Arc::clone(&sound_font.file);
 
+    let (sender, receiver) = crossbeam_channel::unbounded::<SynthCommand>();
     let synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
 
-    let synthesizer = Arc::new(Mutex::new(
-        Synthesizer::new(&sound_font, &synth_settings).unwrap(),
-    ));
-
-    let device_synth_ref = synthesizer.clone();
+    let mut synthesizer = Synthesizer::new(&sound_font, &synth_settings).unwrap();
 
     let mut left = vec![0f32; synth.params.channel_sample_count];
     let mut right = vec![0f32; synth.params.channel_sample_count];
 
     let _device = run_output_device(synth.params, {
         move |data| {
-            let mut synth = device_synth_ref.lock().unwrap();
-
-            synth.render(&mut left[..], &mut right[..]);
+            for command in receiver.try_iter() {
+                let data1 = command.event.data_1_byte();
+                let data2 = command.event.data_2_byte().unwrap_or(0);
+                synthesizer.process_midi_message(command.event.status(), data1, data2);
+            }
+            synthesizer.render(&mut left[..], &mut right[..]);
             for (i, value) in left.iter().interleave(right.iter()).enumerate() {
                 data[i] = *value;
             }
         }
     })
     .unwrap();
-    synth.synthesizer = SynthState::Loaded(synthesizer);
+    synth.synthesizer = SynthState::Loaded(sender);
     synth._device = Some(Mutex::new(_device));
 }
 

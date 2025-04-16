@@ -4,18 +4,29 @@ Synthesizer resources, setup and plugins
 
 use crate::prelude::SoundFont;
 use bevy::prelude::*;
+use crossbeam_channel::Sender;
 use midix::prelude::ChannelVoiceMessage;
-use midix_synth::prelude::*;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use tinyaudio::{OutputDevice, OutputDeviceParameters};
 
 mod plugin;
 pub use plugin::*;
 
+/// Send a command to the synth to play a note
+struct SynthCommand {
+    event: ChannelVoiceMessage,
+}
+impl SynthCommand {
+    /// Create a command to play a note to the synth
+    pub fn new(event: ChannelVoiceMessage) -> Self {
+        Self { event }
+    }
+}
+
 enum SynthState {
     NotLoaded,
     LoadHandle { sound_font: Handle<SoundFont> },
-    Loaded(Arc<Mutex<Synthesizer>>),
+    Loaded(Sender<SynthCommand>),
 }
 
 /// Plays audio commands with the provided soundfont
@@ -57,15 +68,11 @@ impl Synth {
 
     /// Send an event for the synth to play
     pub fn handle_event(&self, event: ChannelVoiceMessage) {
-        let SynthState::Loaded(synth) = &self.synthesizer else {
+        let SynthState::Loaded(channel) = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return;
         };
-        // TODO: refacctor midix synth
-        let mut synth = synth.lock().unwrap();
-        let data1 = event.data_1_byte();
-        let data2 = event.data_2_byte().unwrap_or(0);
-        synth.process_midi_message(event.status(), data1, data2);
+        channel.send(SynthCommand::new(event)).unwrap();
     }
     /// Returns true if the sound font has been loaded!
     pub fn is_ready(&self) -> bool {
