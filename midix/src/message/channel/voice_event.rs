@@ -33,14 +33,7 @@ pub enum VoiceEvent {
         velocity: Velocity,
     },
     /// Modify the value of a MIDI controller.
-    ControlChange {
-        /// The controller to modify.
-        ///
-        /// See the MIDI spec for the meaning of each index.
-        controller: Controller,
-        /// The value to set it to.
-        value: DataByte,
-    },
+    ControlChange(Controller),
     /// Change the program (also known as instrument) for a channel.
     ProgramChange {
         /// The new program (instrument) to use for the channel.

@@ -4,6 +4,10 @@ mod chorus;
 use chorus::*;
 
 mod reverb;
+use midix::{
+    events::LiveEvent,
+    prelude::{ChannelVoiceMessage, VoiceEvent},
+};
 use reverb::*;
 
 mod settings;
@@ -144,9 +148,8 @@ impl Synthesizer {
     /// * `command` - The type of the message.
     /// * `data1` - The first data part of the message.
     /// * `data2` - The second data part of the message.
-    pub fn process_midi_message(&mut self, status: u8, data1: u8, data2: u8) {
-        let channel = status & 0x0F;
-        let command = status & 0xF0;
+    pub fn process_midi_message(&mut self, message: ChannelVoiceMessage) {
+        let channel = message.channel();
 
         if channel as usize >= self.channels.len() {
             return;
@@ -154,9 +157,18 @@ impl Synthesizer {
 
         let channel_info = &mut self.channels[channel as usize];
 
-        match command {
-            0x80 => self.note_off(channel, data1),       // Note Off
-            0x90 => self.note_on(channel, data1, data2), // Note On
+        match message.event() {
+            VoiceEvent::NoteOff { key, velocity } => self.note_off(channel, key, velocity),
+            VoiceEvent::NoteOn { key, velocity } => {
+                self.note_on(channel, key, velocity);
+            }
+            //0xb0
+            VoiceEvent::ControlChange { controller, value } => {
+                match controller => {
+
+                }
+            }
+
             0xB0 => match data1 // Controller
             {
                 0x00 => channel_info.set_bank(data2), // Bank Selection
