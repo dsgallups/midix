@@ -5,6 +5,8 @@ TODO
 "#]
 
 mod builder;
+use std::borrow::Cow;
+
 use builder::*;
 mod format;
 pub use format::*;
@@ -13,10 +15,7 @@ pub use header::*;
 mod track;
 pub use track::*;
 
-use crate::{
-    Bytes,
-    reader::{ReadResult, Reader},
-};
+use crate::reader::{ReadResult, Reader};
 
 #[doc = r#"
 TODO
@@ -30,7 +29,7 @@ impl<'a> MidiFile<'a> {
     /// Parse a set of bytes into a file struct
     pub fn parse<B>(bytes: B) -> ReadResult<Self>
     where
-        B: Into<Bytes<'a>>,
+        B: Into<Cow<'a, [u8]>>,
     {
         let mut reader = Reader::from_bytes(bytes);
         let mut builder = MidiFileBuilder::default();

@@ -11,6 +11,8 @@ Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 mod error;
 mod source;
 mod state;
+use std::{borrow::Cow, io::Read};
+
 pub use error::*;
 pub use source::*;
 use state::{ParseState, ReaderState};
@@ -81,6 +83,7 @@ assert_eq!(
 #[derive(Clone)]
 pub struct Reader<R> {
     reader: R,
+    inner_buf: Vec<u8>,
     pub(crate) state: ReaderState,
 }
 
@@ -89,6 +92,7 @@ impl<R> Reader<R> {
     pub const fn new(reader: R) -> Self {
         Self {
             reader,
+            inner_buf: Vec::new(),
             state: ReaderState::default(),
         }
     }
@@ -130,9 +134,9 @@ impl<'slc> Reader<&'slc [u8]> {
     }
 }
 
-impl<'a> Reader<Bytes<'a>> {
+impl<'a> Reader<Cow<'a, [u8]>> {
     /// Create a new reader from anything that can be turned into [`Bytes`]
-    pub fn from_bytes<B: Into<Bytes<'a>>>(slice: B) -> Self {
+    pub fn from_bytes<B: Into<Cow<'a, [u8]>>>(slice: B) -> Self {
         Self {
             reader: slice.into(),
             state: ReaderState::default(),
@@ -141,12 +145,14 @@ impl<'a> Reader<Bytes<'a>> {
 }
 
 //internal implementations
-impl<'slc, R: MidiSource<'slc>> Reader<R> {
+impl<'slc, R: Read> Reader<R> {
     // Returns None if there's no bytes left to read
-    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<Bytes<'slc>>
+    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<Cow<'slc, [u8]>>
     where
         'slc: 'slf,
     {
+        let mut buf: [u8; 0] = [0; bytes];
+        let read = self.reader.read_exact(bytes)?;
         if self.buffer_position() > self.reader.max_len() {
             return Err(unexp_eof());
         }
@@ -166,9 +172,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
     }
 
     /// Returns a statically sized array
-    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
-        &'slf mut self,
-    ) -> ReadResult<BytesConst<'slc, SIZE>>
+    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(&'slf mut self) -> ReadResult<[u8; SIZE]>
     where
         'slc: 'slf,
     {
@@ -217,7 +221,7 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
     }
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
-    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<Bytes<'slc>>
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<Cow<'slc, [u8]>>
     where
         'slc: 'slf,
     {

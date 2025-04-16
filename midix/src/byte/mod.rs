@@ -1,163 +1,308 @@
-mod message;
 use std::{
     borrow::Cow,
-    io::{self, ErrorKind},
-    ops::Deref,
+    fmt::{self, Debug},
+    io::{self, ErrorKind, Write},
 };
 
-pub use message::*;
-
 #[doc = r#"
-Wraps a `Cow<'_, u8>`.
+There are only three types of midi message bytes:
 
-This is because Cow doesn't implement `From<Vec<u8>>` or `From<&[u8]>`, and a common interface is nice to have
-for [`MidiSource`](crate::reader::MidiSource).
+```text
+1.  |--------|
+    | Status |
+    |--------|
+
+2.  |--------|   |------|
+    | Status | - | Data |
+    |--------|   |------|
+
+3.  |--------|   |------|   |------|
+    | Status | - | Data | - | Data |
+    |--------|   |------|   |------|
+```
 "#]
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct Bytes<'a>(Cow<'a, [u8]>);
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum MidiMessageBytes {
+    /// Message is only one byte
+    Status(StatusByte),
 
-impl<'a> Bytes<'a> {
-    /// Create a new set of bytes
-    pub fn new<T: Into<Bytes<'a>>>(v: T) -> Self {
-        v.into()
-    }
+    /// Message is a [`StatusByte`] and a [`DataByte`]
+    Single(StatusByte, DataByte),
 
-    /// Removes X elements from the end
-    pub fn truncate(&mut self, amt: usize) {
-        match &mut self.0 {
-            Cow::Borrowed(val) => {
-                *val = &val[..val.len() - amt];
+    /// Message is a [`StatusByte`] and two [`DataByte`]s
+    Double(StatusByte, DataByte, DataByte),
+}
+
+// impl Read for MidiMessageBytes {
+//     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+//         use MidiMessageBytes::*;
+//         match self {
+//             Status(s) => {
+//                 let Some(byte) = buf.get_mut(0) else {
+//                     return Ok(0);
+//                 };
+//                 *byte = s.0;
+//                 Ok(1)
+//             }
+//             Single(s, d) => {
+//                 let Some(byte) = buf.get_mut(0) else {
+//                     return Ok(0);
+//                 };
+//                 *byte = s.0;
+//                 let Some(byte) = buf.get_mut(1) else {
+//                     return Ok(1);
+//                 };
+//                 *byte = d.0;
+//                 Ok(2)
+//             }
+//             Double(s, d1, d2) => {
+//                 let Some(byte) = buf.get_mut(0) else {
+//                     return Ok(0);
+//                 };
+//                 *byte = s.0;
+//                 let Some(byte) = buf.get_mut(1) else {
+//                     return Ok(1);
+//                 };
+//                 *byte = d1.0;
+
+//                 let Some(byte) = buf.get_mut(1) else {
+//                     return Ok(2);
+//                 };
+//                 *byte = d2.0;
+//                 Ok(3)
+//             }
+//         }
+//     }
+// }
+
+impl MidiMessageBytes {
+    /// Write the contents of self into some writer as MIDI bytes.
+    ///
+    /// Returns number of bytes written.
+    pub fn write_to_writer<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
+        use MidiMessageBytes::*;
+        match self {
+            Status(s) => {
+                writer.write_all(&[s.0])?;
+                Ok(1)
             }
-            Cow::Owned(val) => {
-                val.truncate(amt);
+            Single(s, d) => {
+                writer.write_all(&[s.0, d.0])?;
+                Ok(2)
+            }
+            Double(s, d1, d2) => {
+                writer.write_all(&[s.0, d1.0, d2.0])?;
+                Ok(3)
             }
         }
     }
 
-    /// Returns mutable reference to underlying byte slice
-    pub fn to_mut(&mut self) -> &mut Vec<u8> {
-        self.0.to_mut()
+    /// Create a MidiMessageByte from a single status byte. Errors if leading 1 is not found.
+    pub fn from_status<B, E>(status: B) -> Result<Self, io::Error>
+    where
+        B: TryInto<StatusByte, Error = E>,
+        E: Into<io::Error>,
+    {
+        let status = status.try_into().map_err(Into::into)?;
+        Ok(Self::Status(status))
+    }
+}
+
+#[doc = r#"
+Status Byte is between [0x80 and 0xFF]
+
+
+Status bytes are eight-bit binary numbers in which the Most Significant Bit (MSB) is set (binary 1).
+Status bytes serve to identify the message type, that is, the purpose of the Data bytes which follow it.
+Except for Real-Time messages, new Status bytes will always command a receiver to adopt a new status,
+even if the last message was not completed.
+"#]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct StatusByte(u8);
+
+impl Debug for StatusByte {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "StatusByte(0x{:0X})", self.0)
+    }
+}
+
+impl StatusByte {
+    /// Check a new status byte
+    pub fn new(byte: u8) -> Result<Self, io::Error> {
+        byte.try_into()
     }
 
-    /// Return a reference to the underlying Cow
-    pub fn as_cow(&self) -> &Cow<'a, [u8]> {
-        &self.0
+    /// Only use if the value is already been checked or
+    /// constructed such that it cannot have a leading 0 bit
+    pub(crate) fn new_unchecked(byte: u8) -> Self {
+        Self(byte)
     }
 
-    /// Returns the underlying Cow
-    pub fn into_inner(self) -> Cow<'a, [u8]> {
+    /// Get the underlying byte of the status
+    pub fn byte(&self) -> u8 {
         self.0
     }
-
-    /// Returns the underlying byte vec. Copies if borrowed.
-    pub fn into_owned(self) -> Vec<u8> {
-        self.0.into_owned()
-    }
 }
 
-impl<'a> Deref for Bytes<'a> {
-    type Target = <Cow<'a, [u8]> as Deref>::Target;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl From<Vec<u8>> for Bytes<'_> {
-    fn from(value: Vec<u8>) -> Self {
-        Self(Cow::Owned(value))
-    }
-}
-
-impl<'a> From<&'a [u8]> for Bytes<'a> {
-    fn from(value: &'a [u8]) -> Self {
-        Self(Cow::Borrowed(value))
-    }
-}
-
-impl<'a, const SIZE: usize> From<&'a [u8; SIZE]> for Bytes<'a> {
-    fn from(value: &'a [u8; SIZE]) -> Self {
-        Self(Cow::Borrowed(value))
-    }
-}
-
-impl<const SIZE: usize> From<[u8; SIZE]> for Bytes<'_> {
-    fn from(value: [u8; SIZE]) -> Self {
-        Self(Cow::Owned(value.to_vec()))
-    }
-}
-
-impl<'a> TryFrom<Bytes<'a>> for Cow<'a, str> {
+impl TryFrom<u8> for StatusByte {
     type Error = io::Error;
-    fn try_from(value: Bytes<'a>) -> Result<Self, Self::Error> {
-        match value.0 {
-            Cow::Borrowed(value) => {
-                let text = std::str::from_utf8(value).map_err(|e| {
-                    io::Error::new(ErrorKind::InvalidData, format!("Invalid string: {:?}", e))
-                })?;
-                Ok(Cow::Borrowed(text))
-            }
-            Cow::Owned(v) => {
-                let text = String::from_utf8(v).map_err(|e| {
-                    io::Error::new(ErrorKind::InvalidData, format!("Invalid string: {:?}", e))
-                })?;
-                Ok(Cow::Owned(text))
-            }
-        }
+    fn try_from(byte: u8) -> Result<Self, Self::Error> {
+        (0x80..=0xFF)
+            .contains(&byte)
+            .then_some(Self(byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
+    }
+}
+
+impl<'a> TryFrom<Cow<'a, u8>> for StatusByte {
+    type Error = io::Error;
+    fn try_from(byte: Cow<'a, u8>) -> Result<Self, Self::Error> {
+        (0x80..=0xFF)
+            .contains(byte.as_ref())
+            .then_some(Self(*byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
+    }
+}
+
+impl<'a> TryFrom<&'a u8> for StatusByte {
+    type Error = io::Error;
+    fn try_from(byte: &'a u8) -> Result<Self, Self::Error> {
+        (0x80..=0xFF)
+            .contains(byte)
+            .then_some(Self(*byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
+    }
+}
+
+impl fmt::Display for StatusByte {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02X}", self.0)
     }
 }
 
 #[doc = r#"
-A representation of a statically borrowed or owned array
+Data Byte is between [0x00 and 0x7F]
 "#]
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct BytesConst<'a, const SIZE: usize>(Cow<'a, [u8; SIZE]>);
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DataByte(pub(crate) u8);
+impl Debug for DataByte {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Debug(0x{:0X}", self.0)
+    }
+}
 
-impl<'a, const SIZE: usize> BytesConst<'a, SIZE> {
-    /// Create a new set of bytes
-    pub fn new<T: Into<BytesConst<'a, SIZE>>>(v: T) -> Self {
-        v.into()
+impl DataByte {
+    /// Check a new status byte
+    pub fn new(byte: u8) -> Result<Self, io::Error> {
+        byte.try_into()
     }
 
-    /// Returns mutable reference to underlying byte slice
-    pub fn to_mut(&mut self) -> &mut [u8; SIZE] {
-        self.0.to_mut()
+    /// Create a data byte without checking for the leading 0.
+    pub const fn new_unchecked(byte: u8) -> Self {
+        Self(byte)
     }
 
-    /// Returns the underlying Cow
-    pub fn into_inner(self) -> Cow<'a, [u8; SIZE]> {
+    /// Get the underlying byte of the data
+    pub fn value(&self) -> u8 {
         self.0
     }
-
-    /// Returns the underlying byte vec. Copies if borrowed.
-    pub fn into_owned(self) -> [u8; SIZE] {
-        self.0.into_owned()
-    }
-}
-impl<'a, const SIZE: usize> Deref for BytesConst<'a, SIZE> {
-    type Target = <Cow<'a, [u8; SIZE]> as Deref>::Target;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
 }
 
-impl<'a, const SIZE: usize> TryFrom<Bytes<'a>> for BytesConst<'a, SIZE> {
-    type Error = ();
-    fn try_from(value: Bytes<'a>) -> Result<Self, Self::Error> {
-        Ok(match value.into_inner() {
-            Cow::Borrowed(v) => Self(Cow::Borrowed(v.try_into().map_err(|_| ())?)),
-            Cow::Owned(v) => Self(Cow::Owned(v.try_into().map_err(|_| ())?)),
-        })
+impl TryFrom<u8> for DataByte {
+    type Error = io::Error;
+    fn try_from(byte: u8) -> Result<Self, Self::Error> {
+        (0x00..=0x7F)
+            .contains(&byte)
+            .then_some(Self(byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
     }
 }
 
-impl<const SIZE: usize> From<[u8; SIZE]> for BytesConst<'_, SIZE> {
-    fn from(value: [u8; SIZE]) -> Self {
-        Self(Cow::Owned(value))
+impl<'a> TryFrom<&'a u8> for DataByte {
+    type Error = io::Error;
+    fn try_from(byte: &'a u8) -> Result<Self, Self::Error> {
+        (0x00..=0x7F)
+            .contains(byte)
+            .then_some(Self(*byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
     }
 }
 
-impl<'a, const SIZE: usize> From<&'a [u8; SIZE]> for BytesConst<'a, SIZE> {
-    fn from(value: &'a [u8; SIZE]) -> Self {
-        Self(Cow::Borrowed(value))
+impl<'a> TryFrom<Cow<'a, u8>> for DataByte {
+    type Error = io::Error;
+    fn try_from(byte: Cow<'a, u8>) -> Result<Self, Self::Error> {
+        (0x00..=0x7F)
+            .contains(byte.as_ref())
+            .then_some(Self(*byte))
+            .ok_or(io::Error::new(
+                ErrorKind::InvalidData,
+                "Expected Status byte",
+            ))
     }
 }
+
+impl fmt::Display for DataByte {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:02X}", self.0)
+    }
+}
+
+/* TODO: planned
+#[doc = r#"
+Any types that can be represented as a `MidiMessageByte`.
+
+Notable, [`SystemExclusiveMessage`] and [`SystemRealTimeMessage`]
+do not implement this trait. They have separate structure types
+"#]
+pub trait MidiMessageByteRep<'a> {
+    /// Represent oneself as MidiMessageBytes.
+    fn as_midi_bytes(&self) -> MidiMessageBytes<'a>;
+}
+
+impl<'a, W, T> MidiWriteable<W> for T
+where
+    W: Write + ?Sized,
+    T: MidiMessageByteRep<'a>,
+{
+    /// Writes the byte representation of the type into a writer
+    fn write_into(&self, writer: &mut W) -> Result<(), io::Error> {
+        self.as_midi_bytes().write(writer)
+    }
+}
+
+#[doc = r#"
+Any representation that can be written, as bytes, into some writer
+"#]
+pub trait MidiWriteable<W: Write + ?Sized> {
+    /// Writes the byte representation of the type into a writer
+    fn write_into(&self, writer: &mut W) -> Result<(), io::Error>;
+}
+
+#[doc = r#"
+A trait for things that can write to midi.
+
+# Overview
+Why not use [`Write`](std::io::Write) instead?
+
+Unfortunately, MIDI events have different byte representations depending on whether it's streamed or
+written out to smf format.
+"#]
+pub trait MidiWriter {
+    fn write_midi(&mut self, byte: &[u8]);
+}
+*/

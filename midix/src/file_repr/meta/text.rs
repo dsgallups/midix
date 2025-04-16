@@ -4,19 +4,17 @@ use std::{
     io::{self},
 };
 
-use super::Bytes;
-
 /// Some text, usually identified by a ['MetaMessage'](super::MetaMessage)s
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BytesText<'a> {
-    inner: Cow<'a, str>,
+    inner: Cow<'a, [u8]>,
 }
 
 impl<'a> BytesText<'a> {
     /// Interpret a byte slice as some text.
-    pub fn new_from_bytes<'b: 'a>(bytes: Bytes<'b>) -> Result<Self, io::Error> {
+    pub fn new_from_bytes<B: Into<Cow<'a, [u8]>>>(bytes: B) -> Result<Self, io::Error> {
         Ok(Self {
-            inner: bytes.try_into()?,
+            inner: bytes.into(),
         })
     }
 

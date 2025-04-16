@@ -40,7 +40,7 @@ impl<'a> MidiFileBuilder<'a> {
                             "Found another format when one was already provided",
                         ));
                     }
-                    FormatStage::KnownTracks(ref tracks) => match h.format_type() {
+                    FormatStage::KnownTracks(tracks) => match &h.format_type() {
                         FormatType::Simultaneous => {
                             self.format =
                                 FormatStage::Formatted(Format::Simultaneous(tracks.clone()))

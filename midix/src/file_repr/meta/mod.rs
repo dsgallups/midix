@@ -3,6 +3,8 @@ Contains types that deal with file ['MetaMessage']s
 "#]
 
 mod tempo;
+use std::borrow::Cow;
+
 use num_enum::TryFromPrimitive;
 pub use tempo::*;
 mod time_signature;
@@ -19,7 +21,7 @@ use crate::prelude::*;
 pub enum MetaMessage<'a> {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
-    TrackNumber(Bytes<'a>),
+    TrackNumber(Cow<'a, [u8]>),
     /// Arbitrary text associated to an instant.
     Text(BytesText<'a>),
     /// A copyright notice.
@@ -33,7 +35,7 @@ pub enum MetaMessage<'a> {
     /// Arbitrary marker text associated to an instant.
     Marker(BytesText<'a>),
     /// Arbitrary cue point text associated to an instant.
-    CuePoint(Bytes<'a>),
+    CuePoint(Cow<'a, [u8]>),
     /// Information about the name of the current program.
     ProgramName(BytesText<'a>),
     /// Name of the device that this file was intended to be played with.
@@ -56,17 +58,17 @@ pub enum MetaMessage<'a> {
     SmpteOffset(&'a [u8]),
     /// In order of the MIDI specification, numerator, denominator, MIDI clocks per click, 32nd
     /// notes per quarter
-    TimeSignature(TimeSignature<'a>),
+    TimeSignature(TimeSignature),
     /// An event defining the key signature of the track
-    KeySignature(KeySignature<'a>),
+    KeySignature(KeySignature),
     /// Arbitrary data intended for the sequencer.
     /// This data is never sent to a device.
-    SequencerSpecific(Bytes<'a>),
+    SequencerSpecific(Cow<'a, [u8]>),
     /// An unknown or malformed meta-message.
     ///
     /// The first `u8` is the raw meta-message identifier byte.
     /// The slice is the actual payload of the meta-message.
-    Unknown(u8, Bytes<'a>),
+    Unknown(u8, Cow<'a, [u8]>),
 }
 impl<'a> MetaMessage<'a> {
     pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>

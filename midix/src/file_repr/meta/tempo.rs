@@ -1,5 +1,3 @@
-use super::Bytes;
-
 /// (in microseconds per MIDI quarter-note)
 ///
 /// FF 51 03 tttttt
@@ -14,18 +12,8 @@ impl Default for Tempo {
 
 impl Tempo {
     /// Interprete a byte slice as a tempo
-    pub fn new_from_bytes<'a, B: Into<Bytes<'a>>>(v: B) -> Self {
-        let mut val = [0; 4];
-        for (i, byte) in v.into().iter().enumerate() {
-            if i > 3 {
-                break;
-            }
-            val[i] = *byte;
-        }
-
-        let val = [0, val[0], val[1], val[2]];
-
-        Self(u32::from_be_bytes(val))
+    pub fn new_from_bytes(v: [u8; 4]) -> Self {
+        Self(u32::from_be_bytes(v))
     }
 
     /// The count of microseconds per midi quarter-note

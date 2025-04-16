@@ -1,5 +1,3 @@
-use reader::MidiSource;
-
 use crate::prelude::*;
 
 #[doc = r#"
@@ -40,7 +38,7 @@ If bit 15 of `<division>` is a one, delta times in a file correspond to subdivis
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RawHeaderChunk<'a> {
     format: RawFormat<'a>,
-    timing: Timing<'a>,
+    timing: Timing,
 }
 
 impl<'a> RawHeaderChunk<'a> {
@@ -55,8 +53,8 @@ impl<'a> RawHeaderChunk<'a> {
             return Err(inv_data(reader, "Length of header chunk is not 6"));
         }
 
-        let format_bytes: BytesConst<'_, 2> = reader.read_exact_size()?;
-        let num_tracks: BytesConst<'_, 2> = reader.read_exact_size()?;
+        let format_bytes: [u8; 2] = reader.read_exact_size()?;
+        let num_tracks: [u8; 2] = reader.read_exact_size()?;
 
         let format = match format_bytes[1] {
             0 => {
@@ -106,7 +104,7 @@ impl<'a> RawHeaderChunk<'a> {
     /// Get the timing property of the header
     ///
     /// identified as `<division>` in the docs
-    pub fn timing(&self) -> &Timing<'a> {
+    pub fn timing(&self) -> &Timing {
         &self.timing
     }
 }
@@ -116,15 +114,15 @@ impl<'a> RawHeaderChunk<'a> {
 /// This is either the number of ticks per quarter note or
 /// the alternative SMTPE format. See the [`RawHeaderChunk`] docs for more information.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Timing<'a> {
+pub enum Timing {
     /// The midi file's delta times are defined using a tick rate per quarter note
-    TicksPerQuarterNote(BytesConst<'a, 2>),
+    TicksPerQuarterNote([u8; 2]),
 
     /// The midi file's delta times are defined using an SMPTE and MIDI Time Code
-    NegativeSmpte(BytesConst<'a, 2>),
+    NegativeSmpte([u8; 2]),
 }
 
-impl<'a> Timing<'a> {
+impl Timing {
     /// The tickrate per quarter note defines what a "quarter note" means.
     ///
     /// The leading bit of the u16 is disregarded, so 1-32767
@@ -134,12 +132,8 @@ impl<'a> Timing<'a> {
         Self::TicksPerQuarterNote([msb, lsb].into())
     }
 
-    pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
-    where
-        R: MidiSource<'slc>,
-        'slc: 'a,
-    {
-        let bytes: BytesConst<'_, 2> = reader.read_exact_size()?;
+    pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self> {
+        let bytes = reader.read_exact(2)?;
         match bytes[0] >> 7 {
             0 => {
                 //this is ticks per quarter_note

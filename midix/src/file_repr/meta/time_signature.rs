@@ -1,5 +1,3 @@
-use super::BytesConst;
-
 #[doc = r#"
 FF 58 04 nn dd cc bb Time Signature
 
@@ -27,16 +25,16 @@ That is, 6/8 time (8 is 2 to the 3rd power, so this is 06 03),
 36 MIDI clocks per dotted-quarter (24 hex!), and
 eight notated 32nd-notes per quarter-note.
 "#]
-#[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct TimeSignature<'a>(BytesConst<'a, 4>);
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+pub struct TimeSignature([u8; 4]);
 
-impl Default for TimeSignature<'_> {
+impl Default for TimeSignature {
     fn default() -> Self {
-        Self([4, 2, 24, 32].into())
+        Self([4, 2, 24, 32])
     }
 }
 
-impl<'a> TimeSignature<'a> {
+impl TimeSignature {
     /// 4 bytes; 6/8 time; 24 MIDI clocks/click, 8 32nd notes/ 24 MIDI clocks (24 MIDI clocks = 1 crotchet = 1 beat)
     /// is represented by
     /// ```rust
@@ -52,16 +50,11 @@ impl<'a> TimeSignature<'a> {
     ) -> Self {
         let pow_den = f64::log2(denominator as f64) as u8;
 
-        Self(BytesConst::new([
-            numerator,
-            pow_den,
-            clocks_per_quarter,
-            notes_per_clocks,
-        ]))
+        Self([numerator, pow_den, clocks_per_quarter, notes_per_clocks])
     }
 
     /// Interpret a byte slice as a time signature
-    pub fn new_from_bytes(v: BytesConst<'a, 4>) -> Self {
+    pub fn new_from_bytes(v: [u8; 4]) -> Self {
         Self(v)
     }
     /// numerator of the time signature
