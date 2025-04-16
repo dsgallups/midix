@@ -6,10 +6,7 @@ pub mod synthesizer;
 
 mod utils;
 
-pub mod prev_midifile;
-
 pub mod prelude {
-    //midifile::*,
     pub use crate::{
         soundfont::{instrument::*, preset::*, *},
         synthesizer::*,
@@ -18,9 +15,5 @@ pub mod prelude {
     pub(crate) use crate::{
         reader::*,
         soundfont::{generator::*, zone::*},
-        /*synthesizer::{
-            voice::*,
-            voice::{envelope::*, region::*},
-        },*/
     };
 }
