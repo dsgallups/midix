@@ -1,13 +1,13 @@
 [package]
 name = "bevy_midix"
-version = "3.2.0"
+version = "3.2.1"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/dsgallups/midix"
 documentation = "https://docs.rs/bevy_midix"
-description = "Do stuff with MIDI in bevy"
+description = "The MIDI plugin for humans. Out-of-the-box soundfont synthesizer, commands, and input!"
 keywords = ["gamedev", "bevy", "midi", "encoding", "control"]
 categories = ["game-development", "game-engines", "encoding"]
 exclude = ["assets/*"]
@@ -18,7 +18,7 @@ web = []
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.15"
-midix = { version = "3.1.1", features = ["bevy"], path = "../midix" }
+midix = { version = "3.1.2", features = ["bevy"], path = "../midix" }
 midix_synth = { version = "0.0.3", path = "../midix_synth" }
 thiserror = "2.0"
 tinyaudio = "1.1.0"

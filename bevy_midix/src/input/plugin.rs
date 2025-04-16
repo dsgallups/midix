@@ -6,7 +6,7 @@ use bevy::prelude::*;
 #[doc = r#"
 Inserts [`MidiInput`] as a resource.
 
-See [`MidiInputSettings`] for configuration options.
+See [`MidiSettings`] for configuration options.
 "#]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MidiInputPlugin {
