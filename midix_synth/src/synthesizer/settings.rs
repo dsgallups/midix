@@ -1,9 +1,7 @@
-#![allow(dead_code)]
-
 use crate::prelude::*;
 
 /// Specifies a set of parameters for synthesis.
-#[non_exhaustive]
+#[derive(Copy, Clone)]
 pub struct SynthesizerSettings {
     /// The sample rate for synthesis.
     pub sample_rate: i32,

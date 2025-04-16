@@ -8,7 +8,6 @@ use std::io::Read;
 use crate::prelude::*;
 
 #[derive(Clone, Copy)]
-#[non_exhaustive]
 pub(crate) struct Generator {
     pub(crate) generator_type: u16,
     pub(crate) value: u16,

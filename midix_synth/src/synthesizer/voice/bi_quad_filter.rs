@@ -1,10 +1,7 @@
-#![allow(dead_code)]
-
 use std::f32::consts;
 
 use crate::prelude::*;
 
-#[non_exhaustive]
 pub(crate) struct BiQuadFilter {
     sample_rate: i32,
 

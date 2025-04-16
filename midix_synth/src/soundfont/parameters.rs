@@ -8,7 +8,6 @@ use zone::ZoneInfo;
 
 use crate::prelude::*;
 
-#[non_exhaustive]
 pub(crate) struct SoundFontParameters {
     pub(crate) sample_headers: Vec<SampleHeader>,
     pub(crate) presets: Vec<Preset>,

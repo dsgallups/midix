@@ -9,7 +9,7 @@ pub use region::*;
 use crate::prelude::*;
 
 /// Represents an instrument in the SoundFont.
-#[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct Instrument {
     pub(crate) name: String,
     pub(crate) regions: Vec<InstrumentRegion>,

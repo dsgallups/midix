@@ -5,7 +5,6 @@ use std::slice;
 
 use crate::prelude::*;
 
-#[non_exhaustive]
 pub struct SoundFontSampleData {
     pub bits_per_sample: i32,
     pub wave_data: Vec<i16>,

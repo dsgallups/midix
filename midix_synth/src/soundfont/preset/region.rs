@@ -2,7 +2,7 @@
 
 use generator::GeneratorType;
 
-use crate::{prelude::*, soundfont::math::SoundFontMath};
+use crate::{prelude::*, utils};
 
 fn set_parameter(gs: &mut [i16; GeneratorType::COUNT], generator: &Generator) {
     let index = generator.generator_type as usize;
@@ -15,7 +15,7 @@ fn set_parameter(gs: &mut [i16; GeneratorType::COUNT], generator: &Generator) {
 
 /// Represents a preset region.
 /// A preset region indicates how the parameters of the instrument should be modified in the preset.
-#[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct PresetRegion {
     pub(crate) gs: [i16; GeneratorType::COUNT],
     pub(crate) instrument: usize,
@@ -103,7 +103,7 @@ impl PresetRegion {
     ///
     /// * `key` - The key of a note.
     /// * `velocity` - The velocity of a note.
-    pub fn contains(&self, key: i32, velocity: i32) -> bool {
+    pub fn contains(&self, key: u8, velocity: u8) -> bool {
         let contains_key = self.get_key_range_start() <= key && key <= self.get_key_range_end();
         let contains_velocity = self.get_velocity_range_start() <= velocity
             && velocity <= self.get_velocity_range_end();
@@ -123,7 +123,7 @@ impl PresetRegion {
     }
 
     pub fn get_initial_filter_cutoff_frequency(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::INITIAL_FILTER_CUTOFF_FREQUENCY as usize] as f32,
         )
     }
@@ -157,49 +157,49 @@ impl PresetRegion {
     }
 
     pub fn get_delay_modulation_lfo(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::DELAY_MODULATION_LFO as usize] as f32,
         )
     }
 
     pub fn get_frequency_modulation_lfo(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::FREQUENCY_MODULATION_LFO as usize] as f32,
         )
     }
 
     pub fn get_delay_vibrato_lfo(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::DELAY_VIBRATO_LFO as usize] as f32,
         )
     }
 
     pub fn get_frequency_vibrato_lfo(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::FREQUENCY_VIBRATO_LFO as usize] as f32,
         )
     }
 
     pub fn get_delay_modulation_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::DELAY_MODULATION_ENVELOPE as usize] as f32,
         )
     }
 
     pub fn get_attack_modulation_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::ATTACK_MODULATION_ENVELOPE as usize] as f32,
         )
     }
 
     pub fn get_hold_modulation_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::HOLD_MODULATION_ENVELOPE as usize] as f32,
         )
     }
 
     pub fn get_decay_modulation_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::DECAY_MODULATION_ENVELOPE as usize] as f32,
         )
     }
@@ -209,7 +209,7 @@ impl PresetRegion {
     }
 
     pub fn get_release_modulation_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::RELEASE_MODULATION_ENVELOPE as usize] as f32,
         )
     }
@@ -223,25 +223,25 @@ impl PresetRegion {
     }
 
     pub fn get_delay_volume_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::DELAY_VOLUME_ENVELOPE as usize] as f32,
         )
     }
 
     pub fn get_attack_volume_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::ATTACK_VOLUME_ENVELOPE as usize] as f32,
         )
     }
 
     pub fn get_hold_volume_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::HOLD_VOLUME_ENVELOPE as usize] as f32,
         )
     }
 
     pub fn get_decay_volume_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::DECAY_VOLUME_ENVELOPE as usize] as f32,
         )
     }
@@ -251,7 +251,7 @@ impl PresetRegion {
     }
 
     pub fn get_release_volume_envelope(&self) -> f32 {
-        SoundFontMath::cents_to_multiplying_factor(
+        utils::cents_to_multiplying_factor(
             self.gs[GeneratorType::RELEASE_VOLUME_ENVELOPE as usize] as f32,
         )
     }
@@ -264,20 +264,20 @@ impl PresetRegion {
         self.gs[GeneratorType::KEY_NUMBER_TO_VOLUME_ENVELOPE_DECAY as usize] as i32
     }
 
-    pub fn get_key_range_start(&self) -> i32 {
-        self.gs[GeneratorType::KEY_RANGE as usize] as i32 & 0xFF
+    pub fn get_key_range_start(&self) -> u8 {
+        (self.gs[GeneratorType::KEY_RANGE as usize] & 0xFF) as u8
     }
 
-    pub fn get_key_range_end(&self) -> i32 {
-        (self.gs[GeneratorType::KEY_RANGE as usize] as i32 >> 8) & 0xFF
+    pub fn get_key_range_end(&self) -> u8 {
+        ((self.gs[GeneratorType::KEY_RANGE as usize] >> 8) & 0xFF) as u8
     }
 
-    pub fn get_velocity_range_start(&self) -> i32 {
-        self.gs[GeneratorType::VELOCITY_RANGE as usize] as i32 & 0xFF
+    pub fn get_velocity_range_start(&self) -> u8 {
+        (self.gs[GeneratorType::VELOCITY_RANGE as usize] & 0xFF) as u8
     }
 
-    pub fn get_velocity_range_end(&self) -> i32 {
-        (self.gs[GeneratorType::VELOCITY_RANGE as usize] as i32 >> 8) & 0xFF
+    pub fn get_velocity_range_end(&self) -> u8 {
+        ((self.gs[GeneratorType::VELOCITY_RANGE as usize] >> 8) & 0xFF) as u8
     }
 
     pub fn get_initial_attenuation(&self) -> f32 {

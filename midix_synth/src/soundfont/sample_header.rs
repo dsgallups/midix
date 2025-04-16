@@ -5,7 +5,7 @@ use std::io::Read;
 use crate::prelude::*;
 
 /// Represents a sample in the SoundFont.
-#[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct SampleHeader {
     pub(crate) name: String,
     pub(crate) start: i32,

@@ -2,7 +2,6 @@ use std::{error, fmt};
 
 /// Represents an error when initializing a synthesizer.
 #[derive(Debug)]
-#[non_exhaustive]
 pub enum SynthesizerError {
     SampleRateOutOfRange(i32),
     BlockSizeOutOfRange(usize),

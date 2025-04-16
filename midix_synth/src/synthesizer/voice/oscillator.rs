@@ -1,6 +1,4 @@
-#![allow(dead_code)]
-
-use super::LoopMode;
+use super::RegionPair;
 
 use crate::prelude::*;
 
@@ -11,11 +9,7 @@ use crate::prelude::*;
 
 #[non_exhaustive]
 pub(crate) struct Oscillator {
-    synthesizer_sample_rate: i32,
-
-    loop_mode: i32,
-    sample_sample_rate: i32,
-    start: i32,
+    loop_mode: LoopMode,
     end: i32,
     start_loop: i32,
     end_loop: i32,
@@ -35,55 +29,40 @@ impl Oscillator {
     const FRAC_UNIT: i64 = 1_i64 << Oscillator::FRAC_BITS;
     const FP_TO_SAMPLE: f32 = 1_f32 / (32768 * Oscillator::FRAC_UNIT) as f32;
 
-    pub(crate) fn new(settings: &SynthesizerSettings) -> Self {
+    pub(crate) fn new(settings: &SynthesizerSettings, region: &RegionPair) -> Self {
+        let sample_rate = region.instrument.sample_sample_rate;
+        let loop_mode = region.get_sample_modes();
+        let start = region.get_sample_start();
+        let end = region.get_sample_end();
+        let start_loop = region.get_sample_start_loop();
+        let end_loop = region.get_sample_end_loop();
+        let root_key = region.get_root_key();
+        let coarse_tune = region.get_coarse_tune();
+        let fine_tune = region.get_fine_tune();
+        let scale_tuning = region.get_scale_tuning();
+
+        let tune = coarse_tune as f32 + 0.01_f32 * fine_tune as f32;
+        let pitch_change_scale = 0.01_f32 * scale_tuning as f32;
+        let sample_rate_ratio = sample_rate as f32 / settings.sample_rate as f32;
+        let looping = loop_mode != LoopMode::NoLoop;
+        let position_fp = (start as i64) << Oscillator::FRAC_BITS;
+
         Self {
-            synthesizer_sample_rate: settings.sample_rate,
-            loop_mode: 0,
-            sample_sample_rate: 0,
-            start: 0,
-            end: 0,
-            start_loop: 0,
-            end_loop: 0,
-            root_key: 0,
-            tune: 0_f32,
-            pitch_change_scale: 0_f32,
-            sample_rate_ratio: 0_f32,
-            looping: false,
-            position_fp: 0,
+            loop_mode,
+            end,
+            start_loop,
+            end_loop,
+            root_key,
+            tune,
+            pitch_change_scale,
+            sample_rate_ratio,
+            looping,
+            position_fp,
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn start(
-        &mut self,
-        loop_mode: i32,
-        sample_rate: i32,
-        start: i32,
-        end: i32,
-        start_loop: i32,
-        end_loop: i32,
-        root_key: i32,
-        coarse_tune: i32,
-        fine_tune: i32,
-        scale_tuning: i32,
-    ) {
-        self.loop_mode = loop_mode;
-        self.sample_sample_rate = sample_rate;
-        self.start = start;
-        self.end = end;
-        self.start_loop = start_loop;
-        self.end_loop = end_loop;
-        self.root_key = root_key;
-
-        self.tune = coarse_tune as f32 + 0.01_f32 * fine_tune as f32;
-        self.pitch_change_scale = 0.01_f32 * scale_tuning as f32;
-        self.sample_rate_ratio = sample_rate as f32 / self.synthesizer_sample_rate as f32;
-        self.looping = self.loop_mode != LoopMode::NO_LOOP;
-        self.position_fp = (start as i64) << Oscillator::FRAC_BITS;
-    }
-
     pub(crate) fn release(&mut self) {
-        if self.loop_mode == LoopMode::LOOP_UNTIL_NOTE_OFF {
+        if self.loop_mode == LoopMode::LoopUntilNoteOff {
             self.looping = false;
         }
     }

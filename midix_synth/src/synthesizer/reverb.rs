@@ -1,8 +1,5 @@
-#![allow(dead_code)]
-
 use std::cmp;
 
-#[non_exhaustive]
 pub(crate) struct Reverb {
     left_combfilters: Vec<CombFilter>,
     left_allpassfilters: Vec<AllPassFilter>,
@@ -237,7 +234,6 @@ impl Reverb {
     }
 }
 
-#[non_exhaustive]
 struct CombFilter {
     buffer: Vec<f32>,
 
@@ -324,7 +320,6 @@ impl CombFilter {
     }
 }
 
-#[non_exhaustive]
 struct AllPassFilter {
     buffer: Vec<f32>,
 

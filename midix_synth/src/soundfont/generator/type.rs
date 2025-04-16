@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 #[allow(unused)]
-#[non_exhaustive]
 pub(crate) struct GeneratorType {}
 
 #[allow(unused)]

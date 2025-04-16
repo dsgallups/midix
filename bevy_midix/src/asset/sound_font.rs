@@ -4,7 +4,7 @@ Asset types
 TODO
 "#]
 
-use std::{io::Read, sync::Arc};
+use std::io::Read;
 use thiserror::Error;
 
 use bevy::{
@@ -16,20 +16,19 @@ use midix_synth::{prelude::SoundFontError, soundfont::SoundFont as Sf};
 /// Sound font asset
 #[derive(Asset, TypePath)]
 pub struct SoundFont {
-    pub(crate) file: Arc<Sf>,
+    pub(crate) file: Sf,
 }
 
 impl SoundFont {
     /// Create a new
     fn new<R: Read + ?Sized>(file: &mut R) -> Result<Self, SoundFontError> {
-        let sf = Arc::new(Sf::new(file)?);
+        let sf = Sf::new(file)?;
 
         Ok(Self { file: sf })
     }
 }
 
 /// Possible errors that can be produced by [`CustomAssetLoader`]
-#[non_exhaustive]
 #[derive(Debug, Error)]
 enum SoundFontLoadError {
     /// An [IO](std::io) Error
