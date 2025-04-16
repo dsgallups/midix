@@ -49,10 +49,7 @@ impl ChannelVoiceMessage {
                 key: Key::from_databyte(reader.read_next()?)?,
                 velocity: Velocity::new(reader.read_next()?)?,
             },
-            0xB => VoiceEvent::ControlChange {
-                controller: Controller::new(reader.read_next()?)?,
-                value: reader.read_next()?.try_into()?,
-            },
+            0xB => VoiceEvent::ControlChange(Controller::read(reader)?),
             0xC => VoiceEvent::ProgramChange {
                 program: Program::new(reader.read_next()?)?,
             },
@@ -121,7 +118,7 @@ impl ChannelVoiceMessage {
             V::NoteOn { key, .. } | V::NoteOff { key, .. } | V::Aftertouch { key, .. } => {
                 key.byte()
             }
-            V::ControlChange { controller, .. } => controller.byte(),
+            V::ControlChange(c) => c.to_raw()[0],
             V::ProgramChange { program } => program.byte(),
             V::ChannelPressureAfterTouch { velocity } => velocity.byte(),
             V::PitchBend(p) => p.lsb(),
@@ -135,7 +132,7 @@ impl ChannelVoiceMessage {
             | VoiceEvent::NoteOff { velocity, .. }
             | VoiceEvent::Aftertouch { velocity, .. }
             | VoiceEvent::ChannelPressureAfterTouch { velocity } => Some(velocity.byte()),
-            VoiceEvent::ControlChange { value, .. } => Some(value.0),
+            VoiceEvent::ControlChange(c) => c.to_raw().get(1).copied(),
             VoiceEvent::PitchBend(p) => Some(p.msb()),
             _ => None,
         }
@@ -202,16 +199,15 @@ impl FromLiveEventBytes for ChannelVoiceMessage {
                         .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
                 )?,
             },
-            0xB => VoiceEvent::ControlChange {
-                controller: Controller::new(
-                    data.get_byte(0)
-                        .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?,
-                )?,
-                value: (data
-                    .get_byte(1)
-                    .ok_or(io::Error::new(ErrorKind::InvalidData, "byte not found"))?)
-                .try_into()?,
-            },
+            0xB => {
+                // TODO: really need to unify this
+                let mut temp = Reader::from_byte_slice(data);
+                let c = Controller::read(&mut temp).map_err(|e| match e {
+                    reader::ReaderError::Io(io) => io,
+                    e => io::Error::new(ErrorKind::InvalidData, e),
+                })?;
+                VoiceEvent::ControlChange(c)
+            }
             0xC => VoiceEvent::ProgramChange {
                 program: Program::new(
                     data.get_byte(0)

@@ -34,6 +34,7 @@ pub enum VoiceEvent {
     },
     /// Modify the value of a MIDI controller.
     ControlChange(Controller),
+
     /// Change the program (also known as instrument) for a channel.
     ProgramChange {
         /// The new program (instrument) to use for the channel.
@@ -94,9 +95,7 @@ impl VoiceEvent {
             VoiceEvent::Aftertouch { key, velocity } => {
                 vec![key.byte(), velocity.byte()]
             }
-            VoiceEvent::ControlChange { controller, value } => {
-                vec![controller.byte(), value.0]
-            }
+            VoiceEvent::ControlChange(control) => control.to_raw(),
             VoiceEvent::ProgramChange { program } => vec![program.byte()],
             VoiceEvent::ChannelPressureAfterTouch { velocity } => vec![velocity.byte()],
             VoiceEvent::PitchBend(bend) => {

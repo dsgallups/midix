@@ -203,6 +203,18 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
 
         Ok(res)
     }
+
+    pub(crate) fn read_next_as_databyte<'slf>(&'slf mut self) -> ReadResult<DataByte>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get_byte(self.buffer_position())
+            .ok_or(unexp_eof())?;
+        self.state.increment_offset(1);
+        Ok(DataByte::new(res)?)
+    }
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
     pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<Bytes<'slc>>
