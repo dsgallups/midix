@@ -30,10 +30,10 @@ default-features = false
 features = [
     "multi_threaded",
     "bevy_asset",
-    "std",
     "async_executor",
     "bevy_log",
     "bevy_state",
+    "std",
 ]
 
 [dev-dependencies.bevy]

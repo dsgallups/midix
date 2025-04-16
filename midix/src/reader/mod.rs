@@ -11,6 +11,8 @@ Inspired by <https://docs.rs/quick-xml/latest/quick_xml/>
 mod error;
 mod source;
 mod state;
+
+use alloc::borrow::Cow;
 pub use error::*;
 pub use source::*;
 use state::{ParseState, ReaderState};
@@ -130,9 +132,11 @@ impl<'slc> Reader<&'slc [u8]> {
     }
 }
 
-impl<'a> Reader<Bytes<'a>> {
-    /// Create a new reader from anything that can be turned into [`Bytes`]
-    pub fn from_bytes<B: Into<Bytes<'a>>>(slice: B) -> Self {
+impl<'slc> Reader<Cow<'slc, [u8]>> {
+    /// Create a new [`Reader`] from a `&[u8]`. Only this type has the
+    /// [`Reader::read_event`] method.
+    #[must_use]
+    pub fn from_bytes<B: Into<Cow<'slc, [u8]>>>(slice: B) -> Self {
         Self {
             reader: slice.into(),
             state: ReaderState::default(),
@@ -143,19 +147,19 @@ impl<'a> Reader<Bytes<'a>> {
 //internal implementations
 impl<'slc, R: MidiSource<'slc>> Reader<R> {
     // Returns None if there's no bytes left to read
-    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<Bytes<'slc>>
+    pub(super) fn read_exact<'slf>(&'slf mut self, bytes: usize) -> ReadResult<Cow<'slc, [u8]>>
     where
         'slc: 'slf,
     {
         if self.buffer_position() > self.reader.max_len() {
-            return Err(unexp_eof());
+            return Err(ReaderError::oob(self.buffer_position()));
         }
         let start = self.buffer_position();
 
         let end = start + bytes;
 
         if end > self.reader.max_len() {
-            return Err(unexp_eof());
+            return Err(ReaderError::oob(self.buffer_position()));
         }
 
         self.state.increment_offset(bytes);
@@ -165,32 +169,19 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
         Ok(slice)
     }
 
-    /// Returns a statically sized array
-    pub(crate) fn read_exact_size<'slf, const SIZE: usize>(
-        &'slf mut self,
-    ) -> ReadResult<BytesConst<'slc, SIZE>>
-    where
-        'slc: 'slf,
-    {
-        let slice = self.read_exact(SIZE)?;
+    pub(super) fn read_exact_size<const N: usize>(&mut self) -> ReadResult<[u8; N]> {
+        let exact = self.read_exact(N)?;
+        if exact.len() == N {
+            let ptr = exact.as_ptr() as *const [u8; N];
 
-        slice
-            .try_into()
-            .map_err(|e| inv_data(self, format!("{e:?}")))
+            // SAFETY: The underlying array of a slice can be reinterpreted as an actual array `[T; N]` if `N` is not greater than the slice's length.
+            let me = unsafe { &*ptr };
+            Ok(*me)
+        } else {
+            Err(ReaderError::oob(self.buffer_position()))
+        }
     }
 
-    /// Get the next byte without incrementing
-    #[allow(dead_code)]
-    pub(super) fn peak_next<'slf>(&'slf mut self) -> ReadResult<u8>
-    where
-        'slc: 'slf,
-    {
-        let res = self
-            .reader
-            .get_byte(self.buffer_position())
-            .ok_or(unexp_eof())?;
-        Ok(res)
-    }
     pub(crate) fn read_next<'slf>(&'slf mut self) -> ReadResult<u8>
     where
         'slc: 'slf,
@@ -198,14 +189,26 @@ impl<'slc, R: MidiSource<'slc>> Reader<R> {
         let res = self
             .reader
             .get_byte(self.buffer_position())
-            .ok_or(unexp_eof())?;
+            .ok_or(ReaderError::oob(self.buffer_position()))?;
         self.state.increment_offset(1);
 
         Ok(res)
     }
+
+    pub(crate) fn read_next_as_databyte<'slf>(&'slf mut self) -> ReadResult<DataByte>
+    where
+        'slc: 'slf,
+    {
+        let res = self
+            .reader
+            .get_byte(self.buffer_position())
+            .ok_or(ReaderError::oob(self.buffer_position()))?;
+        self.state.increment_offset(1);
+        DataByte::new(res).map_err(|e| ReaderError::parse_error(self.buffer_position(), e))
+    }
     /// ASSUMING that the offset is pointing at the length of a varlen,
     /// it will read that length and return the resulting slice.
-    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<Bytes<'slc>>
+    pub(crate) fn read_varlen_slice<'slf>(&'slf mut self) -> ReadResult<Cow<'slc, [u8]>>
     where
         'slc: 'slf,
     {
@@ -238,7 +241,10 @@ pub(crate) fn check_u4(reader: &mut Reader<&[u8]>) -> ReadResult<u8> {
     let byte = reader.read_next()?;
     (byte & 0b1111_0000 == 0)
         .then_some(byte)
-        .ok_or(inv_data(reader, "Leading bit found"))
+        .ok_or(ReaderError::parse_error(
+            reader.buffer_position(),
+            ParseError::InvalidDataByte(byte),
+        ))
 }
 
 impl<'slc, R: MidiSource<'slc>> Reader<R> {

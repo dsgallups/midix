@@ -12,7 +12,7 @@ pub enum ChunkEvent<'a> {
     /// A midi header
     ///
     /// See [`RawHeaderChunk`] for a breakdown on layout
-    Header(RawHeaderChunk<'a>),
+    Header(RawHeaderChunk),
     /// The full bytes identified by a track chunk
     ///
     /// See [`RawTrackChunk`] for a breakdown on layout
@@ -26,8 +26,8 @@ pub enum ChunkEvent<'a> {
     EOF,
 }
 
-impl<'a> From<RawHeaderChunk<'a>> for ChunkEvent<'a> {
-    fn from(value: RawHeaderChunk<'a>) -> Self {
+impl<'a> From<RawHeaderChunk> for ChunkEvent<'a> {
+    fn from(value: RawHeaderChunk) -> Self {
         Self::Header(value)
     }
 }

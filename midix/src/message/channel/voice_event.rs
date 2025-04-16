@@ -33,14 +33,8 @@ pub enum VoiceEvent {
         velocity: Velocity,
     },
     /// Modify the value of a MIDI controller.
-    ControlChange {
-        /// The controller to modify.
-        ///
-        /// See the MIDI spec for the meaning of each index.
-        controller: Controller,
-        /// The value to set it to.
-        value: DataByte,
-    },
+    ControlChange(Controller),
+
     /// Change the program (also known as instrument) for a channel.
     ProgramChange {
         /// The new program (instrument) to use for the channel.
@@ -93,24 +87,22 @@ impl VoiceEvent {
         }
     }
 
-    /// Get the raw data bytes for this message
-    pub fn to_raw(&self) -> Vec<u8> {
-        match self {
-            VoiceEvent::NoteOff { key, velocity } => vec![key.byte(), velocity.byte()],
-            VoiceEvent::NoteOn { key, velocity } => vec![key.byte(), velocity.byte()],
-            VoiceEvent::Aftertouch { key, velocity } => {
-                vec![key.byte(), velocity.byte()]
-            }
-            VoiceEvent::ControlChange { controller, value } => {
-                vec![controller.byte(), value.0]
-            }
-            VoiceEvent::ProgramChange { program } => vec![program.byte()],
-            VoiceEvent::ChannelPressureAfterTouch { velocity } => vec![velocity.byte()],
-            VoiceEvent::PitchBend(bend) => {
-                vec![bend.lsb(), bend.msb()]
-            }
-        }
-    }
+    // /// Get the raw data bytes for this message
+    // pub fn to_raw(&self) -> Vec<u8> {
+    //     match self {
+    //         VoiceEvent::NoteOff { key, velocity } => vec![key.byte(), velocity.byte()],
+    //         VoiceEvent::NoteOn { key, velocity } => vec![key.byte(), velocity.byte()],
+    //         VoiceEvent::Aftertouch { key, velocity } => {
+    //             vec![key.byte(), velocity.byte()]
+    //         }
+    //         VoiceEvent::ControlChange(control) => control.to_raw(),
+    //         VoiceEvent::ProgramChange { program } => vec![program.byte()],
+    //         VoiceEvent::ChannelPressureAfterTouch { velocity } => vec![velocity.byte()],
+    //         VoiceEvent::PitchBend(bend) => {
+    //             vec![bend.lsb(), bend.msb()]
+    //         }
+    //     }
+    // }
 
     /// Returns the upper four bits for the status. This should be combined with the channel to make the status byte.
     /// i.e. this will return 00001000.

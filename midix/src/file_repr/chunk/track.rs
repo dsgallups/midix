@@ -1,4 +1,6 @@
-use crate::prelude::*;
+use alloc::{borrow::Cow, vec::Vec};
+
+use crate::{prelude::*, reader::ReaderErrorKind};
 
 #[doc = r#"
 Identifies a track chunk header. Only metadata
@@ -19,9 +21,7 @@ impl TrackChunkHeader {
     where
         R: MidiSource<'slc>,
     {
-        let length: BytesConst<'_, 4> = reader.read_exact_size()?;
-
-        let length = u32::from_be_bytes(*length);
+        let length = u32::from_be_bytes(reader.read_exact_size()?);
 
         Ok(Self { length })
     }
@@ -37,7 +37,7 @@ impl TrackChunkHeader {
 Contains the whole length of the track chunk
 "#]
 #[allow(dead_code)]
-pub struct RawTrackChunk<'a>(Bytes<'a>);
+pub struct RawTrackChunk<'a>(Cow<'a, [u8]>);
 
 impl<'a> RawTrackChunk<'a> {
     pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
@@ -45,7 +45,7 @@ impl<'a> RawTrackChunk<'a> {
         R: MidiSource<'slc>,
         'slc: 'a,
     {
-        let length = u32::from_be_bytes(*reader.read_exact_size()?);
+        let length = u32::from_be_bytes(reader.read_exact_size()?);
 
         let track_event_bytes = reader.read_exact(length as usize)?;
 
@@ -53,7 +53,7 @@ impl<'a> RawTrackChunk<'a> {
     }
 
     /// Consume self to yield a list of track events
-    pub fn events(self) -> ReadResult<Vec<TrackEvent<'a>>> {
+    pub fn events(self) -> Result<Vec<TrackEvent<'a>>, ReaderErrorKind> {
         // just a guess, may over-allocate
         let mut events: Vec<TrackEvent<'a>> = Vec::with_capacity(self.0.len());
         let mut reader = Reader::from_bytes(self.0);
@@ -66,7 +66,7 @@ impl<'a> RawTrackChunk<'a> {
                     if err.is_out_of_bounds() {
                         break;
                     } else {
-                        return Err(err);
+                        return Err(err.kind);
                     }
                 }
             }

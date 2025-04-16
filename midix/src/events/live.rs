@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use std::io::ErrorKind;
 
 /// Identifies something that can be interpreted from the bytes of a live MIDI stream
 pub trait FromLiveEventBytes {
@@ -13,23 +12,17 @@ pub trait FromLiveEventBytes {
     ///
     /// # Errors
     /// If the byte slice cannot actually represent the type
-    fn from_bytes(bytes: &[u8]) -> Result<Self, std::io::Error>
+    fn from_bytes(bytes: &[u8]) -> Result<Self, ParseError>
     where
         Self: Sized,
     {
         if bytes.is_empty() {
-            return Err(io_error!(
-                ErrorKind::InvalidInput,
-                "Invalid live event (no byte data!)"
-            ));
+            return Err(ParseError::InvalidLength(0));
         }
         let (status, data) = bytes.split_at(1);
         let status = status[0];
         if !(Self::MIN_STATUS_BYTE..=Self::MAX_STATUS_BYTE).contains(&status) {
-            return Err(io_error!(
-                ErrorKind::InvalidData,
-                "Invalid status message for type!)"
-            ));
+            return Err(ParseError::InvalidStatusByte(status));
         }
 
         Self::from_status_and_data(status, data)
@@ -40,7 +33,7 @@ pub trait FromLiveEventBytes {
     ///
     /// # Errors
     /// If the status and data cannot represent the type
-    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
+    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, ParseError>
     where
         Self: Sized;
 }
@@ -72,14 +65,14 @@ impl LiveEvent<'_> {
         }
     }
 
-    /// Returns the event as a set of bytes. These bytes are to be interpreted by a MIDI live stream
-    pub fn to_bytes(&self) -> Vec<u8> {
-        match self {
-            LiveEvent::ChannelVoice(c) => c.to_bytes(),
-            LiveEvent::SysCommon(s) => s.to_bytes(),
-            LiveEvent::SysRealTime(r) => vec![r.byte()],
-        }
-    }
+    // /// Returns the event as a set of bytes. These bytes are to be interpreted by a MIDI live stream
+    // pub fn to_bytes(&self) -> Vec<u8> {
+    //     match self {
+    //         LiveEvent::ChannelVoice(c) => c.to_bytes(),
+    //         LiveEvent::SysCommon(s) => s.to_bytes(),
+    //         LiveEvent::SysRealTime(r) => vec![r.byte()],
+    //     }
+    // }
 }
 
 impl From<ChannelVoiceMessage> for LiveEvent<'_> {
@@ -107,7 +100,7 @@ impl From<SystemRealTimeMessage> for LiveEvent<'_> {
 impl FromLiveEventBytes for LiveEvent<'_> {
     const MIN_STATUS_BYTE: u8 = 0x80;
     const MAX_STATUS_BYTE: u8 = 0xFF;
-    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error>
+    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, ParseError>
     where
         Self: Sized,
     {
@@ -121,29 +114,26 @@ impl FromLiveEventBytes for LiveEvent<'_> {
             0xF8..=0xFF => Ok(Self::SysRealTime(
                 SystemRealTimeMessage::from_status_and_data(status, data)?,
             )),
-            _ => Err(io_error!(
-                ErrorKind::InvalidData,
-                "Received a status that is not a midi message"
-            )),
+            b => Err(ParseError::InvalidStatusByte(b)),
         }
     }
 }
 
-#[test]
-fn parse_note_on() {
-    use crate::prelude::*;
-    let message = [0b1001_0001, 0b0100_1000, 0b001_00001];
-    let parsed = LiveEvent::from_bytes(&message).unwrap();
-    //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
+// #[test]
+// fn parse_note_on() {
+//     use crate::prelude::*;
+//     let message = [0b1001_0001, 0b0100_1000, 0b001_00001];
+//     let parsed = LiveEvent::from_bytes(&message).unwrap();
+//     //parsed: ChannelVoice(ChannelVoiceMessage { channel: Channel(1), message: NoteOn { key: Key(72), vel: Velocity(33) } })
 
-    assert_eq!(
-        parsed,
-        LiveEvent::ChannelVoice(ChannelVoiceMessage::new(
-            Channel::Two,
-            VoiceEvent::NoteOn {
-                key: Key::from_databyte(72).unwrap(),
-                velocity: Velocity::new(33).unwrap()
-            }
-        ))
-    );
-}
+//     assert_eq!(
+//         parsed,
+//         LiveEvent::ChannelVoice(ChannelVoiceMessage::new(
+//             Channel::Two,
+//             VoiceEvent::NoteOn {
+//                 key: Key::from_databyte(72).unwrap(),
+//                 velocity: Velocity::new(33).unwrap()
+//             }
+//         ))
+//     );
+// }

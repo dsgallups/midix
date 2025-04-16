@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use crate::{
     channel::Channel,
     events::LiveEvent,
@@ -70,7 +72,7 @@ impl<'a> Track<'a> {
 #[allow(missing_docs)]
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct TrackInfo<'a> {
-    pub time_signature: TimeSignature<'a>,
+    pub time_signature: TimeSignature,
     pub name: Option<BytesText<'a>>,
     pub device: Option<BytesText<'a>>,
     pub track_info: Option<u16>,

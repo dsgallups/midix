@@ -5,6 +5,8 @@ TODO
 "#]
 
 mod builder;
+
+use alloc::{borrow::Cow, vec::Vec};
 use builder::*;
 mod format;
 pub use format::*;
@@ -14,15 +16,15 @@ mod track;
 pub use track::*;
 
 use crate::{
-    Bytes,
-    reader::{ReadResult, Reader},
+    ParseError,
+    reader::{ReadResult, Reader, ReaderError, ReaderErrorKind},
 };
 
 #[doc = r#"
 TODO
 "#]
 pub struct MidiFile<'a> {
-    header: Header<'a>,
+    header: Header,
     format: Format<'a>,
 }
 
@@ -30,7 +32,7 @@ impl<'a> MidiFile<'a> {
     /// Parse a set of bytes into a file struct
     pub fn parse<B>(bytes: B) -> ReadResult<Self>
     where
-        B: Into<Bytes<'a>>,
+        B: Into<Cow<'a, [u8]>>,
     {
         let mut reader = Reader::from_bytes(bytes);
         let mut builder = MidiFileBuilder::default();
@@ -41,10 +43,17 @@ impl<'a> MidiFile<'a> {
             if val.is_eof() {
                 break;
             }
-            builder.handle_chunk(val)?;
+            builder
+                .handle_chunk(val)
+                .map_err(|k| ReaderError::new(reader.buffer_position(), k))?;
         }
 
-        builder.build()
+        builder.build().map_err(|k| {
+            ReaderError::new(
+                reader.buffer_position(),
+                ReaderErrorKind::ParseError(ParseError::File(k)),
+            )
+        })
     }
 
     /// Returns header info
@@ -54,10 +63,10 @@ impl<'a> MidiFile<'a> {
 
     /// Returns a track list
     pub fn tracks(&self) -> Vec<&Track<'a>> {
-        match self.format {
-            Format::SequentiallyIndependent(ref t) => t.iter().collect(),
-            Format::Simultaneous(ref s) => s.iter().collect(),
-            Format::SingleMultiChannel(ref c) => vec![c],
+        match &self.format {
+            Format::SequentiallyIndependent(t) => t.iter().collect(),
+            Format::Simultaneous(s) => s.iter().collect(),
+            Format::SingleMultiChannel(c) => [c].to_vec(),
         }
     }
 }

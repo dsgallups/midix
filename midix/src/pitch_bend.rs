@@ -18,7 +18,7 @@ impl PitchBend {
     /// least significant and most significant bytes.
     ///
     /// Checks for byte correctness (leading 0 bit)
-    pub fn new(lsb: u8, msb: u8) -> Result<Self, std::io::Error> {
+    pub fn new(lsb: u8, msb: u8) -> Result<Self, ParseError> {
         let lsb = DataByte::new(lsb)?;
         let msb = DataByte::new(msb)?;
         Ok(Self { lsb, msb })
@@ -54,7 +54,7 @@ impl PitchBend {
     }
 
     /// Represents a u16, lsb then msb, as a pitch bend
-    pub fn from_bits(rep: u16) -> Result<Self, std::io::Error> {
+    pub fn from_bits(rep: u16) -> Result<Self, ParseError> {
         let lsb = (rep >> 8) as u8;
         let msb = (rep & 0x00FF) as u8;
         Self::new(lsb, msb)

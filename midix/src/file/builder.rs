@@ -1,6 +1,9 @@
-use reader::ReaderError;
+use alloc::vec::Vec;
 
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    reader::{ReadError, ReaderErrorKind},
+};
 
 use super::MidiFile;
 
@@ -8,7 +11,7 @@ use super::MidiFile;
 pub enum FormatStage<'a> {
     #[default]
     Unknown,
-    KnownFormat(RawFormat<'a>),
+    KnownFormat(RawFormat),
     KnownTracks(Vec<Track<'a>>),
     Formatted(Format<'a>),
 }
@@ -16,31 +19,28 @@ pub enum FormatStage<'a> {
 #[derive(Default)]
 pub struct MidiFileBuilder<'a> {
     format: FormatStage<'a>,
-    timing: Option<Timing<'a>>,
+    timing: Option<Timing>,
+    //TODO
     unknown_chunks: Vec<UnknownChunk<'a>>,
 }
 
 impl<'a> MidiFileBuilder<'a> {
-    pub fn handle_chunk<'b: 'a>(&mut self, chunk: ChunkEvent<'b>) -> ReadResult<()> {
+    pub fn handle_chunk<'b: 'a>(&mut self, chunk: ChunkEvent<'b>) -> Result<(), ReaderErrorKind> {
         use ChunkEvent::*;
         match chunk {
             Header(h) => {
                 if self.timing.is_some() {
-                    return Err(ReaderError::invalid_data(
-                        "Found another header, should only expect one",
-                    ));
+                    return Err(ReaderErrorKind::chunk(ChunkError::DuplicateHeader));
                 }
 
-                match self.format {
+                match &self.format {
                     FormatStage::Unknown => {
                         self.format = FormatStage::KnownFormat(h.format().clone());
                     }
                     FormatStage::KnownFormat(_) | FormatStage::Formatted(_) => {
-                        return Err(ReaderError::invalid_data(
-                            "Found another format when one was already provided",
-                        ));
+                        return Err(ReaderErrorKind::chunk(ChunkError::DuplicateFormat));
                     }
-                    FormatStage::KnownTracks(ref tracks) => match h.format_type() {
+                    FormatStage::KnownTracks(tracks) => match &h.format_type() {
                         FormatType::Simultaneous => {
                             self.format =
                                 FormatStage::Formatted(Format::Simultaneous(tracks.clone()))
@@ -48,8 +48,8 @@ impl<'a> MidiFileBuilder<'a> {
                         FormatType::SingleMultiChannel => {
                             // this shouldn't even happen...but we will support headers that aren't at the top of the file, so it *could*
                             if tracks.len() != 1 {
-                                return Err(ReaderError::invalid_data(
-                                    "track lengths is greater than one, yet format is single multichannel",
+                                return Err(ReaderErrorKind::chunk(
+                                    ChunkError::MultipleTracksForSingleMultiChannel,
                                 ));
                             }
                             let track = tracks.first().unwrap().clone();
@@ -71,28 +71,33 @@ impl<'a> MidiFileBuilder<'a> {
                 let events = t.events()?;
 
                 let track = super::Track::new(events);
+                let mut track_vec = Vec::new();
                 match &mut self.format {
                     FormatStage::Unknown => {
-                        self.format = FormatStage::KnownTracks(vec![track]);
+                        track_vec.push(track);
+                        self.format = FormatStage::KnownTracks(track_vec);
                     }
                     FormatStage::KnownFormat(t) => match t.format_type() {
                         FormatType::Simultaneous => {
-                            self.format = FormatStage::Formatted(Format::Simultaneous(vec![track]))
+                            track_vec.push(track);
+
+                            self.format = FormatStage::Formatted(Format::Simultaneous(track_vec))
                         }
                         FormatType::SingleMultiChannel => {
                             self.format = FormatStage::Formatted(Format::SingleMultiChannel(track))
                         }
                         FormatType::SequentiallyIndependent => {
+                            track_vec.push(track);
                             self.format =
-                                FormatStage::Formatted(Format::SequentiallyIndependent(vec![track]))
+                                FormatStage::Formatted(Format::SequentiallyIndependent(track_vec))
                         }
                     },
                     FormatStage::KnownTracks(tracks) => tracks.push(track),
                     FormatStage::Formatted(format) => match format {
                         Format::SequentiallyIndependent(tracks) => tracks.push(track),
                         Format::SingleMultiChannel(_) => {
-                            return Err(ReaderError::invalid_data(
-                                "Track of format 0 has multiple tracks",
+                            return Err(ReaderErrorKind::chunk(
+                                ChunkError::MultipleTracksForSingleMultiChannel,
                             ));
                         }
                         Format::Simultaneous(tracks) => tracks.push(track),
@@ -104,17 +109,15 @@ impl<'a> MidiFileBuilder<'a> {
                 self.unknown_chunks.push(data);
                 Ok(())
             }
-            EOF => Err(ReaderError::oob("Expected end of file to be handled")),
+            EOF => Err(ReaderErrorKind::ReadError(ReadError::OutOfBounds)),
         }
     }
-    pub fn build(self) -> ReadResult<MidiFile<'a>> {
+    pub fn build(self) -> Result<MidiFile<'a>, FileError> {
         let FormatStage::Formatted(format) = self.format else {
-            return Err(ReaderError::invalid_data(
-                "Error: format doesn't line up with tracks",
-            ));
+            return Err(FileError::NoFormat);
         };
         let Some(timing) = self.timing else {
-            return Err(ReaderError::invalid_data("No timing provided"));
+            return Err(FileError::NoTiming);
         };
 
         Ok(MidiFile {

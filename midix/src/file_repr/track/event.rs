@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use core::fmt::{self, Debug};
 
 use crate::prelude::*;
 
@@ -21,7 +21,7 @@ pub struct TrackEvent<'a> {
 }
 
 impl Debug for TrackEvent<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "Track Event {{ delta_time: 0x{:02X}, event: {:?} }}",
@@ -57,8 +57,9 @@ impl<'a> TrackEvent<'a> {
                 let mut data = reader.read_varlen_slice()?;
                 if !data.is_empty() {
                     //discard the last 0xF7
-                    data.truncate(1);
+                    data.to_mut().pop();
                 }
+
                 TrackMessage::SystemExclusive(SystemExclusiveMessage::new(data))
             }
             0xFF => TrackMessage::Meta(MetaMessage::read(reader)?),
@@ -74,7 +75,7 @@ impl<'a> TrackEvent<'a> {
                     reader.state.decrement_offset(1);
                     *prev_status
                 } else {
-                    return Err(inv_data(reader, "Invalid MIDI event triggered"));
+                    return Err(inv_data(reader, TrackError::InvalidEvent(byte)));
                 };
                 let status = StatusByte::try_from(status).unwrap();
 

@@ -1,5 +1,6 @@
-use crate::prelude::*;
-use std::io::ErrorKind;
+use alloc::vec::Vec;
+
+use crate::{prelude::*, utils::check_u7};
 
 #[doc = r#"
 A System Common Message, used to relay data for ALL receivers, regardless of channel.
@@ -35,24 +36,24 @@ impl SystemCommonMessage<'_> {
         }
     }
 
-    /// Represents the message as an array of bytes for some live MIDI stream
-    pub fn to_bytes(&self) -> Vec<u8> {
-        use SystemCommonMessage::*;
-        match self {
-            SystemExclusive(b) => b.to_live_bytes(),
-            SongPositionPointer(spp) => {
-                vec![self.status(), spp.lsb().value(), spp.msb().value()]
-            }
-            SongSelect(v) => vec![self.status(), *v],
-            TuneRequest | Undefined(_) => vec![self.status()],
-        }
-    }
+    // /// Represents the message as an array of bytes for some live MIDI stream
+    // pub fn to_bytes(&self) -> Vec<u8> {
+    //     use SystemCommonMessage::*;
+    //     match self {
+    //         SystemExclusive(b) => b.to_live_bytes(),
+    //         SongPositionPointer(spp) => {
+    //             vec![self.status(), spp.lsb().value(), spp.msb().value()]
+    //         }
+    //         SongSelect(v) => vec![self.status(), *v],
+    //         TuneRequest | Undefined(_) => vec![self.status()],
+    //     }
+    // }
 }
 
 impl FromLiveEventBytes for SystemCommonMessage<'_> {
     const MIN_STATUS_BYTE: u8 = 0xF0;
     const MAX_STATUS_BYTE: u8 = 0xF7;
-    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, std::io::Error> {
+    fn from_status_and_data(status: u8, data: &[u8]) -> Result<Self, ParseError> {
         let ev = match status {
             0xF0 => {
                 //SystemExclusiveMessage
@@ -88,13 +89,10 @@ impl FromLiveEventBytes for SystemCommonMessage<'_> {
                 //Unknown system common event
                 SystemCommonMessage::Undefined(StatusByte::new(status)?)
             }
-            _ => {
+            b => {
                 //Invalid/Unknown/Unreachable event
                 //(Including F7 SystemExclusiveMessage End Marker)
-                return Err(io_error!(
-                    ErrorKind::InvalidInput,
-                    "Could not read System Common Message"
-                ));
+                return Err(ParseError::InvalidSystemCommonMessage(b));
             }
         };
         Ok(ev)
@@ -138,24 +136,24 @@ impl MtcQuarterFrameMessage {
         }
     }
 
-    /// Creates a new message from a byte. This type always checks for correctness.
-    pub fn new(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
-        use MtcQuarterFrameMessage::*;
-        Ok(match code {
-            0 => FramesLow,
-            1 => FramesHigh,
-            2 => SecondsLow,
-            3 => SecondsHigh,
-            4 => MinutesLow,
-            5 => MinutesHigh,
-            6 => HoursLow,
-            7 => HoursHigh,
-            _ => {
-                return Err(io_error!(
-                    ErrorKind::InvalidData,
-                    "Invalid MtcQuarterFrameMessage"
-                ));
-            }
-        })
-    }
+    // /// Creates a new message from a byte. This type always checks for correctness.
+    // pub fn new(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
+    //     use MtcQuarterFrameMessage::*;
+    //     Ok(match code {
+    //         0 => FramesLow,
+    //         1 => FramesHigh,
+    //         2 => SecondsLow,
+    //         3 => SecondsHigh,
+    //         4 => MinutesLow,
+    //         5 => MinutesHigh,
+    //         6 => HoursLow,
+    //         7 => HoursHigh,
+    //         _ => {
+    //             return Err(io_error!(
+    //                 ErrorKind::InvalidData,
+    //                 "Invalid MtcQuarterFrameMessage"
+    //             ));
+    //         }
+    //     })
+    // }
 }

@@ -1,4 +1,4 @@
-use crate::Bytes;
+use alloc::borrow::Cow;
 
 #[doc = r#"
 A System Exclusive messsage, found in
@@ -41,19 +41,20 @@ be interleaved with a System Exclusive.) This message also
 is used for extensions called Universal Exclusive Messages.
 ```
 "#]
+//TODO
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct SystemExclusiveMessage<'a>(Bytes<'a>);
+pub struct SystemExclusiveMessage<'a>(Cow<'a, [u8]>);
 
 impl<'a> SystemExclusiveMessage<'a> {
     /// Create a new owned system exclusive message
-    pub fn new<B: Into<Bytes<'a>>>(data: B) -> Self {
+    pub fn new<B: Into<Cow<'a, [u8]>>>(data: B) -> Self {
         Self(data.into())
     }
 
-    /// Returns a mutable reference to the underlying data.
-    pub fn data_mut(&mut self) -> &mut Vec<u8> {
-        self.0.to_mut()
-    }
+    // /// Returns a mutable reference to the underlying data.
+    // pub fn data_mut(&mut self) -> &mut Vec<u8> {
+    //     self.0.to_mut()
+    // }
 
     /// Get the length of the sysex data
     pub fn len(&self) -> usize {
@@ -65,14 +66,14 @@ impl<'a> SystemExclusiveMessage<'a> {
         self.0.is_empty()
     }
 
-    /// Interprets the sysex as a live-streamed set of bytes.
-    ///
-    /// Note that live bytes don't have an identifying length, unlike a file system common message.
-    pub fn to_live_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::with_capacity(self.len() + 2);
-        bytes.push(0xF0);
-        bytes.extend(self.0.iter());
-        bytes.push(0xF7);
-        bytes
-    }
+    // /// Interprets the sysex as a live-streamed set of bytes.
+    // ///
+    // /// Note that live bytes don't have an identifying length, unlike a file system common message.
+    // pub fn to_live_bytes(&self) -> Vec<u8> {
+    //     let mut bytes = Vec::with_capacity(self.len() + 2);
+    //     bytes.push(0xF0);
+    //     bytes.extend(self.0.iter());
+    //     bytes.push(0xF7);
+    //     bytes
+    // }
 }
