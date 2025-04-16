@@ -51,22 +51,13 @@ pub fn spawn_piano(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn((
             Node {
                 top: Val::Percent(25.),
-
+                right: Val::Px(5.),
                 ..Default::default()
             },
             InfoText,
             Text::default(),
         ))
         .with_children(|commands| {
-            commands.spawn((
-                TextSpan::new("Press ESC to disconnect\n"),
-                TextFont {
-                    font: font.clone(),
-                    font_size: 30.,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
             commands.spawn((
                 TextSpan::default(),
                 TextFont {
@@ -127,16 +118,6 @@ pub fn spawn_piano(mut commands: Commands, asset_server: Res<AssetServer>) {
                     .observe(on_mouse_up);
             })
         });
-}
-pub fn cleanup(
-    mut commands: Commands,
-    piano: Query<Entity, With<Piano>>,
-    text: Query<Entity, With<InfoText>>,
-) {
-    let piano = piano.single().unwrap();
-    commands.entity(piano).despawn();
-    let text = text.single().unwrap();
-    commands.entity(text).despawn();
 }
 
 fn bg_color(sharp: bool) -> Color {
