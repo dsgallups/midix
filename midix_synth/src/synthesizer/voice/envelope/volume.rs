@@ -2,7 +2,6 @@ use crate::{prelude::*, synthesizer::RegionPair, utils};
 
 use super::EnvelopeStage;
 
-#[non_exhaustive]
 pub struct VolumeEnvelope {
     sample_rate: i32,
 

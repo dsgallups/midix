@@ -4,7 +4,6 @@ use std::io::Read;
 
 use crate::prelude::*;
 
-#[non_exhaustive]
 pub(crate) struct InstrumentInfo {
     pub(crate) name: String,
     pub(crate) zone_start_index: i32,

@@ -1,4 +1,4 @@
-use super::{LoopMode, RegionPair};
+use super::RegionPair;
 
 use crate::prelude::*;
 
@@ -9,7 +9,7 @@ use crate::prelude::*;
 
 #[non_exhaustive]
 pub(crate) struct Oscillator {
-    loop_mode: i32,
+    loop_mode: LoopMode,
     end: i32,
     start_loop: i32,
     end_loop: i32,
@@ -44,7 +44,7 @@ impl Oscillator {
         let tune = coarse_tune as f32 + 0.01_f32 * fine_tune as f32;
         let pitch_change_scale = 0.01_f32 * scale_tuning as f32;
         let sample_rate_ratio = sample_rate as f32 / settings.sample_rate as f32;
-        let looping = loop_mode != LoopMode::NO_LOOP;
+        let looping = loop_mode != LoopMode::NoLoop;
         let position_fp = (start as i64) << Oscillator::FRAC_BITS;
 
         Self {
@@ -62,7 +62,7 @@ impl Oscillator {
     }
 
     pub(crate) fn release(&mut self) {
-        if self.loop_mode == LoopMode::LOOP_UNTIL_NOTE_OFF {
+        if self.loop_mode == LoopMode::LoopUntilNoteOff {
             self.looping = false;
         }
     }

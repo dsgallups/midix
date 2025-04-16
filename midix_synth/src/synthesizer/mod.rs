@@ -15,6 +15,9 @@ pub use error::*;
 mod array_math;
 use array_math::*;
 
+mod loop_mode;
+pub use loop_mode::*;
+
 mod channel;
 use channel::*;
 use voice::{RegionPair, Voice};
@@ -25,7 +28,6 @@ use std::collections::HashMap;
 use crate::{prelude::*, utils};
 
 /// An instance of the SoundFont synthesizer.
-#[non_exhaustive]
 pub struct Synthesizer {
     pub(crate) sound_font: SoundFont,
     pub(crate) sample_rate: i32,

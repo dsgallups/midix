@@ -176,7 +176,7 @@ impl<'a> RegionPair<'a> {
         self.gs(GeneratorType::FINE_TUNE as usize) + self.instrument.sample_pitch_correction
     }
 
-    pub fn get_sample_modes(&self) -> i32 {
+    pub fn get_sample_modes(&self) -> LoopMode {
         self.instrument.get_sample_modes()
     }
 

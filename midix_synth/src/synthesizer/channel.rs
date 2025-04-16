@@ -5,7 +5,6 @@ enum DataType {
     Nrpn,
 }
 
-#[non_exhaustive]
 pub(crate) struct Channel {
     pub(crate) is_percussion_channel: bool,
 

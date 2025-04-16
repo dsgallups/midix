@@ -29,7 +29,6 @@ impl SoundFont {
 }
 
 /// Possible errors that can be produced by [`CustomAssetLoader`]
-#[non_exhaustive]
 #[derive(Debug, Error)]
 enum SoundFontLoadError {
     /// An [IO](std::io) Error

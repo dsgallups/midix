@@ -4,7 +4,6 @@ use std::fmt::{self, Debug, Display, Formatter, Result, Write};
 
 /// Represents an error when loading a SoundFont.
 #[derive(Debug)]
-#[non_exhaustive]
 pub enum SoundFontError {
     IoError(io::Error),
     RiffChunkNotFound,

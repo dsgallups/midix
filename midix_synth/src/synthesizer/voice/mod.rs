@@ -11,14 +11,10 @@ use oscillator::*;
 mod bi_quad_filter;
 use bi_quad_filter::*;
 
-mod loop_mode;
-use loop_mode::*;
-
 use crate::{prelude::*, utils};
 
 use super::Channel;
 
-#[non_exhaustive]
 pub(crate) struct Voice {
     block_size: usize,
 

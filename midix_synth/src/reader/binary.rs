@@ -9,7 +9,6 @@ use std::str;
 use crate::soundfont::FourCC;
 
 #[allow(unused)]
-#[non_exhaustive]
 pub struct BinaryReader {}
 
 impl BinaryReader {

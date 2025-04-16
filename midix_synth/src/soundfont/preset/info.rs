@@ -4,7 +4,6 @@ use std::io::Read;
 
 use crate::prelude::*;
 
-#[non_exhaustive]
 pub(crate) struct PresetInfo {
     pub(crate) name: String,
     pub(crate) patch_number: i32,

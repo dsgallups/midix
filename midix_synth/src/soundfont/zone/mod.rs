@@ -4,7 +4,6 @@ pub(super) use info::ZoneInfo;
 
 use crate::prelude::*;
 
-#[non_exhaustive]
 pub(crate) struct Zone {
     pub(crate) generators: Vec<Generator>,
 }
