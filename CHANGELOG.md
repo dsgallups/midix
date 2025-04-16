@@ -1,3 +1,7 @@
+# 3.2.0
+## `bevy_midix` (April 15, 2025)
+- feat: WASM compatability with example!
+
 # 3.1.0 (April 13, 2025)
 ## `bevy_midix`
 - Added `iterate_voices` example
