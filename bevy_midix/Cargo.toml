@@ -12,6 +12,8 @@ keywords = ["gamedev", "bevy", "midi", "encoding", "control"]
 categories = ["game-development", "game-engines", "encoding"]
 exclude = ["assets/*"]
 
+[features]
+web = []
 
 [dependencies]
 midir = "0.10"

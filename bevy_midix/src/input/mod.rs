@@ -62,12 +62,12 @@ pub struct MidiInput {
 /// HOWEVER: Because the main scheduler does not run on worker threads, it is safe,
 /// for the wasm target, to implement Send (until this issue is resolved.)
 /// <https://github.com/bevyengine/bevy/issues/4078>
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown", feature = "web"))]
 unsafe impl Send for MidiInput {}
 /// SAFETY:
 ///
 /// See [`MidiInput`]'s Send implementation
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown", feature = "web"))]
 unsafe impl Sync for MidiInput {}
 
 impl MidiInput {
