@@ -43,9 +43,6 @@ pub use song_position_pointer::*;
 mod target;
 pub use target::*;
 
-// #[cfg(feature = "debug")]
-// pub mod debug;
-
 pub mod prelude {
     #![doc = r#"
         Common re-exports when working with `midix`

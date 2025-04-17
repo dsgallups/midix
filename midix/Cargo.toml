@@ -1,6 +1,6 @@
 [package]
 name = "midix"
-version = "3.1.2"
+version = "4.0.0-alpha"
 edition = "2024"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 description = "MIDI structures designed for humans"

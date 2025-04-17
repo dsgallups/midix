@@ -39,6 +39,7 @@ pub enum MidiMessageBytes {
 }
 
 impl MidiMessageBytes {
+    /// Writes bytes into a buffer
     pub fn write_into(&mut self, buf: &mut [u8]) -> usize {
         use MidiMessageBytes::*;
         match self {
