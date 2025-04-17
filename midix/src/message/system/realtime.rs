@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use std::io::ErrorKind;
 
 #[doc = r#"
 One-byte messages that only occur in live MIDI events.
@@ -49,9 +48,9 @@ impl SystemRealTimeMessage {
     }
 
     /// Interpret a byte as a [`SystemRealTimeMessage`]
-    pub fn from_byte(rep: u8) -> Result<Self, std::io::Error> {
+    pub fn from_byte(rep: u8) -> Self {
         use SystemRealTimeMessage::*;
-        Ok(match rep {
+        match rep {
             0xF8 => TimingClock,
             0xFA => Start,
             0xFB => Continue,
@@ -62,7 +61,7 @@ impl SystemRealTimeMessage {
                 //Unknown system realtime event
                 Undefined(rep)
             }
-        })
+        }
     }
 }
 
@@ -71,13 +70,11 @@ impl FromLiveEventBytes for SystemRealTimeMessage {
     const MAX_STATUS_BYTE: u8 = 0xFF;
 
     /// Create a system realtime event from its id byte.
-    fn from_status_and_data(status: u8, bytes: &[u8]) -> Result<Self, std::io::Error> {
+    fn from_status_and_data(status: u8, bytes: &[u8]) -> Result<Self, ParseError> {
         if bytes.is_empty() {
-            return Err(io_error!(
-                ErrorKind::InvalidData,
-                "System real time messages do not have data bytes"
-            ));
+            Ok(Self::from_byte(status))
+        } else {
+            Err(ParseError::InvalidLength(1 + bytes.len()))
         }
-        Self::from_byte(status)
     }
 }

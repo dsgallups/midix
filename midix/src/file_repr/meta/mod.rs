@@ -3,6 +3,8 @@ Contains types that deal with file ['MetaMessage']s
 "#]
 
 mod tempo;
+
+use alloc::borrow::Cow;
 use num_enum::TryFromPrimitive;
 pub use tempo::*;
 mod time_signature;
@@ -12,14 +14,14 @@ pub use key_signature::*;
 mod text;
 pub use text::*;
 
-use crate::prelude::*;
+use crate::{prelude::*, reader::ReaderError};
 /// A "meta message", as defined by the SMF spec.
 /// These events carry metadata about the track, such as tempo, time signature, copyright, etc...
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum MetaMessage<'a> {
     /// For `Format::Sequential` MIDI file types, `TrackNumber` can be empty, and defaults to
     /// the track index.
-    TrackNumber(Bytes<'a>),
+    TrackNumber(Cow<'a, [u8]>),
     /// Arbitrary text associated to an instant.
     Text(BytesText<'a>),
     /// A copyright notice.
@@ -33,12 +35,12 @@ pub enum MetaMessage<'a> {
     /// Arbitrary marker text associated to an instant.
     Marker(BytesText<'a>),
     /// Arbitrary cue point text associated to an instant.
-    CuePoint(Bytes<'a>),
+    CuePoint(Cow<'a, [u8]>),
     /// Information about the name of the current program.
     ProgramName(BytesText<'a>),
     /// Name of the device that this file was intended to be played with.
     DeviceName(BytesText<'a>),
-    /// Number of the MIDI channel that this file was intended to be played with.
+    /// Number of the MIDI channels that this file was intended to be played with.
     MidiChannel(Channel),
     /// Number of the MIDI port that this file was intended to be played with.
     MidiPort(u8),
@@ -56,17 +58,17 @@ pub enum MetaMessage<'a> {
     SmpteOffset(&'a [u8]),
     /// In order of the MIDI specification, numerator, denominator, MIDI clocks per click, 32nd
     /// notes per quarter
-    TimeSignature(TimeSignature<'a>),
+    TimeSignature(TimeSignature),
     /// An event defining the key signature of the track
-    KeySignature(KeySignature<'a>),
+    KeySignature(KeySignature),
     /// Arbitrary data intended for the sequencer.
     /// This data is never sent to a device.
-    SequencerSpecific(Bytes<'a>),
+    SequencerSpecific(Cow<'a, [u8]>),
     /// An unknown or malformed meta-message.
     ///
     /// The first `u8` is the raw meta-message identifier byte.
     /// The slice is the actual payload of the meta-message.
-    Unknown(u8, Bytes<'a>),
+    Unknown(u8, Cow<'a, [u8]>),
 }
 impl<'a> MetaMessage<'a> {
     pub(crate) fn read<'slc, 'r, R>(reader: &'r mut Reader<R>) -> ReadResult<Self>
@@ -79,35 +81,31 @@ impl<'a> MetaMessage<'a> {
 
         Ok(match type_byte {
             0x00 => MetaMessage::TrackNumber(data),
-            0x01 => MetaMessage::Text(BytesText::new_from_bytes(data)?),
-            0x02 => MetaMessage::Copyright(BytesText::new_from_bytes(data)?),
-            0x03 => MetaMessage::TrackName(BytesText::new_from_bytes(data)?),
-            0x04 => MetaMessage::InstrumentName(BytesText::new_from_bytes(data)?),
-            0x05 => MetaMessage::Lyric(BytesText::new_from_bytes(data)?),
-            0x06 => MetaMessage::Marker(BytesText::new_from_bytes(data)?),
+            0x01 => MetaMessage::Text(BytesText::new_from_bytes(data)),
+            0x02 => MetaMessage::Copyright(BytesText::new_from_bytes(data)),
+            0x03 => MetaMessage::TrackName(BytesText::new_from_bytes(data)),
+            0x04 => MetaMessage::InstrumentName(BytesText::new_from_bytes(data)),
+            0x05 => MetaMessage::Lyric(BytesText::new_from_bytes(data)),
+            0x06 => MetaMessage::Marker(BytesText::new_from_bytes(data)),
             0x07 => MetaMessage::CuePoint(data),
-            0x08 => MetaMessage::ProgramName(BytesText::new_from_bytes(data)?),
-            0x09 => MetaMessage::DeviceName(BytesText::new_from_bytes(data)?),
+            0x08 => MetaMessage::ProgramName(BytesText::new_from_bytes(data)),
+            0x09 => MetaMessage::DeviceName(BytesText::new_from_bytes(data)),
             0x20 => {
                 if data.len() != 1 {
-                    return Err(inv_data(
-                        reader,
-                        format!(
-                            "Varlen is invalid for this channel (should be 1, is {}",
-                            data.len()
-                        ),
-                    ));
+                    return Err(inv_data(reader, ParseError::channel_count(data.len())));
                 }
                 //TODO: need to test thsi
                 let c = data.first().unwrap();
-                MetaMessage::MidiChannel(Channel::try_from_primitive(*c)?)
+                MetaMessage::MidiChannel(Channel::try_from_primitive(*c).map_err(|e| {
+                    ReaderError::parse_error(
+                        reader.buffer_position(),
+                        ParseError::InvalidChannel(e.number),
+                    )
+                })?)
             }
             0x21 => {
                 if data.len() != 1 {
-                    return Err(inv_data(
-                        reader,
-                        format!("Varlen is invalid for port (should be 1, is {}", data.len()),
-                    ));
+                    return Err(inv_data(reader, ParseError::port(data.len())));
                 }
                 let port = reader.read_next()?;
                 MetaMessage::MidiPort(port)
@@ -115,7 +113,7 @@ impl<'a> MetaMessage<'a> {
             0x2F => MetaMessage::EndOfTrack,
             0x51 => {
                 //FF 51 03 tttttt
-                MetaMessage::Tempo(Tempo::new_from_bytes(data))
+                MetaMessage::Tempo(Tempo::new_from_bytes(&data))
             }
             0x54 => {
                 //TODO
@@ -125,27 +123,15 @@ impl<'a> MetaMessage<'a> {
             0x58 if data.len() >= 4 => {
                 //FF 58 04 nn dd cc bb
                 if data.len() != 4 {
-                    return Err(inv_data(
-                        reader,
-                        format!(
-                            "Varlen is invalid for time signature (should be 4, is {}",
-                            data.len()
-                        ),
-                    ));
+                    return Err(inv_data(reader, ParseError::time_sig(data.len())));
                 }
-                MetaMessage::TimeSignature(TimeSignature::new_from_bytes(data.try_into().unwrap()))
+                MetaMessage::TimeSignature(TimeSignature::new_from_bytes(*data.as_array().unwrap()))
             }
             0x59 => {
                 if data.len() != 2 {
-                    return Err(inv_data(
-                        reader,
-                        format!(
-                            "Varlen is invalid for key signature (should be 2, is {}",
-                            data.len()
-                        ),
-                    ));
+                    return Err(inv_data(reader, ParseError::key_sig(data.len())));
                 }
-                MetaMessage::KeySignature(KeySignature::new_from_bytes(data.try_into().unwrap()))
+                MetaMessage::KeySignature(KeySignature::new_from_bytes(*data.as_array().unwrap()))
             }
             0x7F => MetaMessage::SequencerSpecific(data),
             _ => MetaMessage::Unknown(type_byte, data),

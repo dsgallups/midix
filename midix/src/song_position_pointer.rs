@@ -1,6 +1,4 @@
-use std::io;
-
-use crate::DataByte;
+use crate::{DataByte, ParseError};
 
 #[doc = r#"
  This is an internal 14 bit register that holds the number of MIDI beats (1 beat= six MIDI clocks) since the start of the song.
@@ -22,13 +20,12 @@ pub struct SongPositionPointer {
 
 impl SongPositionPointer {
     /// Create a new Song PositionPointer from lsb and msb bytes
-    pub fn new<B, E>(lsb: B, msb: B) -> Result<Self, std::io::Error>
+    pub fn new<B>(lsb: B, msb: B) -> Result<Self, ParseError>
     where
-        B: TryInto<DataByte, Error = E>,
-        E: Into<io::Error>,
+        B: TryInto<DataByte, Error = ParseError>,
     {
-        let lsb = lsb.try_into().map_err(Into::into)?;
-        let msb = msb.try_into().map_err(Into::into)?;
+        let lsb = lsb.try_into()?;
+        let msb = msb.try_into()?;
         Ok(Self { lsb, msb })
     }
 

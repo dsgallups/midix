@@ -9,12 +9,11 @@ impl Velocity {
     /// Creates a new velocity from the provided byte
     ///
     /// Checks for correctness (leading 0 bit)
-    pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
+    pub fn new<B>(rep: B) -> Result<Self, ParseError>
     where
-        B: TryInto<DataByte, Error = E>,
-        E: Into<io::Error>,
+        B: TryInto<DataByte, Error = ParseError>,
     {
-        rep.try_into().map(Self).map_err(Into::into)
+        rep.try_into().map(Self)
     }
 
     /// Returns a max velocity

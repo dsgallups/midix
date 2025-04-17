@@ -1,21 +1,24 @@
 #![warn(missing_docs)]
 #![cfg_attr(not(feature = "debug"), warn(clippy::print_stdout))]
 #![doc = include_str!("../README.md")]
+#![no_std]
 
-use std::io::{self};
+extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
-#[macro_use]
-mod error;
-
-pub mod reader;
 pub(crate) mod utils;
+
+mod error;
+pub use error::*;
 
 pub mod channel;
 
 pub mod events;
+pub mod file;
 pub mod file_repr;
 
-pub mod file;
+pub mod reader;
 
 mod pitch_bend;
 pub use pitch_bend::*;
@@ -43,9 +46,6 @@ pub use song_position_pointer::*;
 mod target;
 pub use target::*;
 
-#[cfg(feature = "debug")]
-pub mod debug;
-
 pub mod prelude {
     #![doc = r#"
         Common re-exports when working with `midix`
@@ -62,9 +62,9 @@ pub mod prelude {
     pub use crate::reader::{MidiSource, ReadResult, Reader};
 
     #[allow(unused_imports)]
-    pub(crate) use crate::reader::{inv_data, inv_input, unexp_eof};
+    pub(crate) use crate::reader::inv_data;
 
     pub use core::fmt::Display;
 
-    pub(crate) use crate::utils::*;
+    //pub(crate) use crate::utils::*;
 }

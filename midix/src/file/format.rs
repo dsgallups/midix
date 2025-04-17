@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use super::track::Track;
 /*
 TODO: Use this for the MIDI file type.

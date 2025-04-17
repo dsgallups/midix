@@ -1,10 +1,7 @@
 use core::fmt;
-use std::{
-    io,
-    ops::{Add, AddAssign, Sub, SubAssign},
-};
+use core::ops::{Add, AddAssign, Sub, SubAssign};
 
-use crate::DataByte;
+use crate::{DataByte, ParseError};
 
 #[doc = r#"
 Identifies a key for some message.
@@ -35,17 +32,16 @@ impl Key {
     /// Create a new key.
     ///
     /// Checks for correctness (leading 0 bit).
-    pub fn from_databyte<B, E>(rep: B) -> Result<Self, std::io::Error>
+    pub fn from_databyte<B>(rep: B) -> Result<Self, ParseError>
     where
-        B: TryInto<DataByte, Error = E>,
-        E: Into<io::Error>,
+        B: TryInto<DataByte, Error = ParseError>,
     {
-        rep.try_into().map(Self).map_err(Into::into)
+        rep.try_into().map(Self)
     }
 
     /// Create all possible keys (128)
-    pub fn all() -> Vec<Self> {
-        (0..128).map(|v| Key::from_databyte(v).unwrap()).collect()
+    pub fn all() -> [Key; 128] {
+        core::array::from_fn(|i| Key(DataByte(i as u8)))
     }
 
     /// Create a key from a given note and octave
@@ -240,35 +236,35 @@ impl Note {
         use Note::*;
         [C, CSharp, D, DSharp, E, F, FSharp, G, GSharp, A, ASharp, B]
     }
-    /// Create a new note from a byte with a leading 0
-    ///
-    /// # Errors
-    /// if the byte is > 127
-    pub fn new<K, E>(key: K) -> Result<Self, io::Error>
-    where
-        K: TryInto<DataByte, Error = E>,
-        E: Into<io::Error>,
-    {
-        use Note::*;
-        let key = key.try_into().map_err(Into::into)?;
-        let note = key.value() % 12;
+    // /// Create a new note from a byte with a leading 0
+    // ///
+    // /// # Errors
+    // /// if the byte is > 127
+    // pub fn new<K, E>(key: K) -> Result<Self, io::Error>
+    // where
+    //     K: TryInto<DataByte, Error = E>,
+    //     E: Into<io::Error>,
+    // {
+    //     use Note::*;
+    //     let key = key.try_into().map_err(Into::into)?;
+    //     let note = key.value() % 12;
 
-        Ok(match note {
-            0 => C,
-            1 => CSharp,
-            2 => D,
-            3 => DSharp,
-            4 => E,
-            5 => F,
-            6 => FSharp,
-            7 => G,
-            8 => GSharp,
-            9 => A,
-            10 => ASharp,
-            11 => B,
-            _ => unreachable!(),
-        })
-    }
+    //     Ok(match note {
+    //         0 => C,
+    //         1 => CSharp,
+    //         2 => D,
+    //         3 => DSharp,
+    //         4 => E,
+    //         5 => F,
+    //         6 => FSharp,
+    //         7 => G,
+    //         8 => GSharp,
+    //         9 => A,
+    //         10 => ASharp,
+    //         11 => B,
+    //         _ => unreachable!(),
+    //     })
+    // }
 
     /// Returns true if the note type is sharp. Same as `is_flat`
     ///

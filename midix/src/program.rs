@@ -11,12 +11,11 @@ impl Program {
     /// Creates a new program command.
     ///
     /// Does not check for correctness.
-    pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
+    pub fn new<B>(rep: B) -> Result<Self, ParseError>
     where
-        B: TryInto<DataByte, Error = E>,
-        E: Into<io::Error>,
+        B: TryInto<DataByte, Error = ParseError>,
     {
-        rep.try_into().map(Self).map_err(Into::into)
+        rep.try_into().map(Self)
     }
 
     /// Get a reference to the underlying byte for the program.

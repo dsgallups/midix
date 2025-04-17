@@ -1,6 +1,6 @@
 [package]
 name = "bevy_midix"
-version = "3.2.2"
+version = "4.0.0-alpha"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -18,8 +18,8 @@ web = []
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.15"
-midix = { version = "3.1.2", features = ["bevy"], path = "../midix" }
-midix_synth = { version = "0.0.4", path = "../midix_synth" }
+midix = { version = "4.0.0-alpha", features = ["bevy"], path = "../midix" }
+midix_synth = { version = "0.1.0-alpha", path = "../midix_synth" }
 thiserror = "2.0"
 tinyaudio = "1.1.0"
 itertools = "0.14.0"
@@ -30,10 +30,10 @@ default-features = false
 features = [
     "multi_threaded",
     "bevy_asset",
-    "std",
     "async_executor",
     "bevy_log",
     "bevy_state",
+    "std",
 ]
 
 [dev-dependencies.bevy]

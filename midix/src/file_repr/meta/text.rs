@@ -1,43 +1,42 @@
-use core::fmt;
-use std::{
-    borrow::Cow,
-    io::{self},
-};
+use core::fmt::{self, Debug};
 
-use super::Bytes;
+use alloc::{borrow::Cow, string::String};
+
+use crate::ParseError;
 
 /// Some text, usually identified by a ['MetaMessage'](super::MetaMessage)s
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct BytesText<'a> {
-    inner: Cow<'a, str>,
+    inner: Cow<'a, [u8]>,
 }
 
 impl<'a> BytesText<'a> {
     /// Interpret a byte slice as some text.
-    pub fn new_from_bytes<'b: 'a>(bytes: Bytes<'b>) -> Result<Self, io::Error> {
-        Ok(Self {
-            inner: bytes.try_into()?,
-        })
+    pub fn new_from_bytes<B: Into<Cow<'a, [u8]>>>(bytes: B) -> Self {
+        Self {
+            inner: bytes.into(),
+        }
     }
 
     /// Get a mutable reference to the underlying string
-    pub fn to_mut(&mut self) -> &mut String {
-        self.inner.to_mut()
+    pub fn to_mut(&mut self) -> Result<&mut str, ParseError> {
+        let self_mut = self.inner.to_mut();
+        str::from_utf8_mut(self_mut).map_err(|_| ParseError::InvalidUtf8)
     }
 
     /// Get a string reference
-    pub fn as_str(&self) -> &str {
-        &self.inner
+    pub fn as_str(&self) -> Result<&str, ParseError> {
+        str::from_utf8(&self.inner).map_err(|_| ParseError::InvalidUtf8)
     }
 
     /// Get a (possibly) cloned string
-    pub fn into_string(self) -> String {
-        self.inner.into_owned()
+    pub fn into_string(self) -> Result<String, ParseError> {
+        String::from_utf8(self.inner.into_owned()).map_err(|_| ParseError::InvalidUtf8)
     }
 }
 
 impl fmt::Display for BytesText<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.inner.fmt(f)
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.as_str().fmt(f)
     }
 }

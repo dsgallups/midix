@@ -1,5 +1,3 @@
-use crate::BytesConst;
-
 #[doc = r#"
 
     FF 00 02 Sequence Number
@@ -16,27 +14,27 @@ use crate::BytesConst;
     sequence number.
 "#]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum RawFormat<'a> {
+pub enum RawFormat {
     /// Format 0
     SingleMultiChannel,
     /// Format 1
-    Simultaneous(BytesConst<'a, 2>),
+    Simultaneous([u8; 2]),
     /// Format 2
-    SequentiallyIndependent(BytesConst<'a, 2>),
+    SequentiallyIndependent([u8; 2]),
 }
-impl<'a> RawFormat<'a> {
+impl RawFormat {
     /// Create a [`RawFormat::SingleMultiChannel`]
     pub const fn single_multichannel() -> Self {
         Self::SingleMultiChannel
     }
 
     /// Create a [`Format::Simultaneous`]
-    pub(crate) const fn simultaneous_from_byte_slice(bytes: BytesConst<'a, 2>) -> Self {
+    pub(crate) const fn simultaneous_from_byte_slice(bytes: [u8; 2]) -> Self {
         Self::Simultaneous(bytes)
     }
 
     /// Create a [`Format::SequentiallyIndependent`]
-    pub(crate) const fn sequentially_independent_from_byte_slice(bytes: BytesConst<'a, 2>) -> Self {
+    pub(crate) const fn sequentially_independent_from_byte_slice(bytes: [u8; 2]) -> Self {
         Self::SequentiallyIndependent(bytes)
     }
 
@@ -47,7 +45,7 @@ impl<'a> RawFormat<'a> {
         use RawFormat::*;
         match &self {
             SingleMultiChannel => 1,
-            Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(**num),
+            Simultaneous(num) | SequentiallyIndependent(num) => u16::from_be_bytes(*num),
         }
     }
 

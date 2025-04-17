@@ -1,5 +1,3 @@
-use std::io::Read;
-
 use bevy::prelude::*;
 use midir::{MidiOutputPort, SendError};
 use midix::MidiMessageBytes;
@@ -23,8 +21,7 @@ impl MidiOutputConnection {
     pub fn send(&mut self, message: impl Into<MidiMessageBytes>) -> Result<(), SendError> {
         let mut buf = [0; 3];
         let mut message: MidiMessageBytes = message.into();
-        //TODO: don't unwrap
-        let wrote = message.read(&mut buf).unwrap();
+        let wrote = message.write_into(&mut buf);
         self.conn.send(&buf[..wrote])?;
         Ok(())
     }
