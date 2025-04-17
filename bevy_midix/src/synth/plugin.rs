@@ -2,12 +2,13 @@ use std::sync::Mutex;
 
 use bevy::prelude::*;
 use itertools::Itertools;
+use midix::prelude::ChannelVoiceMessage;
 use midix_synth::prelude::{Synthesizer, SynthesizerSettings};
 use tinyaudio::run_output_device;
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
-use super::{Synth, SynthCommand, SynthState};
+use super::{Synth, SynthState, sink};
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
@@ -60,7 +61,8 @@ impl Plugin for SynthPlugin {
                     sync_states.run_if(state_out_of_sync),
                 )
                     .chain(),
-            );
+            )
+            .add_systems(OnEnter(SynthStatus::Loaded), sink::setup);
     }
 }
 
@@ -98,7 +100,8 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
         return;
     };
 
-    let (sender, receiver) = crossbeam_channel::unbounded::<SynthCommand>();
+    // the synth need not know about anything but a message to play instantaneously.
+    let (sender, receiver) = crossbeam_channel::unbounded::<ChannelVoiceMessage>();
     let synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
 
     let mut synthesizer = Synthesizer::new(sound_font.file.clone(), &synth_settings).unwrap();
@@ -109,9 +112,9 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
     let _device = run_output_device(synth.params, {
         move |data| {
             for command in receiver.try_iter() {
-                let data1 = command.event.data_1_byte();
-                let data2 = command.event.data_2_byte().unwrap_or(0);
-                synthesizer.process_midi_message(command.event.status(), data1, data2);
+                let data1 = command.data_1_byte();
+                let data2 = command.data_2_byte().unwrap_or(0);
+                synthesizer.process_midi_message(command.status(), data1, data2);
             }
             synthesizer.render(&mut left[..], &mut right[..]);
             for (i, value) in left.iter().interleave(right.iter()).enumerate() {

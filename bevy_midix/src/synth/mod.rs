@@ -12,21 +12,13 @@ use tinyaudio::{OutputDevice, OutputDeviceParameters};
 mod plugin;
 pub use plugin::*;
 
-/// Send a command to the synth to play a note
-struct SynthCommand {
-    event: ChannelVoiceMessage,
-}
-impl SynthCommand {
-    /// Create a command to play a note to the synth
-    pub fn new(event: ChannelVoiceMessage) -> Self {
-        Self { event }
-    }
-}
+mod sink;
+pub use sink::*;
 
 enum SynthState {
     NotLoaded,
     LoadHandle { sound_font: Handle<SoundFont> },
-    Loaded(Sender<SynthCommand>),
+    Loaded(Sender<ChannelVoiceMessage>),
 }
 
 /// Plays audio commands with the provided soundfont
@@ -72,7 +64,7 @@ impl Synth {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return;
         };
-        channel.send(SynthCommand::new(event)).unwrap();
+        channel.send(event).unwrap();
     }
     /// Returns true if the sound font has been loaded!
     pub fn is_ready(&self) -> bool {
