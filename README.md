@@ -3,6 +3,8 @@
 
 A suite of tools used to read, modify, and manage MIDI-related systems
 
+### NOTE: The main branch is in development. Stable versions are on their own branches.
+
 ## Ecosystem
 
 ### `midix`
