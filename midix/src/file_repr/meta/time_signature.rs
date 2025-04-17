@@ -42,6 +42,7 @@ impl TimeSignature {
     /// let x = TimeSignature::new_from_parts(6, 8, 24, 8);
     /// # assert_eq!(x.den(), 3);
     /// ```
+    #[cfg(feature = "std")]
     pub fn new_from_parts(
         numerator: u8,
         denominator: u8,

@@ -2,7 +2,10 @@
 #![cfg_attr(not(feature = "debug"), warn(clippy::print_stdout))]
 #![doc = include_str!("../README.md")]
 #![no_std]
+
 extern crate alloc;
+#[cfg(feature = "std")]
+extern crate std;
 
 pub(crate) mod utils;
 

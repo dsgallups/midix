@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 use crate::{prelude::*, reader::ReaderError};
 
 /// Identifies a modification to the controller
@@ -35,9 +33,9 @@ pub enum Controller {
     /// 0x5D
     ChorusSend(DataByte),
     /// 0x63
-    NRPNCoarse,
+    NRPNCoarse(DataByte),
     /// 0x62
-    NRPNFine,
+    NRPNFine(DataByte),
     /// 0x65
     SetNRPNCoarse(DataByte),
     /// 0x64
@@ -45,16 +43,16 @@ pub enum Controller {
     /// 0x78
     ///
     /// All sound should immediately turn off
-    MuteImmediately,
+    MuteImmediately(DataByte),
 
     /// 0x79
-    ResetAllControllers,
+    ResetAllControllers(DataByte),
 
     /// 0x7B
     ///
     /// All sound should turn off);
-    /// vec.push(bt not immediately.
-    Mute,
+    /// [bt not immediatel]
+    Mute(DataByte),
 
     /// A value not listed in this enum.
     /// it's value is in byte_1, and byte_2 *may* have valuable data.
@@ -78,127 +76,64 @@ impl Controller {
     {
         use Controller::*;
         let controller_byte = reader.read_next()?;
+        let data_byte = reader.read_next_as_databyte()?;
         let controller = match controller_byte {
-            0x00 => BankSelection(reader.read_next_as_databyte()?),
-            0x01 => ModulationCoarse(reader.read_next_as_databyte()?),
-            0x21 => ModulationFine(reader.read_next_as_databyte()?),
-            0x06 => DataEntryCoarse(reader.read_next_as_databyte()?),
-            0x26 => DataEntryFine(reader.read_next_as_databyte()?),
-            0x07 => VolumeCoarse(reader.read_next_as_databyte()?),
-            0x27 => VolumeFine(reader.read_next_as_databyte()?),
-            0x0A => PanCoarse(reader.read_next_as_databyte()?),
-            0x2A => PanFine(reader.read_next_as_databyte()?),
-            0x0B => ExpressionCoarse(reader.read_next_as_databyte()?),
-            0x2B => ExpressionFine(reader.read_next_as_databyte()?),
-            0x40 => HoldPedal(reader.read_next_as_databyte()?),
-            0x5B => ReverbSend(reader.read_next_as_databyte()?),
-            0x5D => ChorusSend(reader.read_next_as_databyte()?),
-            0x63 => NRPNCoarse,
-            0x62 => NRPNFine,
-            0x65 => SetNRPNCoarse(reader.read_next_as_databyte()?),
-            0x64 => SetNRPNFine(reader.read_next_as_databyte()?),
-            0x78 => MuteImmediately,
-            0x79 => ResetAllControllers,
-            0x7B => Mute,
+            0x00 => BankSelection(data_byte),
+            0x01 => ModulationCoarse(data_byte),
+            0x21 => ModulationFine(data_byte),
+            0x06 => DataEntryCoarse(data_byte),
+            0x26 => DataEntryFine(data_byte),
+            0x07 => VolumeCoarse(data_byte),
+            0x27 => VolumeFine(data_byte),
+            0x0A => PanCoarse(data_byte),
+            0x2A => PanFine(data_byte),
+            0x0B => ExpressionCoarse(data_byte),
+            0x2B => ExpressionFine(data_byte),
+            0x40 => HoldPedal(data_byte),
+            0x5B => ReverbSend(data_byte),
+            0x5D => ChorusSend(data_byte),
+            0x63 => NRPNCoarse(data_byte),
+            0x62 => NRPNFine(data_byte),
+            0x65 => SetNRPNCoarse(data_byte),
+            0x64 => SetNRPNFine(data_byte),
+            0x78 => MuteImmediately(data_byte),
+            0x79 => ResetAllControllers(data_byte),
+            0x7B => Mute(data_byte),
             other => Other {
                 byte_1: DataByte::new(other)
                     .map_err(|v| ReaderError::parse_error(reader.buffer_position(), v))?,
-                byte_2: reader.read_next_as_databyte()?,
+                byte_2: data_byte,
             },
         };
         Ok(controller)
     }
     /// Converts self to a vector of bytes.
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self) -> [u8; 2] {
         use Controller::*;
-        let mut vec = Vec::new();
         match self {
-            BankSelection(byte) => {
-                let p = [1].to_vec();
-                vec.push(0x00);
-                vec.push(byte.value());
-            }
-            ModulationCoarse(b) => {
-                vec.push(0x01);
-                vec.push(b.value());
-            }
-            ModulationFine(b) => {
-                vec.push(0x21);
-                vec.push(b.value());
-            }
-            DataEntryCoarse(b) => {
-                vec.push(0x06);
-                vec.push(b.value());
-            }
-            DataEntryFine(b) => {
-                vec.push(0x26);
-                vec.push(b.value());
-            }
-            VolumeCoarse(b) => {
-                vec.push(0x07);
-                vec.push(b.value());
-            }
-            VolumeFine(b) => {
-                vec.push(0x27);
-                vec.push(b.value());
-            }
-            PanCoarse(b) => {
-                vec.push(0x0A);
-                vec.push(b.value());
-            }
-            PanFine(b) => {
-                vec.push(0x2A);
-                vec.push(b.value());
-            }
-            ExpressionCoarse(b) => {
-                vec.push(0x0B);
-                vec.push(b.value());
-            }
-            ExpressionFine(b) => {
-                vec.push(0x2B);
-                vec.push(b.value());
-            }
-            HoldPedal(b) => {
-                vec.push(0x40);
-                vec.push(b.value());
-            }
-            ReverbSend(b) => {
-                vec.push(0x5B);
-                vec.push(b.value());
-            }
-            ChorusSend(b) => {
-                vec.push(0x5D);
-                vec.push(b.value());
-            }
-            NRPNCoarse => {
-                vec.push(0x63);
-            }
-            NRPNFine => {
-                vec.push(0x62);
-            }
-            SetNRPNCoarse(b) => {
-                vec.push(0x65);
-                vec.push(b.value());
-            }
-            SetNRPNFine(b) => {
-                vec.push(0x64);
-                vec.push(b.value());
-            }
-            MuteImmediately => {
-                vec.push(0x78);
-            }
-            ResetAllControllers => {
-                vec.push(0x79);
-            }
-            Mute => {
-                vec.push(0x7B);
-            }
-            Other { byte_1, byte_2 } => {
-                vec.push(byte_1.value());
-                vec.push(byte_2.value());
-            }
+            BankSelection(byte) => [0x00, byte.value()],
+            ModulationCoarse(b) => [0x01, b.value()],
+            ModulationFine(b) => [0x21, b.value()],
+            DataEntryCoarse(b) => [0x06, b.value()],
+            DataEntryFine(b) => [0x26, b.value()],
+            VolumeCoarse(b) => [0x07, b.value()],
+            VolumeFine(b) => [0x27, b.value()],
+            PanCoarse(b) => [0x0A, b.value()],
+            PanFine(b) => [0x2A, b.value()],
+            ExpressionCoarse(b) => [0x0B, b.value()],
+            ExpressionFine(b) => [0x2B, b.value()],
+            HoldPedal(b) => [0x40, b.value()],
+            ReverbSend(b) => [0x5B, b.value()],
+            ChorusSend(b) => [0x5D, b.value()],
+            NRPNCoarse(b) => [0x63, b.value()],
+            NRPNFine(b) => [0x62, b.value()],
+            SetNRPNCoarse(b) => [0x65, b.value()],
+            SetNRPNFine(b) => [0x64, b.value()],
+            MuteImmediately(b) => [0x78, b.value()],
+            ResetAllControllers(b) => [0x79, b.value()],
+            Mute(b) => [0x7B, b.value()],
+            Other { byte_1, byte_2 } => [byte_1.value(), byte_2.value()],
         }
-        vec
     }
 }
 

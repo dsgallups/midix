@@ -6,7 +6,6 @@ fn loop_through(bytes: &[u8]) {
     loop {
         match reader.read_event() {
             Ok(e) => {
-                println!("FileEvent: {:?}", e);
                 if e == FileEvent::EOF {
                     break;
                 }
