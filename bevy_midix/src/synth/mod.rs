@@ -17,8 +17,14 @@ pub use sink::*;
 
 enum SynthState {
     NotLoaded,
-    LoadHandle { sound_font: Handle<SoundFont> },
-    Loaded(Sender<ChannelVoiceMessage>),
+    LoadHandle {
+        sound_font: Handle<SoundFont>,
+    },
+    Loaded {
+        synth_channel: Sender<ChannelVoiceMessage>,
+        /// the sink channel will process delayed events and interface with the synth channel directly
+        sink_channel: Sender<SinkCommand>,
+    },
 }
 
 /// Plays audio commands with the provided soundfont
@@ -60,15 +66,20 @@ impl Synth {
 
     /// Send an event for the synth to play instantly
     pub fn handle_event(&self, event: ChannelVoiceMessage) {
-        let SynthState::Loaded(channel) = &self.synthesizer else {
+        let SynthState::Loaded { synth_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return;
         };
-        channel.send(event).unwrap();
+        synth_channel.send(event).unwrap();
     }
+
+    pub fn push_audio(song: &impl MidiCommandSource) {
+        todo!()
+    }
+
     /// Returns true if the sound font has been loaded!
     pub fn is_ready(&self) -> bool {
-        matches!(self.synthesizer, SynthState::Loaded(_))
+        matches!(self.synthesizer, SynthState::Loaded { .. })
     }
 
     /// Provide a handle to the soundfont file

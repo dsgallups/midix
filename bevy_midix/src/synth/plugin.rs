@@ -8,7 +8,7 @@ use tinyaudio::run_output_device;
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
-use super::{MidiSink, SinkCommand, SinkTask, Synth, SynthState, sink};
+use super::{SinkCommand, SinkTask, Synth, SynthState};
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
@@ -61,8 +61,7 @@ impl Plugin for SynthPlugin {
                     sync_states.run_if(state_out_of_sync),
                 )
                     .chain(),
-            )
-            .add_systems(OnEnter(SynthStatus::Loaded), setup_sink);
+            );
     }
 }
 
@@ -78,7 +77,7 @@ impl SynthState {
         match self {
             Self::NotLoaded => SynthStatus::NotLoaded,
             Self::LoadHandle { .. } => SynthStatus::ShouldLoad,
-            Self::Loaded(..) => SynthStatus::Loaded,
+            Self::Loaded { .. } => SynthStatus::Loaded,
         }
     }
 }
@@ -101,7 +100,7 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
     };
 
     // the synth need not know about anything but a message to play instantaneously.
-    let (sender, receiver) = crossbeam_channel::unbounded::<ChannelVoiceMessage>();
+    let (synth_sender, synth_receiver) = crossbeam_channel::unbounded::<ChannelVoiceMessage>();
     let synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
 
     let mut synthesizer = Synthesizer::new(sound_font.file.clone(), &synth_settings).unwrap();
@@ -111,7 +110,7 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
 
     let _device = run_output_device(synth.params, {
         move |data| {
-            for command in receiver.try_iter() {
+            for command in synth_receiver.try_iter() {
                 let data1 = command.data_1_byte();
                 let data2 = command.data_2_byte().unwrap_or(0);
                 synthesizer.process_midi_message(command.status(), data1, data2);
@@ -123,7 +122,18 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
         }
     })
     .unwrap();
-    synth.synthesizer = SynthState::Loaded(sender);
+
+    let (sink_sender, sink_receiver) = crossbeam_channel::unbounded();
+
+    let thread_pool = IoTaskPool::get();
+    thread_pool
+        .spawn(SinkTask::new(synth_sender.clone(), sink_receiver))
+        .detach();
+
+    synth.synthesizer = SynthState::Loaded {
+        synth_channel: synth_sender,
+        sink_channel: sink_sender,
+    };
     synth._device = Some(Mutex::new(_device));
 }
 
@@ -133,23 +143,4 @@ fn state_out_of_sync(synth: Res<Synth>, current_state: Res<State<SynthStatus>>) 
 
 fn sync_states(synth: Res<Synth>, mut next_state: ResMut<NextState<SynthStatus>>) {
     next_state.set(synth.status_should_be());
-}
-///Run once
-pub(super) fn setup_sink(mut commands: Commands, synth: Res<Synth>, already_ran: Local<bool>) {
-    if *already_ran {
-        return;
-    }
-    let (sender, receiver) = crossbeam_channel::unbounded::<SinkCommand>();
-
-    let SynthState::Loaded(synth_channel) = &synth.synthesizer else {
-        return;
-    };
-    let synth_channel = synth_channel.clone();
-
-    let thread_pool = IoTaskPool::get();
-    thread_pool
-        .spawn(SinkTask::new(synth_channel, receiver))
-        .detach();
-
-    commands.insert_resource(MidiSink::new(sender));
 }
