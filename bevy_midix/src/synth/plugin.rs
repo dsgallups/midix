@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use bevy::prelude::*;
+use bevy::{prelude::*, tasks::IoTaskPool};
 use itertools::Itertools;
 use midix::prelude::ChannelVoiceMessage;
 use midix_synth::prelude::{Synthesizer, SynthesizerSettings};
@@ -8,7 +8,7 @@ use tinyaudio::run_output_device;
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
-use super::{Synth, SynthState, sink};
+use super::{MidiSink, SinkCommand, SinkTask, Synth, SynthState, sink};
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
@@ -62,7 +62,7 @@ impl Plugin for SynthPlugin {
                 )
                     .chain(),
             )
-            .add_systems(OnEnter(SynthStatus::Loaded), sink::setup);
+            .add_systems(OnEnter(SynthStatus::Loaded), setup_sink);
     }
 }
 
@@ -133,4 +133,23 @@ fn state_out_of_sync(synth: Res<Synth>, current_state: Res<State<SynthStatus>>) 
 
 fn sync_states(synth: Res<Synth>, mut next_state: ResMut<NextState<SynthStatus>>) {
     next_state.set(synth.status_should_be());
+}
+///Run once
+pub(super) fn setup_sink(mut commands: Commands, synth: Res<Synth>, already_ran: Local<bool>) {
+    if *already_ran {
+        return;
+    }
+    let (sender, receiver) = crossbeam_channel::unbounded::<SinkCommand>();
+
+    let SynthState::Loaded(synth_channel) = &synth.synthesizer else {
+        return;
+    };
+    let synth_channel = synth_channel.clone();
+
+    let thread_pool = IoTaskPool::get();
+    thread_pool
+        .spawn(SinkTask::new(synth_channel, receiver))
+        .detach();
+
+    commands.insert_resource(MidiSink::new(sender));
 }

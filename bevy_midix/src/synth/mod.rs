@@ -58,7 +58,7 @@ impl Synth {
         }
     }
 
-    /// Send an event for the synth to play
+    /// Send an event for the synth to play instantly
     pub fn handle_event(&self, event: ChannelVoiceMessage) {
         let SynthState::Loaded(channel) = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
@@ -91,4 +91,13 @@ impl Default for Synth {
             _device: None,
         }
     }
+}
+
+/// This defines a song, a file, or otherwise
+/// that has timestamps associated with midi events.
+///
+/// this is named as such not to conflict with [`midix::MidiSource`]
+pub trait MidiCommandSource {
+    /// Create sink commands this type.
+    fn to_commands(&self) -> impl Iterator<Item = SinkCommand>;
 }

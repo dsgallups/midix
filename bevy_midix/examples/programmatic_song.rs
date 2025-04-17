@@ -29,25 +29,25 @@ fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
     synth.use_soundfont(asset_server.load("soundfont.sf2"));
 }
 
-fn play_song(synth: Res<Synth>, time: Res<Time>, mut song: ResMut<MidiSong>) {
-    if !synth.is_ready() {
-        return;
-    }
-    let beat = song.current_beat();
-    if song.finished() {
-        song.restart();
-    }
-    let Some(events) = song.get_events(time.delta()) else {
-        return;
-    };
-    info!("song beat no: {}", beat + 1);
+// fn play_song(synth: Res<Synth>, time: Res<Time>, mut song: ResMut<MidiSong>) {
+//     if !synth.is_ready() {
+//         return;
+//     }
+//     let beat = song.current_beat();
+//     if song.finished() {
+//         song.restart();
+//     }
+//     let Some(events) = song.get_events(time.delta()) else {
+//         return;
+//     };
+//     info!("song beat no: {}", beat + 1);
 
-    for event in events {
-        synth.handle_event(*event);
-    }
-}
+//     for event in events {
+//         synth.handle_event(*event);
+//     }
+// }
 
-pub fn make_song(mut commands: Commands) {
+pub fn make_song(mut commands: Commands, sink: Res<MidiSink>) {
     // <https://musiclab.chromeexperiments.com/Song-Maker/song/5716146745114624>
     //
     // new song with 120 beats per minute

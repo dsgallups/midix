@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
+use crate::synth::{MidiCommandSource, SinkCommand};
+
 use super::{Beat, ChannelModifier, MidiSong};
 
 /// A builder designed to make simple songs.
@@ -111,6 +113,62 @@ impl SimpleMidiSong {
     }
 }
 
+impl MidiCommandSource for SimpleMidiSong {
+    fn to_commands(&self) -> impl Iterator<Item = SinkCommand> {
+        let micros_per_beat = 60_000_000. / self.beats_per_minute;
+
+        let mut next_beat_additions = Vec::new();
+
+        // we'll add the program change for any voices set to next_beat additions
+        if !self.channel_presets.is_empty() {
+            for (channel, program) in self.channel_presets.iter() {
+                next_beat_additions.push(ChannelVoiceMessage::new(
+                    *channel,
+                    VoiceEvent::program_change(*program),
+                ));
+            }
+        }
+
+        let mut commands = Vec::with_capacity(self.beats.len() * 6);
+
+        for i in 0..=self.last_beat {
+            let beat_no = i + 1;
+            let timestamp = i * micros_per_beat as u64;
+            let Some(events) = self.beats.get(&beat_no) else {
+                let iter = next_beat_additions
+                    .iter()
+                    .copied()
+                    .map(|nb| SinkCommand::new(timestamp, nb))
+                    .collect::<Vec<_>>();
+
+                next_beat_additions.clear();
+                commands.extend(iter);
+                continue;
+            };
+
+            let additions_for_this_beat = next_beat_additions.clone();
+            next_beat_additions.clear();
+
+            for event in events.iter() {
+                // add off events for the next beat
+                if event.is_note_on() {
+                    next_beat_additions.push(ChannelVoiceMessage::new(
+                        event.channel(),
+                        VoiceEvent::note_off(*event.key().unwrap(), Velocity::max()),
+                    ));
+                }
+            }
+            commands.extend(
+                additions_for_this_beat
+                    .into_iter()
+                    .chain(events.iter().copied())
+                    .map(|msg| SinkCommand::new(timestamp, msg)),
+            );
+        }
+
+        commands.into_iter()
+    }
+}
 #[test]
 fn make_simple_song() {
     use pretty_assertions::assert_eq;

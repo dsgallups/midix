@@ -11,7 +11,7 @@ use super::SinkCommand;
 /// It needs its own thread because it's going to need to update its timer
 ///
 /// as frequently as possible.
-pub struct SinkTask {
+pub(crate) struct SinkTask {
     synth_channel: Sender<ChannelVoiceMessage>,
     commands: Receiver<SinkCommand>,
 }
