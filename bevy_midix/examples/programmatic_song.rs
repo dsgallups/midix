@@ -17,7 +17,8 @@ fn main() {
                 ..Default::default()
             },
         ))
-        .add_systems(Startup, (load_sf2, make_song))
+        .add_systems(Startup, load_sf2)
+        .add_systems(Update, make_song)
         .run();
 }
 
@@ -46,7 +47,10 @@ fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
 //     }
 // }
 
-pub fn make_song(mut commands: Commands, synth: Res<Synth>) {
+pub fn make_song(synth: Res<Synth>, mut finished: Local<bool>) {
+    if *finished || !synth.is_ready() {
+        return;
+    }
     // <https://musiclab.chromeexperiments.com/Song-Maker/song/5716146745114624>
     //
     // new song with 120 beats per minute
@@ -130,6 +134,7 @@ pub fn make_song(mut commands: Commands, synth: Res<Synth>) {
     }
 
     synth.push_audio(&s);
+    *finished = true;
     // a MidiSong, ready to go!
     //let song = s.build();
 }
