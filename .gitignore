@@ -5,6 +5,7 @@ midix/target
 *.sf2
 bevy_midix/assets/*.mid
 !bevy_midix/assets/Africa.mid
+!bevy_midix/assets/21Guns.mid
 !bevy_midix/assets/soundfont.sf2
 midix_wasm_example/target
 !midix_wasm_example/assets/soundfont.sf2
