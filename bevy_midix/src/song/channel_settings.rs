@@ -14,9 +14,17 @@ pub struct ChannelModifier<'a> {
 impl<'s> ChannelModifier<'s> {
     /// Set the voice for a channel
     pub fn set_voice(&mut self, program: Program) -> &mut Self {
-        self.song.channel_presets.insert(self.channel, program);
+        let preset = self.song.channel_presets.entry(self.channel).or_default();
+        preset.program = program;
         self
     }
+    /// Set the voice for a channel
+    pub fn set_volume(&mut self, volume: Velocity) -> &mut Self {
+        let preset = self.song.channel_presets.entry(self.channel).or_default();
+        preset.velocity = volume;
+        self
+    }
+
     /// Do something with the channel at this beat
     pub fn beat<'b>(&'b mut self, beat_no: u64) -> BeatChannel<'b, 's> {
         BeatChannel {
@@ -28,11 +36,25 @@ impl<'s> ChannelModifier<'s> {
     pub fn play_section(&mut self, section: &SimpleSection, beat_offset: u64) -> &mut Self {
         for (beat, event) in section.events() {
             let absolute_beat = *beat + beat_offset;
+            let velocity = self
+                .song
+                .channel_presets
+                .get(&self.channel)
+                .copied()
+                .unwrap_or_default()
+                .velocity;
             self.song.add_events(
                 absolute_beat,
-                event
-                    .iter()
-                    .map(|e| ChannelVoiceMessage::new(self.channel, *e)),
+                event.iter().map(|e| {
+                    let event = match e {
+                        VoiceEvent::NoteOn { key, .. } => VoiceEvent::NoteOn {
+                            key: *key,
+                            velocity,
+                        },
+                        _ => *e,
+                    };
+                    ChannelVoiceMessage::new(self.channel, event)
+                }),
             );
         }
         self
@@ -48,10 +70,16 @@ pub struct BeatChannel<'b, 's> {
 impl<'b, 's> BeatChannel<'b, 's> {
     /// play a note for this channel. Does not override other notes that will be played.
     pub fn play(self, key: Key) -> &'b mut ChannelModifier<'s> {
-        let event = ChannelVoiceMessage::new(
-            self.channel_mod.channel,
-            VoiceEvent::note_on(key, Velocity::max()),
-        );
+        let velocity = self
+            .channel_mod
+            .song
+            .channel_presets
+            .get(&self.channel_mod.channel)
+            .copied()
+            .unwrap_or_default()
+            .velocity;
+        let event =
+            ChannelVoiceMessage::new(self.channel_mod.channel, VoiceEvent::note_on(key, velocity));
 
         self.channel_mod.song.add_event(self.beat, event);
         self.channel_mod

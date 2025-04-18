@@ -6,6 +6,20 @@ use crate::synth::{MidiCommandSource, SinkCommand, SinkCommands};
 
 use super::{Beat, ChannelModifier, MidiSong};
 
+#[derive(Copy, Clone, Debug)]
+pub struct ChannelSettings {
+    pub program: Program,
+    pub velocity: Velocity,
+}
+impl Default for ChannelSettings {
+    fn default() -> Self {
+        Self {
+            program: Program::new(1).unwrap(),
+            velocity: Velocity::max(),
+        }
+    }
+}
+
 /// A builder designed to make simple songs.
 ///
 /// Add a few notes, and then call [`SimpleMidiSong::build`] to get a [`MidiSong`]
@@ -16,7 +30,7 @@ use super::{Beat, ChannelModifier, MidiSong};
 pub struct SimpleMidiSong {
     beats_per_minute: f64,
 
-    pub(crate) channel_presets: FnvHashMap<Channel, Program>,
+    pub(crate) channel_presets: FnvHashMap<Channel, ChannelSettings>,
 
     beats: FnvHashMap<u64, Vec<ChannelVoiceMessage>>,
     last_beat: u64,
@@ -79,10 +93,10 @@ impl SimpleMidiSong {
 
         // we'll add the program change for any voices set to next_beat additions
         if !self.channel_presets.is_empty() {
-            for (channel, program) in self.channel_presets.into_iter() {
+            for (channel, settings) in self.channel_presets.into_iter() {
                 next_beat_additions.push(ChannelVoiceMessage::new(
                     channel,
-                    VoiceEvent::program_change(program),
+                    VoiceEvent::program_change(settings.program),
                 ));
             }
         }
@@ -121,10 +135,10 @@ impl MidiCommandSource for SimpleMidiSong {
 
         // we'll add the program change for any voices set to next_beat additions
         if !self.channel_presets.is_empty() {
-            for (channel, program) in self.channel_presets.iter() {
+            for (channel, settings) in self.channel_presets.iter() {
                 next_beat_additions.push(ChannelVoiceMessage::new(
                     *channel,
-                    VoiceEvent::program_change(*program),
+                    VoiceEvent::program_change(settings.program),
                 ));
             }
         }
@@ -152,8 +166,10 @@ impl MidiCommandSource for SimpleMidiSong {
             for event in events.iter() {
                 // add off events for the next beat
                 if event.is_note_on() {
+                    let channel = event.channel();
+
                     next_beat_additions.push(ChannelVoiceMessage::new(
-                        event.channel(),
+                        channel,
                         VoiceEvent::note_off(*event.key().unwrap(), Velocity::max()),
                     ));
                 }

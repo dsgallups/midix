@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
@@ -29,37 +31,41 @@ fn load_sf2(asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
     synth.use_soundfont(asset_server.load("soundfont.sf2"));
 }
 
-// fn play_song(synth: Res<Synth>, time: Res<Time>, mut song: ResMut<MidiSong>) {
-//     if !synth.is_ready() {
-//         return;
-//     }
-//     let beat = song.current_beat();
-//     if song.finished() {
-//         song.restart();
-//     }
-//     let Some(events) = song.get_events(time.delta()) else {
-//         return;
-//     };
-//     info!("song beat no: {}", beat + 1);
-
-//     for event in events {
-//         synth.handle_event(*event);
-//     }
-// }
-
-pub fn make_song(synth: Res<Synth>, mut finished: Local<bool>) {
-    if *finished || !synth.is_ready() {
+struct PlaySongAgain {
+    timer: Timer,
+    count: u8,
+}
+impl Default for PlaySongAgain {
+    fn default() -> Self {
+        let timer = Timer::new(Duration::from_millis(5000), TimerMode::Repeating);
+        Self { timer, count: 0 }
+    }
+}
+fn make_song(synth: Res<Synth>, mut play_again: Local<Option<PlaySongAgain>>, timer: Res<Time>) {
+    if !synth.is_ready() {
         return;
     }
-    // <https://musiclab.chromeexperiments.com/Song-Maker/song/5716146745114624>
-    //
-    // new song with 120 beats per minute
-    let mut s = SimpleMidiSong::new(140. * 2.);
+    let count = if let Some(ref mut play_again) = *play_again {
+        play_again.timer.tick(timer.delta());
+        if !play_again.timer.just_finished() {
+            return;
+        }
+        play_again.count += 1;
+        play_again.count
+    } else {
+        *play_again = Some(PlaySongAgain::default());
+        0
+    };
+
+    let mut song = SimpleMidiSong::new(400.);
 
     use Channel::*;
 
-    s.channel(One).set_voice(Program::new(31).unwrap());
-    s.channel(Two).set_voice(Program::new(8).unwrap());
+    println!("voice: {}", count);
+    song.channel(One)
+        .set_voice(Program::new(count).unwrap())
+        .set_volume(Velocity::new(80).unwrap());
+    song.channel(Two).set_voice(Program::new(count).unwrap());
 
     //s.channel(One)
     let mut section_repeat = SimpleSection::default();
@@ -97,44 +103,51 @@ pub fn make_song(synth: Res<Synth>, mut finished: Local<bool>) {
         .beat(16)
         .play(key!(G, 3));
     // we'll play this section twice
-    s.channel(One)
+    song.channel(One)
         .play_section(&section_repeat, 0)
         .play_section(&section_repeat, 16);
 
-    for (i, base_key) in [
-        key!(F, 2),
-        key!(G, 2),
-        key!(GSharp, 2),
-        key!(ASharp, 2),
-        key!(C, 3),
-        key!(ASharp, 2),
-        key!(GSharp, 2),
-        key!(G, 2),
-        key!(CSharp, 2),
-    ]
-    .into_iter()
-    .enumerate()
-    {
-        let higher_key = Key::new(base_key.note(), base_key.octave() + 2);
-        s.channel(Two)
-            .beat(i as u64 + 17)
-            .play_notes([base_key, higher_key]);
+    for i in 17..=24 {
+        song.channel(Two).beat(i).play(key!(F, 1));
+    }
+    for i in 25..=28 {
+        song.channel(Two).beat(i).play(key!(CSharp, 1));
+    }
+    for i in 29..=32 {
+        song.channel(Two).beat(i).play(key!(C, 1));
     }
 
-    // rest
+    // for (i, base_key) in [
+    //     key!(F, 2),
+    //     key!(G, 2),
+    //     key!(GSharp, 2),
+    //     key!(ASharp, 2),
+    //     key!(C, 3),
+    //     key!(ASharp, 2),
+    //     key!(GSharp, 2),
+    //     key!(G, 2),
+    //     key!(CSharp, 2),
+    // ]
+    // .into_iter()
+    // .enumerate()
+    // {
+    //     let higher_key = Key::new(base_key.note(), base_key.octave() + 2);
+    //     s.channel(Two)
+    //         .beat(i as u64 + 17)
+    //         .play_notes([base_key, higher_key]);
+    // }
 
-    for (i, base_key) in [key!(CSharp, 2), key!(DSharp, 2), key!(C, 2)]
-        .into_iter()
-        .enumerate()
-    {
-        let higher_key = Key::new(base_key.note(), base_key.octave() + 2);
-        s.channel(Two)
-            .beat(i as u64 + 27)
-            .play_notes([base_key, higher_key]);
-    }
+    // // rest
 
-    synth.push_audio(&s);
-    *finished = true;
-    // a MidiSong, ready to go!
-    //let song = s.build();
+    // for (i, base_key) in [key!(CSharp, 2), key!(DSharp, 2), key!(C, 2)]
+    //     .into_iter()
+    //     .enumerate()
+    // {
+    //     let higher_key = Key::new(base_key.note(), base_key.octave() + 2);
+    //     s.channel(Two)
+    //         .beat(i as u64 + 27)
+    //         .play_notes([base_key, higher_key]);
+    // }
+
+    synth.push_audio(&song);
 }

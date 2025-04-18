@@ -21,8 +21,7 @@ use super::{SinkCommands, inner::InnerCommand};
 ///
 /// as frequently as possible.
 pub(crate) struct SinkTask {
-    now: Instant,
-    accumulated_time: u64,
+    start: Instant,
     synth_channel: Sender<ChannelVoiceMessage>,
     commands: Receiver<SinkCommands>,
     queue: VecDeque<InnerCommand>,
@@ -34,8 +33,7 @@ impl SinkTask {
         commands: Receiver<SinkCommands>,
     ) -> Self {
         Self {
-            now: Instant::now(),
-            accumulated_time: 0,
+            start: Instant::now(),
             synth_channel,
             commands,
             queue: VecDeque::new(),
@@ -47,8 +45,9 @@ impl Future for SinkTask {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> std::task::Poll<Self::Output> {
+        let mut messages_pushed = false;
         // first check if there's anything in the queue
-        let accumulated_time = self.accumulated_time;
+        let elapsed = self.start.elapsed().as_micros() as u64;
         while let Some(mut messages) = match self.commands.try_recv() {
             Ok(m) => Some(m),
             Err(e) => match e {
@@ -59,23 +58,28 @@ impl Future for SinkTask {
             },
         } {
             messages.0.sort_by_key(|m| m.timestamp);
-            self.queue
-                .extend(messages.0.into_iter().map(|message| InnerCommand {
-                    time_to_send: accumulated_time + message.timestamp,
+
+            for message in messages.0 {
+                let amt = elapsed + message.timestamp;
+                self.queue.push_back(InnerCommand {
+                    time_to_send: amt,
                     command: message.event,
-                }));
+                });
+                messages_pushed = true;
+            }
+
             //do something
         }
-        let earlier = self.now;
-        self.now = Instant::now();
-        let time_passed = self.now.duration_since(earlier);
-        // 584542 years is more than enough space
-        self.accumulated_time += time_passed.as_micros() as u64;
+        if messages_pushed {
+            self.queue.make_contiguous().sort_by_key(|m| m.time_to_send);
+        }
+
+        let elapsed = self.start.elapsed().as_micros() as u64;
 
         while self
             .queue
             .front()
-            .is_some_and(|first| first.time_to_send <= self.accumulated_time)
+            .is_some_and(|first| first.time_to_send <= elapsed)
         {
             let message = self.queue.pop_front().unwrap();
 
