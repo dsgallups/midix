@@ -21,12 +21,26 @@ impl<'a> BytesText<'a> {
     /// Get a mutable reference to the underlying string
     pub fn to_mut(&mut self) -> Result<&mut str, ParseError> {
         let self_mut = self.inner.to_mut();
-        str::from_utf8_mut(self_mut).map_err(|_| ParseError::InvalidUtf8)
+        if cfg!(feature = "std") {
+            std::str::from_utf8_mut(self_mut).map_err(|_| ParseError::InvalidUtf8)
+        } else if cfg!(feature = "nightly") {
+            str::from_utf8_mut(self_mut).map_err(|_| ParseError::InvalidUtf8)
+        } else {
+            panic!(
+                "cannot get mutable reference to text without `std` or `nightly` features enabled!",
+            )
+        }
     }
 
     /// Get a string reference
     pub fn as_str(&self) -> Result<&str, ParseError> {
-        str::from_utf8(&self.inner).map_err(|_| ParseError::InvalidUtf8)
+        if cfg!(feature = "std") {
+            std::str::from_utf8(&self.inner).map_err(|_| ParseError::InvalidUtf8)
+        } else if cfg!(feature = "nightly") {
+            str::from_utf8(&self.inner).map_err(|_| ParseError::InvalidUtf8)
+        } else {
+            panic!("Cannot intrepret string without the std or nightly feature")
+        }
     }
 
     /// Get a (possibly) cloned string
