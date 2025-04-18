@@ -28,7 +28,7 @@ pub use program::*;
 
 mod velocity;
 pub use velocity::*;
-
+#[macro_use]
 mod key;
 pub use key::*;
 

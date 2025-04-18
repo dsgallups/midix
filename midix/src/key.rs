@@ -97,6 +97,24 @@ impl Key {
         self.0.0
     }
 }
+/// Efficiently make a key.
+///
+///
+/// ## Example
+/// ```rust
+/// # use midix::prelude::*;
+/// let my_key = key!(C, 2);
+/// assert_eq!(my_key, Key::new(Note::C, Octave::new(2)));
+/// ```
+#[macro_export]
+macro_rules! key {
+    ($note:ident, $oct:literal) => {
+        ::midix::prelude::Key::new(
+            ::midix::prelude::Note::$note,
+            ::midix::prelude::Octave::new($oct),
+        )
+    };
+}
 
 impl fmt::Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -415,6 +433,32 @@ impl Octave {
 impl fmt::Display for Octave {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl Add<i8> for Octave {
+    type Output = Octave;
+    fn add(self, rhs: i8) -> Self::Output {
+        Self::new(self.0 + rhs)
+    }
+}
+
+impl AddAssign<i8> for Octave {
+    fn add_assign(&mut self, rhs: i8) {
+        self.0 = (self.0 + rhs).clamp(-1, 9);
+    }
+}
+
+impl Sub<i8> for Octave {
+    type Output = Octave;
+    fn sub(self, rhs: i8) -> Self::Output {
+        Self::new(self.0 - rhs)
+    }
+}
+
+impl SubAssign<i8> for Octave {
+    fn sub_assign(&mut self, rhs: i8) {
+        self.0 = (self.0 - rhs).clamp(-1, 9);
     }
 }
 

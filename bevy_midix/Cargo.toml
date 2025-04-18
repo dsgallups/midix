@@ -23,6 +23,7 @@ midix_synth = { version = "0.1.0-alpha", path = "../midix_synth" }
 thiserror = "2.0"
 tinyaudio = "1.1.0"
 itertools = "0.14.0"
+fnv = "1.0.7"
 
 [dependencies.bevy]
 version = "0.16.0-rc.5"
@@ -35,6 +36,9 @@ features = [
     "bevy_state",
     "std",
 ]
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
 
 [dev-dependencies.bevy]
 version = "0.16.0-rc.5"

@@ -12,21 +12,19 @@ use tinyaudio::{OutputDevice, OutputDeviceParameters};
 mod plugin;
 pub use plugin::*;
 
-/// Send a command to the synth to play a note
-struct SynthCommand {
-    event: ChannelVoiceMessage,
-}
-impl SynthCommand {
-    /// Create a command to play a note to the synth
-    pub fn new(event: ChannelVoiceMessage) -> Self {
-        Self { event }
-    }
-}
+mod sink;
+pub use sink::*;
 
 enum SynthState {
     NotLoaded,
-    LoadHandle { sound_font: Handle<SoundFont> },
-    Loaded(Sender<SynthCommand>),
+    LoadHandle {
+        sound_font: Handle<SoundFont>,
+    },
+    Loaded {
+        synth_channel: Sender<ChannelVoiceMessage>,
+        /// the sink channel will process delayed events and interface with the synth channel directly
+        sink_channel: Sender<SinkCommands>,
+    },
 }
 
 /// Plays audio commands with the provided soundfont
@@ -66,17 +64,28 @@ impl Synth {
         }
     }
 
-    /// Send an event for the synth to play
+    /// Send an event for the synth to play instantly
     pub fn handle_event(&self, event: ChannelVoiceMessage) {
-        let SynthState::Loaded(channel) = &self.synthesizer else {
+        let SynthState::Loaded { synth_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return;
         };
-        channel.send(SynthCommand::new(event)).unwrap();
+        synth_channel.send(event).unwrap();
     }
+
+    /// Push something that makes the synth do things
+    pub fn push_audio(&self, song: &impl MidiCommandSource) {
+        let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
+            error!("An event was passed to the synth, but the soundfont has not been loaded!");
+            return;
+        };
+        let commands = song.to_commands();
+        sink_channel.send(commands).unwrap();
+    }
+
     /// Returns true if the sound font has been loaded!
     pub fn is_ready(&self) -> bool {
-        matches!(self.synthesizer, SynthState::Loaded(_))
+        matches!(self.synthesizer, SynthState::Loaded { .. })
     }
 
     /// Provide a handle to the soundfont file
@@ -99,4 +108,13 @@ impl Default for Synth {
             _device: None,
         }
     }
+}
+
+/// This defines a song, a file, or otherwise
+/// that has timestamps associated with midi events.
+///
+/// this is named as such not to conflict with [`midix::MidiSource`]
+pub trait MidiCommandSource {
+    /// Create sink commands this type.
+    fn to_commands(&self) -> SinkCommands;
 }

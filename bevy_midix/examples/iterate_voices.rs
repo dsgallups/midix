@@ -18,7 +18,7 @@ fn main() {
             },
         ))
         .add_systems(Startup, load_sf2)
-        .add_systems(Update, scale_me)
+        .add_systems(Update, iterate_voices)
         .run();
 }
 
@@ -44,7 +44,7 @@ impl Default for VoiceChanger {
     }
 }
 
-fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChanger>) {
+fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChanger>) {
     if !synth.is_ready() {
         return;
     }

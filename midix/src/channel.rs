@@ -35,6 +35,10 @@ pub enum Channel {
     /// 0bxxxx1000
     Nine,
     /// 0bxxxx1001
+    ///
+    /// Note: MIDI gives Channel Ten a special role (drums).
+    ///
+    /// Therefore, this channel may have different properties than you would expect!
     Ten,
     /// 0bxxxx1010
     Eleven,
