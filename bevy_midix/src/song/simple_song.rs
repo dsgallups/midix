@@ -4,11 +4,14 @@ use midix::prelude::*;
 
 use crate::synth::{MidiCommandSource, SinkCommand, SinkCommands};
 
-use super::{Beat, ChannelModifier, MidiSong};
+use super::{Beat, ChannelModifier};
 
+/// Presets for a channel for a simple song
 #[derive(Copy, Clone, Debug)]
 pub struct ChannelSettings {
+    /// program to use
     pub program: Program,
+    /// how loud is it
     pub velocity: Velocity,
 }
 impl Default for ChannelSettings {
@@ -85,46 +88,6 @@ impl SimpleMidiSong {
         let current_beat = self.beats.entry(beat_no).or_default();
         current_beat.extend(events);
     }
-
-    /// Converts my events into a playable song!
-    pub fn build(mut self) -> MidiSong {
-        let mut song = MidiSong::new(self.beats_per_minute);
-        let mut next_beat_additions = Vec::new();
-
-        // we'll add the program change for any voices set to next_beat additions
-        if !self.channel_presets.is_empty() {
-            for (channel, settings) in self.channel_presets.into_iter() {
-                next_beat_additions.push(ChannelVoiceMessage::new(
-                    channel,
-                    VoiceEvent::program_change(settings.program),
-                ));
-            }
-        }
-
-        // need to turn off the last beat
-        for i in 1..=(self.last_beat + 1) {
-            let Some(events) = self.beats.remove(&i) else {
-                song.push_beat_events(next_beat_additions.iter().copied());
-                next_beat_additions.clear();
-                continue;
-            };
-
-            let additions_for_this_beat = next_beat_additions.clone();
-            next_beat_additions.clear();
-
-            for event in events.iter() {
-                // add off events for the next beat
-                if event.is_note_on() {
-                    next_beat_additions.push(ChannelVoiceMessage::new(
-                        event.channel(),
-                        VoiceEvent::note_off(*event.key().unwrap(), Velocity::max()),
-                    ));
-                }
-            }
-            song.push_beat_events(additions_for_this_beat.into_iter().chain(events));
-        }
-        song
-    }
 }
 
 impl MidiCommandSource for SimpleMidiSong {
@@ -184,69 +147,4 @@ impl MidiCommandSource for SimpleMidiSong {
 
         SinkCommands::new(commands)
     }
-}
-#[test]
-fn make_simple_song() {
-    use pretty_assertions::assert_eq;
-    let mut simple_song = SimpleMidiSong::new(120.);
-    simple_song
-        .beat(1)
-        .channel(Channel::One)
-        .play(Key::new(Note::A, Octave::new(2)));
-    simple_song
-        .beat(2)
-        .channel(Channel::One)
-        .play(Key::new(Note::B, Octave::new(4)));
-
-    simple_song
-        .beat(5)
-        .channel(Channel::One)
-        .play(Key::new(Note::F, Octave::new(1)));
-
-    let song = simple_song.build();
-
-    let queue = song.queue;
-    assert_eq!(
-        queue[0],
-        vec![ChannelVoiceMessage::new(
-            Channel::One,
-            VoiceEvent::note_on(Key::new(Note::A, Octave::new(2)), Velocity::max())
-        )]
-    );
-    assert_eq!(
-        queue[1],
-        vec![
-            ChannelVoiceMessage::new(
-                Channel::One,
-                VoiceEvent::note_off(Key::new(Note::A, Octave::new(2)), Velocity::max())
-            ),
-            ChannelVoiceMessage::new(
-                Channel::One,
-                VoiceEvent::note_on(Key::new(Note::B, Octave::new(4)), Velocity::max())
-            )
-        ]
-    );
-    assert_eq!(
-        queue[2],
-        vec![ChannelVoiceMessage::new(
-            Channel::One,
-            VoiceEvent::note_off(Key::new(Note::B, Octave::new(4)), Velocity::max())
-        ),]
-    );
-    assert_eq!(queue[3], vec![]);
-    assert_eq!(
-        queue[4],
-        vec![ChannelVoiceMessage::new(
-            Channel::One,
-            VoiceEvent::note_on(Key::new(Note::F, Octave::new(1)), Velocity::max())
-        )]
-    );
-    // notice that there's a sixth measure here
-    assert_eq!(
-        queue[5],
-        vec![ChannelVoiceMessage::new(
-            Channel::One,
-            VoiceEvent::note_off(Key::new(Note::F, Octave::new(1)), Velocity::max())
-        )]
-    );
 }

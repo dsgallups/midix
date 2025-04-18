@@ -13,6 +13,3 @@ pub use simple_song::*;
 
 mod section;
 pub use section::*;
-
-mod bad_idea;
-pub use bad_idea::*;

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use midix::prelude::ChannelVoiceMessage;
 
 /// A set of commands
-pub struct SinkCommands(pub(super) Vec<SinkCommand>);
+pub struct SinkCommands(pub(crate) Vec<SinkCommand>);
 
 impl SinkCommands {
     /// Create a set of commands
@@ -13,8 +13,8 @@ impl SinkCommands {
 
 /// Send a command to the synth to play a note
 pub struct SinkCommand {
-    pub(super) timestamp: u64,
-    pub(super) event: ChannelVoiceMessage,
+    pub(crate) timestamp: u64,
+    pub(crate) event: ChannelVoiceMessage,
 }
 impl SinkCommand {
     /// Create a command to play a note to the synth.
