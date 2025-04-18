@@ -55,7 +55,7 @@ pub enum MetaMessage<'a> {
     /// track from the start of a sequence in terms of SMPTE time (hours:minutes:seconds:frames:subframes).
     ///
     /// [Reference](https://www.recordingblogs.com/wiki/midi-smpte-offset-meta-message)
-    SmpteOffset(&'a [u8]),
+    SmpteOffset(Cow<'a, [u8]>),
     /// In order of the MIDI specification, numerator, denominator, MIDI clocks per click, 32nd
     /// notes per quarter
     TimeSignature(TimeSignature),
@@ -117,7 +117,9 @@ impl<'a> MetaMessage<'a> {
             }
             0x54 => {
                 //TODO
-                todo!("implement SMTPE")
+                //5 bytes varlen
+                assert_eq!(data.len(), 5);
+                MetaMessage::SmpteOffset(data)
                 //return Err(inv_data(reader, "SMTPE is not yet implemented"));
             }
             0x58 if data.len() >= 4 => {

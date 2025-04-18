@@ -88,18 +88,11 @@ impl Future for SinkTask {
             .is_some_and(|first| first.time_to_send <= elapsed)
         {
             let message = self.queue.pop_front().unwrap();
-            match message.command.event() {
-                midix::prelude::VoiceEvent::PitchBend(_) => {
-                    info!(
-                        "Channel{} PB {:?}",
-                        message.command.channel(),
-                        message.command.event()
-                    );
-                }
-                _ => {
-                    //nothing
-                }
-            }
+            info!(
+                "({}) {:?}",
+                message.command.channel(),
+                message.command.event()
+            );
 
             self.synth_channel.send(message.command).unwrap();
         }

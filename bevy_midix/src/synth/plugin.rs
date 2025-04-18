@@ -45,7 +45,8 @@ impl Default for SynthParams {
 /// The plugin for handling the synthesizer
 #[derive(Default, Clone, Copy)]
 pub struct SynthPlugin {
-    params: SynthParams,
+    /// Set params for the plugin
+    pub params: SynthParams,
 }
 
 impl Plugin for SynthPlugin {

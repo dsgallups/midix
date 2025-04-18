@@ -77,7 +77,8 @@ impl MidiCommandSource for MidiFile {
         //so one beat is a quarter note
         // so quarter_notes_per_minute
         // quarter_notes_per_second
-        let micros_per_quarter_note = 0.0002 / bpm;
+        //let micros_per_quarter_note = 0.00005 / bpm;
+        let micros_per_quarter_note = 0.00023 / bpm;
 
         for track in tracks {
             for event in track.events() {
