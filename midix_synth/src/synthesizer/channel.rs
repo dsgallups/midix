@@ -188,8 +188,8 @@ impl Channel {
         }
     }
 
-    pub(crate) fn set_pitch_bend(&mut self, value1: u8, value2: u8) {
-        self.pitch_bend = (1_f32 / 8192_f32) * (value1 as u16 | ((value2 as u16) << 7)) as f32;
+    pub(crate) fn set_pitch_bend(&mut self, lsb: u8, msb: u8) {
+        self.pitch_bend = (1_f32 / 8192_f32) * ((lsb as i32 | ((msb as i32) << 7)) - 8192) as f32;
     }
 
     pub(crate) fn get_bank_number(&self) -> u8 {
