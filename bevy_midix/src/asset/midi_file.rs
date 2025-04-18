@@ -11,7 +11,9 @@ use bevy::{
     prelude::*,
 };
 
-use midix::{file::MidiFile as Mf, reader::ReaderError};
+use midix::{events::LiveEvent, file::MidiFile as Mf, reader::ReaderError};
+
+use crate::synth::{MidiCommandSource, SinkCommand, SinkCommands};
 
 /// Sound font asset. Wraps a midix MidiFile
 #[derive(Asset, TypePath)]
@@ -57,5 +59,41 @@ impl AssetLoader for MidiFileLoader {
 
     fn extensions(&self) -> &[&str] {
         &["mid"]
+    }
+}
+
+impl MidiCommandSource for MidiFile {
+    fn to_commands(&self) -> crate::prelude::SinkCommands {
+        let midi = &self.inner;
+
+        let mut commands = Vec::new();
+        let tracks = midi.tracks();
+
+        let ticks_per_qn = midi.header().timing().ticks_per_quarter_note().unwrap();
+
+        let bpm = 120.;
+        // assume 4 quarter notes per measure
+
+        //so one beat is a quarter note
+        // so quarter_notes_per_minute
+        // quarter_notes_per_second
+        let micros_per_quarter_note = 0.0002 / bpm;
+
+        for track in tracks {
+            for event in track.events() {
+                match event.event() {
+                    LiveEvent::ChannelVoice(cv) => {
+                        let tick = event.accumulated_ticks();
+                        let quarter_notes = tick as f64 / ticks_per_qn as f64;
+                        let micros = quarter_notes / micros_per_quarter_note;
+                        commands.push(SinkCommand::new(micros as u64, *cv));
+                    }
+                    _ => {
+                        //idk
+                    }
+                }
+            }
+        }
+        SinkCommands::new(commands)
     }
 }
