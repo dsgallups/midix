@@ -8,7 +8,7 @@ use tinyaudio::run_output_device;
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
-use super::{SinkCommand, SinkTask, Synth, SynthState};
+use super::{SinkTask, Synth, SynthState};
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///

@@ -23,7 +23,7 @@ enum SynthState {
     Loaded {
         synth_channel: Sender<ChannelVoiceMessage>,
         /// the sink channel will process delayed events and interface with the synth channel directly
-        sink_channel: Sender<SinkCommand>,
+        sink_channel: Sender<SinkCommands>,
     },
 }
 
@@ -73,8 +73,14 @@ impl Synth {
         synth_channel.send(event).unwrap();
     }
 
-    pub fn push_audio(song: &impl MidiCommandSource) {
-        todo!()
+    /// Push something that makes the synth do things
+    pub fn push_audio(&self, song: &impl MidiCommandSource) {
+        let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
+            error!("An event was passed to the synth, but the soundfont has not been loaded!");
+            return;
+        };
+        let commands = song.to_commands();
+        sink_channel.send(commands).unwrap();
     }
 
     /// Returns true if the sound font has been loaded!
@@ -110,5 +116,5 @@ impl Default for Synth {
 /// this is named as such not to conflict with [`midix::MidiSource`]
 pub trait MidiCommandSource {
     /// Create sink commands this type.
-    fn to_commands(&self) -> impl Iterator<Item = SinkCommand>;
+    fn to_commands(&self) -> SinkCommands;
 }
