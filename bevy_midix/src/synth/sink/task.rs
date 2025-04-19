@@ -89,13 +89,6 @@ impl Future for SinkTask {
         {
             let message = self.queue.pop_front().unwrap();
 
-            // popping
-            // if message.command.channel() != Channel::Sixteen {
-            //     continue;
-            // }
-            // if message.command.channel() != Channel::One {
-            //     continue;
-            // }
             info!(
                 "({}) {:?}",
                 message.command.channel(),

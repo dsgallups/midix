@@ -56,10 +56,6 @@ impl<'a> MidiFile<'a> {
             )
         })
     }
-    /// Returns the bpm for the song
-    pub fn bpm(&self) -> f64 {
-        todo!();
-    }
 
     /// Returns header info
     pub fn header(&self) -> &Header {
