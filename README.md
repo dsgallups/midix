@@ -22,7 +22,8 @@ Human readable MIDI. See [README](https://github.com/dsgallups/midix/blob/main/m
 
 ### `midix_synth`
 
-Streaming midi-command SoundFont synth (Under heavy development). If you're looking for a rust synthesizer with audiofont support, I highly recommend checking out [rustysynth](https://github.com/sinshu/rustysynth) for your needs!
+Streaming midi-command SoundFont synth (Under heavy development). If you're looking for a rust synthesizer with audiofont support, I highly recommend checking out [rustysynth](https://github.com/sinshu/rustysynth) for your needs! `bevy_midix` v4 uses `rustysynth` over
+`midix_synth`.
 
 
 ## MIDIx feature roadmap
