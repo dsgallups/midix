@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use crate::{
     channel::Channel,
     events::LiveEvent,
-    prelude::{BytesText, Tempo, TimeSignature, TrackEvent, TrackMessage},
+    prelude::{BytesText, SmpteOffset, Tempo, TimeSignature, TrackEvent, TrackMessage},
 };
 
 #[doc = r#"
@@ -78,6 +78,8 @@ pub struct TrackInfo<'a> {
     pub track_info: Option<u16>,
     pub channel: Option<Channel>,
     pub tempo: Tempo,
+    /// this is intentionally allowed if the file doesn't identify as using smpte.
+    pub smpte_offset: Option<SmpteOffset>,
 }
 
 #[doc = r#"

@@ -166,20 +166,23 @@ pub enum FileError {
     NoTiming,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum SmpteError {
     #[error("Invalid hour for offset. Expected 0-24. Got {0}")]
     HourOffset(u8),
     #[error("Invalid minute for offset. Expected 0-59. Got {0}")]
     MinuteOffset(u8),
-    #[error("Invalid hour for offset. Expected 0-59. Got {0}")]
+    #[error("Invalid second for offset. Expected 0-59. Got {0}")]
     SecondOffset(u8),
-    #[error("Invalid hour for offset. Expected 0-24. Got {0}")]
+    #[error("Invalid frame for offset. Expected 0-(n frames - 1). Got {0}")]
     FrameOffset(u8),
+    #[error("Invalid subframe offset. Subframes are 1/100th (0-99) of a frame. Got {0}")]
+    Subframe(u8),
     #[error("Smpte meta length for track invalid (always must be 5): {0}")]
     Length(usize),
     #[error("Invalid frame for track interpretation. Should be 0, 1, 2, or 3. Got 0")]
     TrackFrame(u8),
+
     #[error("Invalid SMPTE time in header (only -24, -25, -29, and -30 allowed.) Interpreted {0}")]
     HeaderFrameTime(i8),
 }

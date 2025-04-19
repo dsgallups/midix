@@ -153,7 +153,7 @@ impl SmtpeHeader {
                 SmpteFrame::TwentyNine
             }
             -30 => SmpteFrame::Thirty,
-            _ => return Err(ParseError::InvalidSmpteFrame(byte)),
+            _ => return Err(ParseError::Smpte(SmpteError::HeaderFrameTime(byte))),
         };
         let ticks_per_frame = DataByte::new(bytes[1])?;
         Ok(Self {
