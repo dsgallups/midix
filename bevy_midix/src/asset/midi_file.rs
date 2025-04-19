@@ -107,12 +107,12 @@ impl MidiCommandSource for MidiFile {
                         .smpte_offset
                         .as_ref()
                         .map(|offset| {
-                            if offset.frame_type != v.fps() {
+                            if offset.fps != v.fps() {
                                 warn!(
                                     "Header's fps({}) does not align with track's fps({}). \
                                     The file's fps will override the track's!",
                                     v.fps().as_f64(),
-                                    offset.frame_type.as_f64()
+                                    offset.fps.as_f64()
                                 );
                             }
                             offset.as_micros_with_override(v.fps())

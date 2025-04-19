@@ -20,9 +20,9 @@ impl<'a> BytesText<'a> {
 
     /// Get a mutable reference to the underlying string
     pub fn to_mut(&mut self) -> Result<&mut str, ParseError> {
-        let self_mut = self.inner.to_mut();
+        let _self_mut = self.inner.to_mut();
         #[cfg(feature = "std")]
-        let _v = std::str::from_utf8_mut(self_mut).map_err(|_| ParseError::InvalidUtf8)?;
+        let _v = std::str::from_utf8_mut(_self_mut).map_err(|_| ParseError::InvalidUtf8)?;
         #[cfg(feature = "nightly")]
         let _v = str::from_utf8_mut(self_mut).map_err(|_| ParseError::InvalidUtf8)?;
         #[cfg(all(not(feature = "std"), not(feature = "nightly")))]

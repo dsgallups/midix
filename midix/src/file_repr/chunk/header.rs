@@ -121,6 +121,7 @@ pub enum Timing {
     Smpte(SmpteHeader),
 }
 
+/// A representation of the `tpqn` timing for a MIDI file
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub struct TicksPerQuarterNote {
     inner: [u8; 2],
@@ -133,9 +134,10 @@ impl TicksPerQuarterNote {
     }
 }
 
+/// A representation of the `smpte` timing for a MIDI file
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
 pub struct SmpteHeader {
-    frame: SmpteFrame,
+    fps: SmpteFps,
     ticks_per_frame: DataByte,
 }
 
@@ -146,25 +148,27 @@ impl SmpteHeader {
         let byte = bytes[0] as i8;
 
         let frame = match byte {
-            -24 => SmpteFrame::TwentyFour,
-            -25 => SmpteFrame::TwentyFive,
+            -24 => SmpteFps::TwentyFour,
+            -25 => SmpteFps::TwentyFive,
             -29 => {
                 //drop frame (29.997)
-                SmpteFrame::TwentyNine
+                SmpteFps::TwentyNine
             }
-            -30 => SmpteFrame::Thirty,
+            -30 => SmpteFps::Thirty,
             _ => return Err(ParseError::Smpte(SmpteError::HeaderFrameTime(byte))),
         };
         let ticks_per_frame = DataByte::new(bytes[1])?;
         Ok(Self {
-            frame,
+            fps: frame,
             ticks_per_frame,
         })
     }
-    pub fn fps(&self) -> SmpteFrame {
-        self.frame
+    /// Returns the frames per second
+    pub fn fps(&self) -> SmpteFps {
+        self.fps
     }
 
+    /// Returns the ticks per frame
     pub fn ticks_per_frame(&self) -> u8 {
         self.ticks_per_frame.0
     }
@@ -179,9 +183,11 @@ impl Timing {
         let lsb = (tpqn & 0x00FF) as u8;
         Self::TicksPerQuarterNote(TicksPerQuarterNote { inner: [msb, lsb] })
     }
-    pub fn new_smpte(frame: SmpteFrame, ticks_per_frame: DataByte) -> Self {
+
+    /// Define the timing in terms of fps and ticks per frame
+    pub fn new_smpte(fps: SmpteFps, ticks_per_frame: DataByte) -> Self {
         Self::Smpte(SmpteHeader {
-            frame,
+            fps,
             ticks_per_frame,
         })
     }
@@ -285,7 +291,7 @@ fn read_midi_header_smpte() {
     let Timing::Smpte(smpte) = result.timing() else {
         panic!("not smpte")
     };
-    assert_eq!(smpte.fps(), SmpteFrame::TwentyNine);
+    assert_eq!(smpte.fps(), SmpteFps::TwentyNine);
     assert_eq!(smpte.ticks_per_frame(), 80);
     assert_eq!(result.num_tracks(), 1);
 }

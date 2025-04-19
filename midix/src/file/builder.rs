@@ -63,7 +63,7 @@ impl<'a> MidiFileBuilder<'a> {
                     },
                 };
 
-                self.timing = Some(h.timing().clone());
+                self.timing = Some(h.timing());
 
                 Ok(())
             }

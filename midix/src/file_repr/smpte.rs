@@ -1,13 +1,23 @@
+/// The possible FPS for MIDI tracks and files
+///
+/// the MIDI spec defines only four possible frame types:
+/// - 24: 24fps
+/// - 25: 25fps
+/// - 29: dropframe 30 (30,000 frames / 1001 seconds)
+/// - 30: 30fps
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SmpteFrame {
+pub enum SmpteFps {
+    /// 24
     TwentyFour,
+    /// 25
     TwentyFive,
     /// Note this is actually 29.997
     TwentyNine,
+    /// 30
     Thirty,
 }
 
-impl SmpteFrame {
+impl SmpteFps {
     /// Most likely want to use this.
     /// Drop 30 (TwentyNine) is 30 here.
     pub fn as_division(&self) -> u8 {

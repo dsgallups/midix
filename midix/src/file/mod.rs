@@ -74,6 +74,7 @@ impl<'a> MidiFile<'a> {
             Format::SingleMultiChannel(c) => [c].to_vec(),
         }
     }
+    /// Returns the format type for the file.
     pub fn format_type(&self) -> FormatType {
         match &self.format {
             Format::SequentiallyIndependent(_) => FormatType::SequentiallyIndependent,
