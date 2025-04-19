@@ -11,7 +11,7 @@ use bevy::log::info;
 This Sink will send events to another thread that will constantly poll/flush command out to the synth.
 */
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
-use midix::prelude::ChannelVoiceMessage;
+use midix::prelude::{Channel, ChannelVoiceMessage};
 
 use super::{SinkCommands, inner::InnerCommand};
 
@@ -88,6 +88,14 @@ impl Future for SinkTask {
             .is_some_and(|first| first.time_to_send <= elapsed)
         {
             let message = self.queue.pop_front().unwrap();
+
+            // popping
+            // if message.command.channel() != Channel::Sixteen {
+            //     continue;
+            // }
+            // if message.command.channel() != Channel::One {
+            //     continue;
+            // }
             info!(
                 "({}) {:?}",
                 message.command.channel(),

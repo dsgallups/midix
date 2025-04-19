@@ -38,7 +38,7 @@ impl<'a> BytesText<'a> {
         let _v = str::from_utf8(&self.inner).map_err(|_| ParseError::InvalidUtf8)?;
         #[cfg(all(not(feature = "std"), not(feature = "nightly")))]
         panic!("Cannot intrepret string without the std or nightly feature");
-
+        #[cfg(any(feature = "std", feature = "nightly"))]
         Ok(_v)
     }
 

@@ -412,6 +412,7 @@ impl Synthesizer {
 
         self.block_left.fill(0_f32);
         self.block_right.fill(0_f32);
+
         for voice in self.voices.iter_mut() {
             let previous_gain_left = self.master_volume * voice.previous_mix_gain_left;
             let current_gain_left = self.master_volume * voice.current_mix_gain_left;
@@ -525,7 +526,7 @@ impl Synthesizer {
             return;
         }
 
-        if (current_gain - previous_gain).abs() < 1.0E-3_f32 {
+        if (current_gain - previous_gain).abs() < utils::NON_AUDIBLE {
             ArrayMath::multiply_add(current_gain, source, destination);
         } else {
             let step = inverse_block_size * (current_gain - previous_gain);

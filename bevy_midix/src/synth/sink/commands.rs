@@ -1,4 +1,3 @@
-use bevy::prelude::*;
 use midix::prelude::ChannelVoiceMessage;
 
 /// A set of commands
