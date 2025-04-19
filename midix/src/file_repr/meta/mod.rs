@@ -13,9 +13,12 @@ mod key_signature;
 pub use key_signature::*;
 mod text;
 pub use text::*;
+mod smpte_offset;
+pub use smpte_offset::*;
 
 use crate::{prelude::*, reader::ReaderError};
 /// A "meta message", as defined by the SMF spec.
+/// These are in tracks.
 /// These events carry metadata about the track, such as tempo, time signature, copyright, etc...
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum MetaMessage<'a> {
@@ -55,7 +58,7 @@ pub enum MetaMessage<'a> {
     /// track from the start of a sequence in terms of SMPTE time (hours:minutes:seconds:frames:subframes).
     ///
     /// [Reference](https://www.recordingblogs.com/wiki/midi-smpte-offset-meta-message)
-    SmpteOffset(&'a [u8]),
+    SmpteOffset(SmpteOffset),
     /// In order of the MIDI specification, numerator, denominator, MIDI clocks per click, 32nd
     /// notes per quarter
     TimeSignature(TimeSignature),
@@ -117,7 +120,12 @@ impl<'a> MetaMessage<'a> {
             }
             0x54 => {
                 //TODO
-                todo!("implement SMTPE")
+                //5 bytes varlen
+                assert_eq!(data.len(), 5);
+                match SmpteOffset::parse(&data) {
+                    Ok(offset) => MetaMessage::SmpteOffset(offset),
+                    Err(e) => return Err(inv_data(reader, ParseError::from(e))),
+                }
                 //return Err(inv_data(reader, "SMTPE is not yet implemented"));
             }
             0x58 if data.len() >= 4 => {
@@ -140,15 +148,14 @@ impl<'a> MetaMessage<'a> {
 
     /// Mutates the data of a track
     pub fn adjust_track_info(self, info: &mut TrackInfo<'a>) {
-        use MetaMessage::*;
-
         match self {
-            TrackName(name) => {
+            MetaMessage::TrackName(name) => {
                 info.name = Some(name);
             }
-            DeviceName(device) => info.device = Some(device),
-            MidiChannel(channel) => info.channel = Some(channel),
-            Tempo(tempo) => info.tempo = tempo,
+            MetaMessage::DeviceName(device) => info.device = Some(device),
+            MetaMessage::MidiChannel(channel) => info.channel = Some(channel),
+            MetaMessage::Tempo(tempo) => info.tempo = tempo,
+            MetaMessage::SmpteOffset(offset) => info.smpte_offset = Some(offset),
             _ => {}
         }
     }

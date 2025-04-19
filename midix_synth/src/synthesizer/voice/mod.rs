@@ -71,7 +71,7 @@ pub(crate) struct Voice {
     // This is used to smooth out the cutoff frequency.
     smoothed_cutoff: f32,
 
-    voice_state: i32,
+    voice_state: VoiceState,
     pub(crate) voice_length: usize,
     min_voice_length: usize,
 }
@@ -143,7 +143,7 @@ impl Voice {
 
         let smoothed_cutoff = cutoff;
 
-        let voice_state = VoiceState::PLAYING;
+        let voice_state = VoiceState::Playing;
         //???
         let voice_length = 0;
 
@@ -191,8 +191,8 @@ impl Voice {
     }
 
     pub(crate) fn end(&mut self) {
-        if self.voice_state == VoiceState::PLAYING {
-            self.voice_state = VoiceState::RELEASE_REQUESTED;
+        if self.voice_state == VoiceState::Playing {
+            self.voice_state = VoiceState::ReleaseRequested;
         }
     }
 
@@ -312,22 +312,20 @@ impl Voice {
             return;
         }
 
-        if self.voice_state == VoiceState::RELEASE_REQUESTED && !channel_info.get_hold_pedal() {
+        if self.voice_state == VoiceState::ReleaseRequested && !channel_info.get_hold_pedal() {
             self.vol_env.release();
             self.mod_env.release();
             self.oscillator.release();
 
-            self.voice_state = VoiceState::RELEASED;
+            self.voice_state = VoiceState::Released;
         }
     }
 }
 
 #[allow(unused)]
-#[non_exhaustive]
-struct VoiceState {}
-
-impl VoiceState {
-    const PLAYING: i32 = 0;
-    const RELEASE_REQUESTED: i32 = 1;
-    const RELEASED: i32 = 2;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum VoiceState {
+    Playing,
+    ReleaseRequested,
+    Released,
 }

@@ -25,6 +25,7 @@ pub enum SystemCommonMessage<'a> {
     TuneRequest,
 }
 impl SystemCommonMessage<'_> {
+    #[allow(dead_code)]
     fn status(&self) -> u8 {
         use SystemCommonMessage::*;
         match self {

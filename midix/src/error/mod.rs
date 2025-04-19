@@ -29,12 +29,15 @@ pub enum ParseError {
     /// Invalid databyte (leading 1)
     #[error("Invalid Data Byte: {0:0X}")]
     InvalidDataByte(u8),
-    #[error("Invalid Status: {0:0X}")]
     /// Invalid status byte
+    #[error("Invalid Status: {0:0X}")]
     InvalidStatusByte(u8),
-    #[error("Invalid length: {0}")]
     /// Desired length for message not found
+    #[error("Invalid length: {0}")]
     InvalidLength(usize),
+    /// An error parsing something related to Smpte
+    #[error("Smpte: {0}")]
+    Smpte(#[from] SmpteError),
     /// There's something missing from the thing being parsed
     #[error("Expected Data")]
     MissingData,
@@ -162,4 +165,33 @@ pub enum FileError {
     /// No timing was found
     #[error("The file has no timing")]
     NoTiming,
+}
+
+/// An error related toe Smpte parsing
+#[derive(Debug, Error, PartialEq, Eq)]
+pub enum SmpteError {
+    /// The hour part of the meta smpte message is invalid
+    #[error("Invalid hour for offset. Expected 0-24. Got {0}")]
+    HourOffset(u8),
+    /// The minute part of the meta smpte message is invalid
+    #[error("Invalid minute for offset. Expected 0-59. Got {0}")]
+    MinuteOffset(u8),
+    /// The second part of the meta smpte message is invalid
+    #[error("Invalid second for offset. Expected 0-59. Got {0}")]
+    SecondOffset(u8),
+    /// The frame part of the meta smpte message is invalid
+    #[error("Invalid frame for offset. Expected 0-(n frames - 1). Got {0}")]
+    FrameOffset(u8),
+    /// The subframe part of the meta smpte message is invalid
+    #[error("Invalid subframe offset. Subframes are 1/100th (0-99) of a frame. Got {0}")]
+    Subframe(u8),
+    /// The varlen of the smpte info meta in the track was invalid
+    #[error("Smpte meta length for track invalid (always must be 5): {0}")]
+    Length(usize),
+    /// The track's leading second and third bits were invalid
+    #[error("Invalid frame for track interpretation. Should be 0, 1, 2, or 3. Got {0}")]
+    TrackFrame(u8),
+    /// The header's signed negative smpte frametime was invalid
+    #[error("Invalid SMPTE time in header (only -24, -25, -29, and -30 allowed.) Interpreted {0}")]
+    HeaderFrameTime(i8),
 }

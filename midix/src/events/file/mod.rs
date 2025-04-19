@@ -67,7 +67,7 @@ pub enum FileEvent<'a> {
     EOF,
 }
 
-impl<'a> From<RawHeaderChunk> for FileEvent<'a> {
+impl From<RawHeaderChunk> for FileEvent<'_> {
     fn from(value: RawHeaderChunk) -> Self {
         Self::Header(value)
     }

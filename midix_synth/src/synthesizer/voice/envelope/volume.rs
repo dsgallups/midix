@@ -126,7 +126,6 @@ impl VolumeEnvelope {
                     * utils::exp_cutoff(
                         self.release_slope * (current_time - self.release_start_time),
                     )) as f32;
-                //self.priority = self.value;
                 (val > utils::NON_AUDIBLE).then_some(val)
             }
         }

@@ -17,6 +17,7 @@ pub use track::*;
 
 use crate::{
     ParseError,
+    prelude::FormatType,
     reader::{ReadResult, Reader, ReaderError, ReaderErrorKind},
 };
 
@@ -67,6 +68,14 @@ impl<'a> MidiFile<'a> {
             Format::SequentiallyIndependent(t) => t.iter().collect(),
             Format::Simultaneous(s) => s.iter().collect(),
             Format::SingleMultiChannel(c) => [c].to_vec(),
+        }
+    }
+    /// Returns the format type for the file.
+    pub fn format_type(&self) -> FormatType {
+        match &self.format {
+            Format::SequentiallyIndependent(_) => FormatType::SequentiallyIndependent,
+            Format::Simultaneous(_) => FormatType::Simultaneous,
+            Format::SingleMultiChannel(_) => FormatType::SingleMultiChannel,
         }
     }
 }

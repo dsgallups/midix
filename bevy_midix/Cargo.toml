@@ -18,7 +18,10 @@ web = []
 [dependencies]
 midir = "0.10"
 crossbeam-channel = "0.5.15"
-midix = { version = "4.0.0-alpha", features = ["bevy"], path = "../midix" }
+midix = { version = "4.0.0-alpha", features = [
+    "bevy",
+    "std",
+], path = "../midix" }
 midix_synth = { version = "0.1.0-alpha", path = "../midix_synth" }
 thiserror = "2.0"
 tinyaudio = "1.1.0"

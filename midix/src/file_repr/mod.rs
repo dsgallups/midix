@@ -10,7 +10,9 @@ mod format;
 pub use format::*;
 pub mod chunk;
 pub mod meta;
+mod smpte;
 pub mod track;
+pub use smpte::*;
 
 /// Represents a 4 character type
 ///

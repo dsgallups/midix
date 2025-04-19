@@ -2,9 +2,10 @@ use std::{
     collections::VecDeque,
     pin::Pin,
     task::{Context, Poll},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
+use bevy::log::info;
 /*
 
 This Sink will send events to another thread that will constantly poll/flush command out to the synth.
@@ -44,7 +45,7 @@ impl SinkTask {
 impl Future for SinkTask {
     type Output = ();
 
-    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> std::task::Poll<Self::Output> {
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
         let mut messages_pushed = false;
         // first check if there's anything in the queue
         let elapsed = self.start.elapsed().as_micros() as u64;
@@ -52,7 +53,7 @@ impl Future for SinkTask {
             Ok(m) => Some(m),
             Err(e) => match e {
                 TryRecvError::Disconnected => {
-                    panic!("synth disconnected");
+                    return Poll::Ready(());
                 }
                 _ => None,
             },
@@ -61,6 +62,11 @@ impl Future for SinkTask {
 
             for message in messages.0 {
                 let amt = elapsed + message.timestamp;
+
+                info!(
+                    "Message will be played in {}",
+                    Duration::from_micros(amt).as_secs_f64()
+                );
                 self.queue.push_back(InnerCommand {
                     time_to_send: amt,
                     command: message.event,
@@ -82,6 +88,12 @@ impl Future for SinkTask {
             .is_some_and(|first| first.time_to_send <= elapsed)
         {
             let message = self.queue.pop_front().unwrap();
+
+            info!(
+                "({}) {:?}",
+                message.command.channel(),
+                message.command.event()
+            );
 
             self.synth_channel.send(message.command).unwrap();
         }
