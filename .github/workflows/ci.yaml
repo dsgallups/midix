@@ -50,11 +50,21 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --all-features
+      - name: Run cargo clippy (std)
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --features std
+      - name: Run cargo clippy (bevy)
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --features bevy
   test:
     strategy:
       matrix:
