@@ -4,7 +4,7 @@ use bevy::{prelude::*, tasks::IoTaskPool};
 use itertools::Itertools;
 use midix::prelude::ChannelVoiceMessage;
 use rustysynth::{Synthesizer, SynthesizerSettings};
-use tinyaudio::run_output_device;
+use tinyaudio::{OutputDeviceParameters, run_output_device};
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
@@ -30,6 +30,9 @@ pub struct SynthParams {
     /// Sample rate of your audio data. Typical values are: 11025 Hz, 22050 Hz, 44100 Hz (default), 48000 Hz,
     /// 96000 Hz
     pub sample_rate: usize,
+
+    /// Enable reverb and chorus for the synthesizer
+    pub enable_reverb_and_chorus: bool,
 }
 
 impl Default for SynthParams {
@@ -38,6 +41,7 @@ impl Default for SynthParams {
             channel_count: 2,
             sample_rate: 44100,
             channel_sample_count: 441,
+            enable_reverb_and_chorus: true,
         }
     }
 }
@@ -102,14 +106,21 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
 
     // the synth need not know about anything but a message to play instantaneously.
     let (synth_sender, synth_receiver) = crossbeam_channel::unbounded::<ChannelVoiceMessage>();
-    let synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
+    let mut synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
+    synth_settings.enable_reverb_and_chorus = synth.params.enable_reverb_and_chorus;
 
     let mut synthesizer = Synthesizer::new(&sound_font.file, &synth_settings).unwrap();
 
     let mut left = vec![0f32; synth.params.channel_sample_count];
     let mut right = vec![0f32; synth.params.channel_sample_count];
 
-    let _device = run_output_device(synth.params, {
+    let output_device_params = OutputDeviceParameters {
+        channels_count: synth.params.channel_count,
+        sample_rate: synth.params.sample_rate,
+        channel_sample_count: synth.params.channel_sample_count,
+    };
+
+    let _device = run_output_device(output_device_params, {
         move |data| {
             for command in synth_receiver.try_iter() {
                 let data1 = command.data_1_byte() as i32;
