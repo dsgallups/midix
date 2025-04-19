@@ -30,7 +30,7 @@ struct CrabRave(Handle<MidiFile>);
 /// <https://sites.google.com/site/soundfonts4u/>
 fn load_sf2(mut commands: Commands, asset_server: Res<AssetServer>, mut synth: ResMut<Synth>) {
     synth.use_soundfont(asset_server.load("8bitsf.sf2"));
-    let handle = asset_server.load::<MidiFile>("21Guns.mid");
+    let handle = asset_server.load::<MidiFile>("Africa.mid");
     commands.insert_resource(CrabRave(handle));
 }
 
