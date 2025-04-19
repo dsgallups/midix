@@ -16,7 +16,7 @@ This Sink will send events to another thread that will constantly poll/flush com
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use midix::prelude::ChannelVoiceMessage;
 
-use super::{SinkCommands, inner::InnerCommand};
+use super::{MidiSong, inner::InnerCommand};
 
 /// This struct is essentially the glue
 /// that determines when to send messages to the synthesizer.
@@ -27,15 +27,12 @@ use super::{SinkCommands, inner::InnerCommand};
 pub(crate) struct SinkTask {
     start: Instant,
     synth_channel: Sender<ChannelVoiceMessage>,
-    commands: Receiver<SinkCommands>,
+    commands: Receiver<MidiSong>,
     queue: VecDeque<InnerCommand>,
 }
 
 impl SinkTask {
-    pub fn new(
-        synth_channel: Sender<ChannelVoiceMessage>,
-        commands: Receiver<SinkCommands>,
-    ) -> Self {
+    pub fn new(synth_channel: Sender<ChannelVoiceMessage>, commands: Receiver<MidiSong>) -> Self {
         Self {
             start: Instant::now(),
             synth_channel,
@@ -61,9 +58,9 @@ impl Future for SinkTask {
                 _ => None,
             },
         } {
-            messages.0.sort_by_key(|m| m.timestamp);
+            messages.commands.sort_by_key(|m| m.timestamp);
 
-            for message in messages.0 {
+            for message in messages.commands {
                 let amt = elapsed + message.timestamp;
 
                 info!(
@@ -72,6 +69,7 @@ impl Future for SinkTask {
                 );
                 self.queue.push_back(InnerCommand {
                     time_to_send: amt,
+                    parent: messages.id,
                     command: message.event,
                 });
                 messages_pushed = true;

@@ -23,7 +23,7 @@ enum SynthState {
     Loaded {
         synth_channel: Sender<ChannelVoiceMessage>,
         /// the sink channel will process delayed events and interface with the synth channel directly
-        sink_channel: Sender<SinkCommands>,
+        sink_channel: Sender<MidiSong>,
     },
 }
 
@@ -107,5 +107,5 @@ impl Default for Synth {
 /// this is named as such not to conflict with [`midix::MidiSource`]
 pub trait MidiCommandSource {
     /// Create sink commands this type.
-    fn to_commands(&self) -> SinkCommands;
+    fn to_commands(&self) -> MidiSong;
 }

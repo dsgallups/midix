@@ -18,7 +18,7 @@ use midix::{
     reader::ReaderError,
 };
 
-use crate::synth::{MidiCommandSource, SinkCommand, SinkCommands};
+use crate::synth::{MidiCommandSource, MidiSong, SinkCommand};
 
 /// Sound font asset. Wraps a midix MidiFile
 #[derive(Asset, TypePath)]
@@ -68,7 +68,7 @@ impl AssetLoader for MidiFileLoader {
 }
 
 impl MidiCommandSource for MidiFile {
-    fn to_commands(&self) -> crate::prelude::SinkCommands {
+    fn to_commands(&self) -> MidiSong {
         let midi = &self.inner;
 
         let mut commands = Vec::new();
@@ -152,6 +152,6 @@ impl MidiCommandSource for MidiFile {
                 }
             }
         }
-        SinkCommands::new(commands)
+        MidiSong::new(commands)
     }
 }
