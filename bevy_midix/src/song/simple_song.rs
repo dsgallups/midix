@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
-use crate::synth::{MidiCommandSource, SinkCommand, SinkCommands};
+use crate::synth::{MidiCommandSource, MidiSong, SinkCommand};
 
 use super::{Beat, ChannelModifier};
 
@@ -91,7 +91,7 @@ impl SimpleMidiSong {
 }
 
 impl MidiCommandSource for SimpleMidiSong {
-    fn to_commands(&self) -> SinkCommands {
+    fn to_commands(&self) -> MidiSong {
         let micros_per_beat = 60_000_000. / self.beats_per_minute;
 
         let mut next_beat_additions = Vec::new();
@@ -145,6 +145,6 @@ impl MidiCommandSource for SimpleMidiSong {
             );
         }
 
-        SinkCommands::new(commands)
+        MidiSong::new(commands)
     }
 }
