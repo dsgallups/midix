@@ -11,4 +11,4 @@ DIRECTLY from [rustysynth v1.3.3](https://github.com/sinshu/rustysynth).
 
 This crate refactors portions of `rustysynth` to operate cohesively with `bevy_midix`.
 
-It should not be used *independently* just yet.
+It should not be used *independently*. It's not even used by `bevy_midix` nor `midix`!
