@@ -18,7 +18,7 @@ use midix::{
     reader::ReaderError,
 };
 
-use crate::synth::{MidiCommandSource, MidiSong, SinkCommand};
+use crate::synth::{MidiCommandSource, MidiSong, TimedMidiEvent};
 
 /// Sound font asset. Wraps a midix MidiFile
 #[derive(Asset, TypePath)]
@@ -144,7 +144,7 @@ impl MidiCommandSource for MidiFile {
                         let tick = event.accumulated_ticks();
                         let micros = micros_per_tick * tick as f64;
 
-                        commands.push(SinkCommand::new(micros as u64, *cv));
+                        commands.push(TimedMidiEvent::new(micros as u64, *cv));
                     }
                     _ => {
                         //idk

@@ -1,18 +1,28 @@
 use bevy::asset::uuid::Uuid;
 use midix::prelude::ChannelVoiceMessage;
 
+/// The identifier of a certain midi song
+#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+pub struct SongId(Uuid);
+
+impl Default for SongId {
+    fn default() -> Self {
+        SongId(Uuid::new_v4())
+    }
+}
+
 /// A set of commands
 pub struct MidiSong {
-    pub(crate) id: Uuid,
-    pub(crate) commands: Vec<SinkCommand>,
+    pub(crate) id: SongId,
+    pub(crate) commands: Vec<TimedMidiEvent>,
     pub(crate) looped: bool,
 }
 
 impl MidiSong {
     /// Create a set of commands
-    pub fn new(commands: Vec<SinkCommand>) -> Self {
+    pub fn new(commands: Vec<TimedMidiEvent>) -> Self {
         Self {
-            id: Uuid::new_v4(),
+            id: SongId::default(),
             commands,
             looped: false,
         }
@@ -23,18 +33,18 @@ impl MidiSong {
         self
     }
     /// The ID of the commands to do something later
-    pub fn id(&self) -> Uuid {
+    pub fn id(&self) -> SongId {
         self.id
     }
 }
 
 /// Send a command to the synth to play a note
-pub struct SinkCommand {
+pub struct TimedMidiEvent {
     /// Micros
     pub(crate) timestamp: u64,
     pub(crate) event: ChannelVoiceMessage,
 }
-impl SinkCommand {
+impl TimedMidiEvent {
     /// Create a command to play a note to the synth.
     ///
     /// Timestamp is delta micros from now.
