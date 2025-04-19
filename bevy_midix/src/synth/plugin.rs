@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use bevy::{prelude::*, tasks::IoTaskPool};
 use itertools::Itertools;
 use midix::prelude::ChannelVoiceMessage;
-use midix_synth::prelude::{Synthesizer, SynthesizerSettings};
+use rustysynth::{Synthesizer, SynthesizerSettings};
 use tinyaudio::run_output_device;
 
 use crate::asset::{SoundFont, SoundFontLoader};
@@ -104,7 +104,7 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
     let (synth_sender, synth_receiver) = crossbeam_channel::unbounded::<ChannelVoiceMessage>();
     let synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
 
-    let mut synthesizer = Synthesizer::new(sound_font.file.clone(), &synth_settings).unwrap();
+    let mut synthesizer = Synthesizer::new(&sound_font.file, &synth_settings).unwrap();
 
     let mut left = vec![0f32; synth.params.channel_sample_count];
     let mut right = vec![0f32; synth.params.channel_sample_count];
@@ -112,9 +112,11 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
     let _device = run_output_device(synth.params, {
         move |data| {
             for command in synth_receiver.try_iter() {
-                let data1 = command.data_1_byte();
-                let data2 = command.data_2_byte().unwrap_or(0);
-                synthesizer.process_midi_message(command.status(), data1, data2);
+                let data1 = command.data_1_byte() as i32;
+                let data2 = command.data_2_byte().unwrap_or(0) as i32;
+                let channel = command.channel().to_byte() as i32;
+                let command = (command.status() & 0b1111_0000) as i32;
+                synthesizer.process_midi_message(channel, command, data1, data2);
             }
             synthesizer.render(&mut left[..], &mut right[..]);
             for (i, value) in left.iter().interleave(right.iter()).enumerate() {
