@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use crossbeam_channel::Sender;
 use midix::prelude::ChannelVoiceMessage;
 use std::sync::Mutex;
-use tinyaudio::{OutputDevice, OutputDeviceParameters};
+use tinyaudio::OutputDevice;
 
 mod plugin;
 pub use plugin::*;
@@ -34,7 +34,7 @@ enum SynthState {
 /// see [`ChannelVoiceMessage`] for the list of options
 #[derive(Resource)]
 pub struct Synth {
-    params: OutputDeviceParameters,
+    params: SynthParams,
     synthesizer: SynthState,
     _device: Option<Mutex<OutputDevice>>,
 }
@@ -55,11 +55,7 @@ impl Synth {
     /// A good default is 441
     pub fn new(params: SynthParams) -> Self {
         Self {
-            params: OutputDeviceParameters {
-                channels_count: params.channel_count,
-                sample_rate: params.sample_rate,
-                channel_sample_count: params.channel_sample_count,
-            },
+            params,
             ..Default::default()
         }
     }
@@ -97,13 +93,8 @@ impl Synth {
 
 impl Default for Synth {
     fn default() -> Self {
-        let params = OutputDeviceParameters {
-            channels_count: 2,
-            sample_rate: 44100,
-            channel_sample_count: 441,
-        };
         Self {
-            params,
+            params: SynthParams::default(),
             synthesizer: SynthState::NotLoaded,
             _device: None,
         }
