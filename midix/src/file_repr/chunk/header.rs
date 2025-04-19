@@ -118,7 +118,7 @@ pub enum Timing {
     TicksPerQuarterNote(TicksPerQuarterNote),
 
     /// The midi file's delta times are defined using an SMPTE and MIDI Time Code
-    NegativeSmpte(SmtpeHeader),
+    Smpte(SmpteHeader),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
@@ -127,19 +127,19 @@ pub struct TicksPerQuarterNote {
 }
 impl TicksPerQuarterNote {
     /// Returns the ticks per quarter note for the file.
-    fn ticks_per_quarter_note(&self) -> u16 {
+    pub fn ticks_per_quarter_note(&self) -> u16 {
         let v = u16::from_be_bytes(self.inner);
         v & 0x7FFF
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Copy)]
-pub struct SmtpeHeader {
+pub struct SmpteHeader {
     frame: SmpteFrame,
     ticks_per_frame: DataByte,
 }
 
-impl SmtpeHeader {
+impl SmpteHeader {
     fn new(bytes: [u8; 2]) -> Result<Self, ParseError> {
         //first byte is known to be 1 when calling this
         //Bits 14 thru 8 contain one of the four values -24, -25, -29, or -30
@@ -161,7 +161,7 @@ impl SmtpeHeader {
             ticks_per_frame,
         })
     }
-    pub fn frame(&self) -> SmpteFrame {
+    pub fn fps(&self) -> SmpteFrame {
         self.frame
     }
 
@@ -180,7 +180,7 @@ impl Timing {
         Self::TicksPerQuarterNote(TicksPerQuarterNote { inner: [msb, lsb] })
     }
     pub fn new_smpte(frame: SmpteFrame, ticks_per_frame: DataByte) -> Self {
-        Self::NegativeSmpte(SmtpeHeader {
+        Self::Smpte(SmpteHeader {
             frame,
             ticks_per_frame,
         })
@@ -197,9 +197,9 @@ impl Timing {
                     inner: bytes,
                 }))
             }
-            1 => Ok(Timing::NegativeSmpte(SmtpeHeader::new(bytes).map_err(
-                |e| ReaderError::new(reader.buffer_position(), e.into()),
-            )?)),
+            1 => Ok(Timing::Smpte(SmpteHeader::new(bytes).map_err(|e| {
+                ReaderError::new(reader.buffer_position(), e.into())
+            })?)),
             t => Err(inv_data(reader, HeaderError::InvalidTiming(t))),
         }
     }
@@ -282,10 +282,10 @@ fn read_midi_header_smpte() {
 
     assert_eq!(result.len(), 6);
     assert_eq!(result.format_type(), FormatType::SingleMultiChannel);
-    let Timing::NegativeSmpte(smpte) = result.timing() else {
+    let Timing::Smpte(smpte) = result.timing() else {
         panic!("not smpte")
     };
-    assert_eq!(smpte.frame(), SmpteFrame::TwentyNine);
+    assert_eq!(smpte.fps(), SmpteFrame::TwentyNine);
     assert_eq!(smpte.ticks_per_frame(), 80);
     assert_eq!(result.num_tracks(), 1);
 }

@@ -11,7 +11,7 @@ use bevy::log::info;
 This Sink will send events to another thread that will constantly poll/flush command out to the synth.
 */
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
-use midix::prelude::{Channel, ChannelVoiceMessage};
+use midix::prelude::ChannelVoiceMessage;
 
 use super::{SinkCommands, inner::InnerCommand};
 

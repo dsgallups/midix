@@ -26,7 +26,7 @@ pub enum ChunkEvent<'a> {
     EOF,
 }
 
-impl<'a> From<RawHeaderChunk> for ChunkEvent<'a> {
+impl From<RawHeaderChunk> for ChunkEvent<'_> {
     fn from(value: RawHeaderChunk) -> Self {
         Self::Header(value)
     }

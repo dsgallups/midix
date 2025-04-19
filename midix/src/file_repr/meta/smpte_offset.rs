@@ -6,12 +6,29 @@ pub struct SmpteOffset {
     pub hour: u8,
     pub minute: u8,
     pub second: u8,
-    /// note that frames start at 0
+    /// note that frames start at 0.
+    /// This is the frame within the second.
     pub frame: u8,
     pub subframe: u8,
 }
 
 impl SmpteOffset {
+    /// Override this value's provided fps. Used when a file is defined in smpte
+    pub fn as_micros_with_override(&self, fps: SmpteFrame) -> f64 {
+        ((((self.hour as u32 * 3600) + (self.minute as u32) * 60 + self.second as u32) * 1_000_000)
+            as f64)
+            + ((self.frame as u32) * 1_000_000) as f64 / fps.as_f64()
+            + ((self.subframe as u32) * 10_000) as f64 / fps.as_f64()
+    }
+    /// Get the offset in terms of microseconds
+    pub fn as_micros(&self) -> f64 {
+        ((((self.hour as u32 * 3600) + (self.minute as u32) * 60 + self.second as u32) * 1_000_000)
+            as f64)
+            + ((self.frame as u32) * 1_000_000) as f64 / self.frame_type.as_f64()
+            + ((self.subframe as u32) * 10_000) as f64 / self.frame_type.as_f64()
+    }
+
+    /// Parse the offset given some slice with a length of 5
     pub fn parse(data: &[u8]) -> Result<Self, SmpteError> {
         if data.len() != 5 {
             return Err(SmpteError::Length(data.len()));

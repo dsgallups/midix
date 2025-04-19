@@ -11,3 +11,4 @@ midix_wasm_example/target
 !midix_wasm_example/assets/soundfont.sf2
 !bevy_midix/assets/8bitsf.sf2
 midix_wasm_example/dist
+.zed
