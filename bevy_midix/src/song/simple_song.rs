@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
-use crate::synth::{MidiCommandSource, MidiSong, SinkCommand};
+use crate::synth::{MidiCommandSource, MidiSong, TimedMidiEvent};
 
 use super::{Beat, ChannelModifier};
 
@@ -115,7 +115,7 @@ impl MidiCommandSource for SimpleMidiSong {
                 let iter = next_beat_additions
                     .iter()
                     .copied()
-                    .map(|nb| SinkCommand::new(timestamp, nb))
+                    .map(|nb| TimedMidiEvent::new(timestamp, nb))
                     .collect::<Vec<_>>();
 
                 next_beat_additions.clear();
@@ -141,7 +141,7 @@ impl MidiCommandSource for SimpleMidiSong {
                 additions_for_this_beat
                     .into_iter()
                     .chain(events.iter().copied())
-                    .map(|msg| SinkCommand::new(timestamp, msg)),
+                    .map(|msg| TimedMidiEvent::new(timestamp, msg)),
             );
         }
 
