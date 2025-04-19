@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use crossbeam_channel::Sender;
 use midix::prelude::ChannelVoiceMessage;
 use std::sync::Mutex;
+use thiserror::Error;
 use tinyaudio::OutputDevice;
 
 mod plugin;
@@ -23,8 +24,16 @@ enum SynthState {
     Loaded {
         synth_channel: Sender<ChannelVoiceMessage>,
         /// the sink channel will process delayed events and interface with the synth channel directly
-        sink_channel: Sender<MidiSong>,
+        sink_channel: Sender<SinkCommand>,
     },
+}
+
+/// Errors related to synthing
+#[derive(Error, Debug)]
+pub enum SynthError {
+    /// The synthesizer isn't ready yet (soundfont not loaded)
+    #[error("The synthesizer isn't ready yet (soundfont not loaded)")]
+    NotReady,
 }
 
 /// Plays audio commands with the provided soundfont
@@ -70,13 +79,27 @@ impl Synth {
     }
 
     /// Push something that makes the synth do things
-    pub fn push_audio(&self, song: &impl MidiCommandSource) {
+    pub fn push_audio(&self, song: impl SongWriter) -> Result<SongId, SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
-            return;
+            return Err(SynthError::NotReady);
         };
-        let commands = song.to_commands();
-        sink_channel.send(commands).unwrap();
+        let song = song.into_song();
+        let id = song.id();
+        sink_channel.send(SinkCommand::NewSong(song)).unwrap();
+        Ok(id)
+    }
+
+    /// Stop a certain song from playing.
+    ///
+    /// Note there is no pause. TODO
+    pub fn stop(&self, id: SongId) -> Result<(), SynthError> {
+        let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
+            error!("An event was passed to the synth, but the soundfont has not been loaded!");
+            return Err(SynthError::NotReady);
+        };
+        sink_channel.send(SinkCommand::Stop(id)).unwrap();
+        Ok(())
     }
 
     /// Returns true if the sound font has been loaded!
@@ -105,7 +128,13 @@ impl Default for Synth {
 /// that has timestamps associated with midi events.
 ///
 /// this is named as such not to conflict with [`midix::MidiSource`]
-pub trait MidiCommandSource {
+pub trait SongWriter {
     /// Create sink commands this type.
-    fn to_commands(&self) -> MidiSong;
+    fn into_song(self) -> MidiSong;
+}
+
+impl SongWriter for MidiSong {
+    fn into_song(self) -> MidiSong {
+        self
+    }
 }

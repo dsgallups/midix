@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
-use crate::synth::{MidiCommandSource, MidiSong, TimedMidiEvent};
+use crate::synth::{MidiSong, SongWriter, TimedMidiEvent};
 
 use super::{Beat, ChannelModifier};
 
@@ -90,8 +90,8 @@ impl SimpleMidiSong {
     }
 }
 
-impl MidiCommandSource for SimpleMidiSong {
-    fn to_commands(&self) -> MidiSong {
+impl SongWriter for SimpleMidiSong {
+    fn into_song(self) -> MidiSong {
         let micros_per_beat = 60_000_000. / self.beats_per_minute;
 
         let mut next_beat_additions = Vec::new();

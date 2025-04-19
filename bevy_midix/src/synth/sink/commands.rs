@@ -2,7 +2,7 @@ use bevy::asset::uuid::Uuid;
 use midix::prelude::ChannelVoiceMessage;
 
 /// The identifier of a certain midi song
-#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 pub struct SongId(Uuid);
 
 impl Default for SongId {
@@ -11,7 +11,16 @@ impl Default for SongId {
     }
 }
 
+/// Command the sink to do something
+pub enum SinkCommand {
+    /// Play a new song
+    NewSong(MidiSong),
+    /// Stop a song
+    Stop(SongId),
+}
+
 /// A set of commands
+#[derive(Clone, Debug)]
 pub struct MidiSong {
     pub(crate) id: SongId,
     pub(crate) commands: Vec<TimedMidiEvent>,
@@ -39,6 +48,7 @@ impl MidiSong {
 }
 
 /// Send a command to the synth to play a note
+#[derive(Copy, Clone, Debug)]
 pub struct TimedMidiEvent {
     /// Micros
     pub(crate) timestamp: u64,

@@ -16,7 +16,51 @@ This Sink will send events to another thread that will constantly poll/flush com
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use midix::prelude::ChannelVoiceMessage;
 
-use super::{MidiSong, inner::InnerCommand};
+use super::{MidiSong, SinkCommand, SongId, TimedMidiEvent, inner::InnerCommand};
+
+#[derive(Default)]
+pub struct CommandQueue(VecDeque<InnerCommand>);
+
+impl CommandQueue {
+    fn queue_commands(
+        &mut self,
+        id: SongId,
+        events: impl IntoIterator<Item = TimedMidiEvent>,
+        elapsed: u64,
+    ) {
+        for message in events {
+            let amt = elapsed + message.timestamp;
+
+            info!(
+                "Message will be played in {}",
+                Duration::from_micros(amt).as_secs_f64()
+            );
+            self.push_back(InnerCommand {
+                time_to_send: amt,
+                parent: id,
+                command: message.event,
+            });
+        }
+    }
+    fn push_back(&mut self, command: InnerCommand) {
+        self.0.push_back(command);
+    }
+    fn sort(&mut self) {
+        self.0.make_contiguous().sort_by_key(|m| m.time_to_send);
+    }
+    fn front(&self) -> Option<&InnerCommand> {
+        self.0.front()
+    }
+    fn pop_front(&mut self) -> Option<InnerCommand> {
+        self.0.pop_front()
+    }
+    fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&InnerCommand) -> bool,
+    {
+        self.0.retain(f);
+    }
+}
 
 /// This struct is essentially the glue
 /// that determines when to send messages to the synthesizer.
@@ -27,17 +71,63 @@ use super::{MidiSong, inner::InnerCommand};
 pub(crate) struct SinkTask {
     start: Instant,
     synth_channel: Sender<ChannelVoiceMessage>,
-    commands: Receiver<MidiSong>,
-    queue: VecDeque<InnerCommand>,
+    commands: Receiver<SinkCommand>,
+    queue: CommandQueue,
+    /// Stored songs that are looping
+    keepsakes: Vec<SongInfo>,
+}
+
+struct SongInfo {
+    song: MidiSong,
+    last_repeated: Instant,
+    length: u64,
 }
 
 impl SinkTask {
-    pub fn new(synth_channel: Sender<ChannelVoiceMessage>, commands: Receiver<MidiSong>) -> Self {
+    pub fn new(
+        synth_channel: Sender<ChannelVoiceMessage>,
+        commands: Receiver<SinkCommand>,
+    ) -> Self {
         Self {
             start: Instant::now(),
             synth_channel,
             commands,
-            queue: VecDeque::new(),
+            queue: CommandQueue::default(),
+            keepsakes: Vec::new(),
+        }
+    }
+
+    // make sure the commands are already sorted.
+    fn keep(&mut self, song: MidiSong) {
+        let length = song.commands.last().map(|e| e.timestamp).unwrap_or(0);
+        self.keepsakes.push(SongInfo {
+            song,
+            last_repeated: Instant::now(),
+            length,
+        })
+    }
+
+    // song commands should already be sorted.
+    //
+    // elapsed is in micros
+    fn queue_commands(
+        &mut self,
+        id: SongId,
+        events: impl IntoIterator<Item = TimedMidiEvent>,
+        elapsed: u64,
+    ) {
+        for message in events {
+            let amt = elapsed + message.timestamp;
+
+            info!(
+                "Message will be played in {}",
+                Duration::from_micros(amt).as_secs_f64()
+            );
+            self.queue.push_back(InnerCommand {
+                time_to_send: amt,
+                parent: id,
+                command: message.event,
+            });
         }
     }
 }
@@ -46,10 +136,10 @@ impl Future for SinkTask {
     type Output = ();
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let mut messages_pushed = false;
+        let mut new_messages_pushed = false;
         // first check if there's anything in the queue
         let elapsed = self.start.elapsed().as_micros() as u64;
-        while let Some(mut messages) = match self.commands.try_recv() {
+        while let Some(messages) = match self.commands.try_recv() {
             Ok(m) => Some(m),
             Err(e) => match e {
                 TryRecvError::Disconnected => {
@@ -58,27 +148,27 @@ impl Future for SinkTask {
                 _ => None,
             },
         } {
-            messages.commands.sort_by_key(|m| m.timestamp);
-
-            for message in messages.commands {
-                let amt = elapsed + message.timestamp;
-
-                info!(
-                    "Message will be played in {}",
-                    Duration::from_micros(amt).as_secs_f64()
-                );
-                self.queue.push_back(InnerCommand {
-                    time_to_send: amt,
-                    parent: messages.id,
-                    command: message.event,
-                });
-                messages_pushed = true;
+            match messages {
+                SinkCommand::NewSong(mut song) => {
+                    song.commands.sort_by_key(|m| m.timestamp);
+                    if song.looped {
+                        self.keep(song.clone());
+                    }
+                    if !song.commands.is_empty() {
+                        new_messages_pushed = true;
+                    }
+                    self.queue_commands(song.id(), song.commands, elapsed);
+                }
+                SinkCommand::Stop(song_id) => {
+                    self.queue.retain(|command| command.parent != song_id);
+                    self.keepsakes.retain(|info| info.song.id() != song_id);
+                }
             }
 
             //do something
         }
-        if messages_pushed {
-            self.queue.make_contiguous().sort_by_key(|m| m.time_to_send);
+        if new_messages_pushed {
+            self.queue.sort();
         }
 
         let elapsed = self.start.elapsed().as_micros() as u64;
@@ -97,6 +187,18 @@ impl Future for SinkTask {
             );
 
             self.synth_channel.send(message.command).unwrap();
+        }
+
+        //finally, queue any songs that have elapsed their length
+        let mut songs_to_clone = Vec::new();
+        for info in self.keepsakes.iter_mut() {
+            if info.last_repeated.elapsed().as_micros() as u64 >= info.length {
+                songs_to_clone.push((info.song.id(), info.song.commands.clone()));
+                info.last_repeated = Instant::now();
+            }
+        }
+        for (id, iter) in songs_to_clone {
+            self.queue.queue_commands(id, iter, elapsed);
         }
 
         cx.waker().wake_by_ref();
