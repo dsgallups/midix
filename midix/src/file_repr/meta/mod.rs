@@ -13,9 +13,12 @@ mod key_signature;
 pub use key_signature::*;
 mod text;
 pub use text::*;
+mod smpte_offset;
+pub use smpte_offset::*;
 
 use crate::{prelude::*, reader::ReaderError};
 /// A "meta message", as defined by the SMF spec.
+/// These are in tracks.
 /// These events carry metadata about the track, such as tempo, time signature, copyright, etc...
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum MetaMessage<'a> {
@@ -151,6 +154,7 @@ impl<'a> MetaMessage<'a> {
             DeviceName(device) => info.device = Some(device),
             MidiChannel(channel) => info.channel = Some(channel),
             Tempo(tempo) => info.tempo = tempo,
+            SmpteOffset(offset)
             _ => {}
         }
     }

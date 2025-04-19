@@ -35,6 +35,8 @@ pub enum ParseError {
     #[error("Invalid length: {0}")]
     /// Desired length for message not found
     InvalidLength(usize),
+    #[error("Smpte: {0}")]
+    Smpte(#[from] SmpteError),
     /// There's something missing from the thing being parsed
     #[error("Expected Data")]
     MissingData,
@@ -162,4 +164,22 @@ pub enum FileError {
     /// No timing was found
     #[error("The file has no timing")]
     NoTiming,
+}
+
+#[derive(Debug, Error)]
+pub enum SmpteError {
+    #[error("Invalid hour for offset. Expected 0-24. Got {0}")]
+    HourOffset(u8),
+    #[error("Invalid minute for offset. Expected 0-59. Got {0}")]
+    MinuteOffset(u8),
+    #[error("Invalid hour for offset. Expected 0-59. Got {0}")]
+    SecondOffset(u8),
+    #[error("Invalid hour for offset. Expected 0-24. Got {0}")]
+    FrameOffset(u8),
+    #[error("Smpte meta length for track invalid (always must be 5): {0}")]
+    Length(usize),
+    #[error("Invalid frame for track interpretation. Should be 0, 1, 2, or 3. Got 0")]
+    TrackFrame(u8),
+    #[error("Invalid SMPTE time in header (only -24, -25, -29, and -30 allowed.) Interpreted {0}")]
+    HeaderFrameTime(i8),
 }

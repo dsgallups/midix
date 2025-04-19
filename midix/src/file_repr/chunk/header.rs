@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, reader::ReaderError};
 
 #[doc = r#"
 The header chunk at the beginning of the file specifies some basic information about
@@ -103,8 +103,8 @@ impl RawHeaderChunk {
     /// Get the timing property of the header
     ///
     /// identified as `<division>` in the docs
-    pub fn timing(&self) -> &Timing {
-        &self.timing
+    pub fn timing(&self) -> Timing {
+        self.timing
     }
 }
 
@@ -112,13 +112,62 @@ impl RawHeaderChunk {
 ///
 /// This is either the number of ticks per quarter note or
 /// the alternative SMTPE format. See the [`RawHeaderChunk`] docs for more information.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Timing {
     /// The midi file's delta times are defined using a tick rate per quarter note
-    TicksPerQuarterNote([u8; 2]),
+    TicksPerQuarterNote(TicksPerQuarterNote),
 
     /// The midi file's delta times are defined using an SMPTE and MIDI Time Code
-    NegativeSmpte([u8; 2]),
+    NegativeSmpte(SmtpeHeader),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+pub struct TicksPerQuarterNote {
+    inner: [u8; 2],
+}
+impl TicksPerQuarterNote {
+    /// Returns the ticks per quarter note for the file.
+    fn ticks_per_quarter_note(&self) -> u16 {
+        let v = u16::from_be_bytes(self.inner);
+        v & 0x7FFF
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Copy)]
+pub struct SmtpeHeader {
+    frame: SmpteFrame,
+    ticks_per_frame: DataByte,
+}
+
+impl SmtpeHeader {
+    fn new(bytes: [u8; 2]) -> Result<Self, ParseError> {
+        //first byte is known to be 1 when calling this
+        //Bits 14 thru 8 contain one of the four values -24, -25, -29, or -30
+        let byte = bytes[0] as i8;
+
+        let frame = match byte {
+            -24 => SmpteFrame::TwentyFour,
+            -25 => SmpteFrame::TwentyFive,
+            -29 => {
+                //drop frame (29.997)
+                SmpteFrame::TwentyNine
+            }
+            -30 => SmpteFrame::Thirty,
+            _ => return Err(ParseError::InvalidSmpteFrame(byte)),
+        };
+        let ticks_per_frame = DataByte::new(bytes[1])?;
+        Ok(Self {
+            frame,
+            ticks_per_frame,
+        })
+    }
+    pub fn frame(&self) -> SmpteFrame {
+        self.frame
+    }
+
+    pub fn ticks_per_frame(&self) -> u8 {
+        self.ticks_per_frame.0
+    }
 }
 
 impl Timing {
@@ -128,7 +177,13 @@ impl Timing {
     pub fn new_ticks_per_quarter_note(tpqn: u16) -> Self {
         let msb = (tpqn >> 8) as u8;
         let lsb = (tpqn & 0x00FF) as u8;
-        Self::TicksPerQuarterNote([msb, lsb])
+        Self::TicksPerQuarterNote(TicksPerQuarterNote { inner: [msb, lsb] })
+    }
+    pub fn new_smpte(frame: SmpteFrame, ticks_per_frame: DataByte) -> Self {
+        Self::NegativeSmpte(SmtpeHeader {
+            frame,
+            ticks_per_frame,
+        })
     }
 
     pub(crate) fn read<'slc, 'r, R: MidiSource<'slc>>(
@@ -138,9 +193,13 @@ impl Timing {
         match bytes[0] >> 7 {
             0 => {
                 //this is ticks per quarter_note
-                Ok(Timing::TicksPerQuarterNote(bytes))
+                Ok(Timing::TicksPerQuarterNote(TicksPerQuarterNote {
+                    inner: bytes,
+                }))
             }
-            1 => Ok(Timing::NegativeSmpte(bytes)),
+            1 => Ok(Timing::NegativeSmpte(SmtpeHeader::new(bytes).map_err(
+                |e| ReaderError::new(reader.buffer_position(), e.into()),
+            )?)),
             t => Err(inv_data(reader, HeaderError::InvalidTiming(t))),
         }
     }
@@ -148,11 +207,8 @@ impl Timing {
     /// as ticks per quarter note
     pub fn ticks_per_quarter_note(&self) -> Option<u16> {
         match self {
-            Self::TicksPerQuarterNote(t) => {
-                let v = u16::from_be_bytes(*t);
-                Some(v & 0x7FFF)
-            }
-            _ => todo!(),
+            Self::TicksPerQuarterNote(t) => Some(t.ticks_per_quarter_note()),
+            _ => None,
         }
     }
 }
@@ -211,4 +267,25 @@ fn read_midi_header_single_multichannel_invalid() {
 
     let _err = RawHeaderChunk::read(&mut reader).expect_err("Invalid");
     //assert!(matches!(err, ReaderError::Io(_)))
+}
+#[test]
+fn read_midi_header_smpte() {
+    let bytes = [
+        0x00, 0x00, 0x00, 0x06, //length
+        0x00, 0x00, //format
+        0x00, 0x01, //num_tracks
+        0xE3, 0x50, //timing
+    ];
+    let mut reader = Reader::from_byte_slice(&bytes);
+
+    let result = RawHeaderChunk::read(&mut reader).unwrap();
+
+    assert_eq!(result.len(), 6);
+    assert_eq!(result.format_type(), FormatType::SingleMultiChannel);
+    let Timing::NegativeSmpte(smpte) = result.timing() else {
+        panic!("not smpte")
+    };
+    assert_eq!(smpte.frame(), SmpteFrame::TwentyNine);
+    assert_eq!(smpte.ticks_per_frame(), 80);
+    assert_eq!(result.num_tracks(), 1);
 }

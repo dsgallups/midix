@@ -40,7 +40,7 @@ impl<'a> MidiFileBuilder<'a> {
                     FormatStage::KnownFormat(_) | FormatStage::Formatted(_) => {
                         return Err(ReaderErrorKind::chunk(ChunkError::DuplicateFormat));
                     }
-                    FormatStage::KnownTracks(tracks) => match &h.format_type() {
+                    FormatStage::KnownTracks(tracks) => match h.format_type() {
                         FormatType::Simultaneous => {
                             self.format =
                                 FormatStage::Formatted(Format::Simultaneous(tracks.clone()))
