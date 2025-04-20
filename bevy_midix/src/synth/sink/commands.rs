@@ -41,6 +41,14 @@ impl MidiSong {
         self.looped = true;
         self
     }
+    /// set's the speed of the commands. Not absolute.
+    pub fn set_speed(mut self, speed: f64) -> Self {
+        let speed = 1. / speed;
+        self.commands
+            .iter_mut()
+            .for_each(|cmd| cmd.timestamp = (cmd.timestamp as f64 * speed) as u64);
+        self
+    }
     /// The ID of the commands to do something later
     pub fn id(&self) -> SongId {
         self.id

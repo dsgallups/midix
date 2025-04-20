@@ -14,6 +14,7 @@ use crate::message::{ChannelVoiceMessage, VoiceEvent};
 #[derive(
     Clone, Copy, PartialEq, Eq, Debug, Hash, IntoPrimitive, TryFromPrimitive, PartialOrd, Ord,
 )]
+#[cfg_attr(feature = "bevy", derive(bevy::prelude::Component))]
 #[repr(u8)]
 pub enum Channel {
     /// 0bxxxx0000

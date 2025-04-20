@@ -76,6 +76,23 @@ pub enum Dynamic {
     Fortississimo,
 }
 
+impl fmt::Display for Dynamic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Dynamic::*;
+        match self {
+            Off => write!(f, "off"),
+            Pianissimo => write!(f, "pp"),
+            Piano => write!(f, "p"),
+            Pianississimo => write!(f, "ppp"),
+            MezzoPiano => write!(f, "mp"),
+            MezzoForte => write!(f, "mf"),
+            Forte => write!(f, "f"),
+            Fortissimo => write!(f, "ff"),
+            Fortississimo => write!(f, "fff"),
+        }
+    }
+}
+
 impl Dynamic {
     /// No sound
     pub fn off() -> Self {
