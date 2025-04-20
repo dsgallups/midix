@@ -74,8 +74,6 @@ impl SongWriter for MidiFile {
         let mut commands = Vec::new();
         let tracks = midi.tracks();
 
-        let ticks_per_qn = midi.header().timing().ticks_per_quarter_note().unwrap();
-
         // is Some if the tempo is set for the whole file.
         // None if the format is sequentially independent
         let file_tempo = match midi.format_type() {
