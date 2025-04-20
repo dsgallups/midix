@@ -134,27 +134,45 @@ fn load_audio_font(
         sample_rate: synth.params.sample_rate,
         channel_sample_count: synth.params.channel_sample_count,
     };
-    if synth.params.synth_event_reader {
-        commands.insert_resource(SynthCommandReaderReceiver {
-            receiver: synth_receiver.clone(),
-        });
-    }
 
-    let _device = run_output_device(output_device_params, {
-        move |data| {
-            for command in synth_receiver.try_iter() {
-                let data1 = command.data_1_byte() as i32;
-                let data2 = command.data_2_byte().unwrap_or(0) as i32;
-                let channel = command.channel().to_byte() as i32;
-                let command = (command.status() & 0b1111_0000) as i32;
-                synthesizer.process_midi_message(channel, command, data1, data2);
+    let _device = if synth.params.synth_event_reader {
+        let (send, recv) = crossbeam_channel::unbounded();
+        commands.insert_resource(SynthCommandReaderReceiver { receiver: recv });
+
+        run_output_device(output_device_params, {
+            move |data| {
+                for command in synth_receiver.try_iter() {
+                    // I am uneasy about this.
+                    send.try_send(command).unwrap();
+                    let data1 = command.data_1_byte() as i32;
+                    let data2 = command.data_2_byte().unwrap_or(0) as i32;
+                    let channel = (command.status() & 0b0000_1111) as i32;
+                    let command = (command.status() & 0b1111_0000) as i32;
+                    synthesizer.process_midi_message(channel, command, data1, data2);
+                }
+                synthesizer.render(&mut left[..], &mut right[..]);
+                for (i, value) in left.iter().interleave(right.iter()).enumerate() {
+                    data[i] = *value;
+                }
             }
-            synthesizer.render(&mut left[..], &mut right[..]);
-            for (i, value) in left.iter().interleave(right.iter()).enumerate() {
-                data[i] = *value;
+        })
+    } else {
+        run_output_device(output_device_params, {
+            move |data| {
+                for command in synth_receiver.try_iter() {
+                    let data1 = command.data_1_byte() as i32;
+                    let data2 = command.data_2_byte().unwrap_or(0) as i32;
+                    let channel = (command.status() & 0b0000_1111) as i32;
+                    let command = (command.status() & 0b1111_0000) as i32;
+                    synthesizer.process_midi_message(channel, command, data1, data2);
+                }
+                synthesizer.render(&mut left[..], &mut right[..]);
+                for (i, value) in left.iter().interleave(right.iter()).enumerate() {
+                    data[i] = *value;
+                }
             }
-        }
-    })
+        })
+    }
     .unwrap();
 
     let (sink_sender, sink_receiver) = crossbeam_channel::unbounded();
