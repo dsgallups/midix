@@ -16,6 +16,9 @@ pub use plugin::*;
 mod sink;
 pub use sink::*;
 
+mod receiver;
+use receiver::*;
+
 enum SynthState {
     NotLoaded,
     LoadHandle {

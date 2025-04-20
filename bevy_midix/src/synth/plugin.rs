@@ -8,7 +8,7 @@ use tinyaudio::{OutputDeviceParameters, run_output_device};
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
-use super::{SinkTask, Synth, SynthState};
+use super::{SinkTask, Synth, SynthCommandReaderReceiver, SynthState, receiver};
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
@@ -33,6 +33,9 @@ pub struct SynthParams {
 
     /// Enable reverb and chorus for the synthesizer
     pub enable_reverb_and_chorus: bool,
+
+    /// Inserts an [`EventReader<ChannelVoiceMessage>`] that are messages send to the synth.. Disabled by default (queue will overflow if unused).
+    pub synth_event_reader: bool,
 }
 
 impl Default for SynthParams {
@@ -42,6 +45,7 @@ impl Default for SynthParams {
             sample_rate: 44100,
             channel_sample_count: 441,
             enable_reverb_and_chorus: true,
+            synth_event_reader: false,
         }
     }
 }
@@ -67,6 +71,13 @@ impl Plugin for SynthPlugin {
                 )
                     .chain(),
             );
+
+        if self.params.synth_event_reader {
+            app.add_event::<ChannelVoiceMessage>().add_systems(
+                PreUpdate,
+                receiver::poll_receiver.run_if(in_state(SynthStatus::Loaded)),
+            );
+        }
     }
 }
 
@@ -93,7 +104,11 @@ impl Synth {
     }
 }
 
-fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
+fn load_audio_font(
+    mut commands: Commands,
+    mut synth: ResMut<Synth>,
+    assets: Res<Assets<SoundFont>>,
+) {
     let SynthState::LoadHandle { sound_font } = &synth.synthesizer else {
         warn!(
             "loading the audio font is out of sync. This is an issue with bevy_midix. Please file an issue!"
@@ -119,6 +134,11 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
         sample_rate: synth.params.sample_rate,
         channel_sample_count: synth.params.channel_sample_count,
     };
+    if synth.params.synth_event_reader {
+        commands.insert_resource(SynthCommandReaderReceiver {
+            receiver: synth_receiver.clone(),
+        });
+    }
 
     let _device = run_output_device(output_device_params, {
         move |data| {
