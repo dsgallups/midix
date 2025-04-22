@@ -849,6 +849,7 @@ dependencies = [
  "rustysynth",
  "thiserror 2.0.12",
  "tinyaudio",
+ "web-time",
 ]
 
 [[package]]
