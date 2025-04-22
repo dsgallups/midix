@@ -49,7 +49,7 @@ fn play_song(
     };
     println!("pushing audio!");
 
-    synth.push_audio(file).unwrap();
+    synth.push_audio(file.to_song()).unwrap();
 
     *run = true;
 }

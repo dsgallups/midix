@@ -1,5 +1,9 @@
+use std::{iter, time::Duration};
+
 use bevy::asset::uuid::Uuid;
 use midix::prelude::ChannelVoiceMessage;
+
+use crate::synth::SongWriter;
 
 /// The identifier of a certain midi song
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
@@ -10,11 +14,38 @@ impl Default for SongId {
         SongId(Uuid::new_v4())
     }
 }
+/// The type of song that will be sent to the synth
+#[derive(Clone, Copy)]
+pub enum SongType {
+    /// No identifier, and therefore, no looping
+    Anonymous,
+    /// An identifier, and therefore, looping
+    Identified {
+        /// The song identifer
+        id: SongId,
+        /// true if it loops
+        looped: bool,
+    },
+}
+
+impl SongType {
+    pub(crate) fn id(&self) -> Option<SongId> {
+        match self {
+            SongType::Anonymous => None,
+            SongType::Identified { id, .. } => Some(*id),
+        }
+    }
+}
 
 /// Command the sink to do something
 pub enum SinkCommand {
     /// Play a new song
-    NewSong(MidiSong),
+    NewSong {
+        /// What kind of song is this?
+        song_type: SongType,
+        /// The associated events with the song
+        commands: Vec<TimedMidiEvent>,
+    },
     /// Stop a song
     Stop(SongId),
 }
@@ -37,7 +68,7 @@ impl MidiSong {
         }
     }
     /// Commands should be looped
-    pub fn looped(mut self) -> Self {
+    pub fn set_looped(mut self) -> Self {
         self.looped = true;
         self
     }
@@ -48,10 +79,6 @@ impl MidiSong {
             .iter_mut()
             .for_each(|cmd| cmd.timestamp = (cmd.timestamp as f64 * speed) as u64);
         self
-    }
-    /// The ID of the commands to do something later
-    pub fn id(&self) -> SongId {
-        self.id
     }
 }
 
@@ -68,5 +95,19 @@ impl TimedMidiEvent {
     /// Timestamp is delta micros from now.
     pub fn new(timestamp: u64, event: ChannelVoiceMessage) -> Self {
         Self { timestamp, event }
+    }
+
+    /// Use a duration to create a timed midi event
+    pub fn new_from_duration(duration: Duration, event: ChannelVoiceMessage) -> Self {
+        Self {
+            timestamp: duration.as_micros() as u64,
+            event,
+        }
+    }
+}
+
+impl SongWriter for TimedMidiEvent {
+    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
+        iter::once(*self)
     }
 }

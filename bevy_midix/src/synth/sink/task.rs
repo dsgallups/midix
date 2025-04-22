@@ -16,7 +16,7 @@ This Sink will send events to another thread that will constantly poll/flush com
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use midix::prelude::ChannelVoiceMessage;
 
-use super::{MidiSong, SinkCommand, SongId, TimedMidiEvent, inner::InnerCommand};
+use super::{MidiSong, SinkCommand, SongId, SongType, TimedMidiEvent, inner::InnerCommand};
 
 #[derive(Default)]
 pub struct CommandQueue(VecDeque<InnerCommand>);
@@ -24,7 +24,7 @@ pub struct CommandQueue(VecDeque<InnerCommand>);
 impl CommandQueue {
     fn queue_commands(
         &mut self,
-        id: SongId,
+        id: Option<SongId>,
         events: impl IntoIterator<Item = TimedMidiEvent>,
         elapsed: u64,
     ) {
@@ -112,7 +112,7 @@ impl SinkTask {
     // elapsed is in micros
     fn queue_commands(
         &mut self,
-        id: SongId,
+        id: Option<SongId>,
         events: impl IntoIterator<Item = TimedMidiEvent>,
         elapsed: u64,
     ) {
@@ -149,19 +149,30 @@ impl Future for SinkTask {
             },
         } {
             match messages {
-                SinkCommand::NewSong(mut song) => {
-                    song.commands.sort_by_key(|m| m.timestamp);
-                    if song.looped {
-                        self.keep(song.clone());
+                SinkCommand::NewSong {
+                    song_type,
+                    mut commands,
+                } => {
+                    if commands.is_empty() {
+                        continue;
                     }
-                    if !song.commands.is_empty() {
-                        new_messages_pushed = true;
+                    commands.sort_by_key(|m| m.timestamp);
+
+                    new_messages_pushed = true;
+                    if let SongType::Identified { id, looped } = song_type {
+                        self.keep(MidiSong {
+                            id,
+                            commands: commands.clone(),
+                            looped,
+                        });
                     }
-                    self.queue_commands(song.id(), song.commands, elapsed);
+
+                    self.queue_commands(song_type.id(), commands, elapsed);
                 }
                 SinkCommand::Stop(song_id) => {
-                    self.queue.retain(|command| command.parent != song_id);
-                    self.keepsakes.retain(|info| info.song.id() != song_id);
+                    self.queue
+                        .retain(|command| command.parent.is_none_or(|id| id != song_id));
+                    self.keepsakes.retain(|info| info.song.id != song_id);
                 }
             }
 
@@ -193,7 +204,7 @@ impl Future for SinkTask {
         let mut songs_to_clone = Vec::new();
         for info in self.keepsakes.iter_mut() {
             if info.last_repeated.elapsed().as_micros() as u64 >= info.length {
-                songs_to_clone.push((info.song.id(), info.song.commands.clone()));
+                songs_to_clone.push((Some(info.song.id), info.song.commands.clone()));
                 info.last_repeated = Instant::now();
             }
         }

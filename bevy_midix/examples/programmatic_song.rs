@@ -152,5 +152,5 @@ fn make_song(synth: Res<Synth>, mut play_again: Local<Option<PlaySongAgain>>, ti
     //         .play_notes([base_key, higher_key]);
     // }
 
-    synth.push_audio(song).unwrap();
+    synth.push_audio(song.into_song()).unwrap();
 }

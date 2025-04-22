@@ -81,15 +81,36 @@ impl Synth {
         synth_channel.send(event).unwrap();
     }
 
-    /// Push something that makes the synth do things
-    pub fn push_audio(&self, song: impl SongWriter) -> Result<SongId, SynthError> {
+    /// Push something that makes the synth do things.
+    ///
+    /// Returns a songid IF it already has one, or IF one was generated (because of looping)
+    pub fn push_audio(&self, song: impl SongWriter) -> Result<Option<SongId>, SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return Err(SynthError::NotReady);
         };
-        let song = song.into_song();
-        let id = song.id();
-        sink_channel.send(SinkCommand::NewSong(song)).unwrap();
+        //let song = song.into_song();
+        let (id, song_type) = match (song.song_id(), song.looped()) {
+            (Some(id), _) => (
+                Some(id),
+                SongType::Identified {
+                    id,
+                    looped: song.looped(),
+                },
+            ),
+            (None, true) => {
+                let id = SongId::default();
+                (Some(id), SongType::Identified { id, looped: true })
+            }
+            _ => (None, SongType::Anonymous),
+        };
+
+        sink_channel
+            .send(SinkCommand::NewSong {
+                song_type,
+                commands: song.commands().collect(),
+            })
+            .unwrap();
         Ok(id)
     }
 
@@ -133,11 +154,25 @@ impl Default for Synth {
 /// this is named as such not to conflict with [`midix::MidiSource`]
 pub trait SongWriter {
     /// Create sink commands this type.
-    fn into_song(self) -> MidiSong;
+    fn song_id(&self) -> Option<SongId> {
+        None
+    }
+    /// A list of timed events relevant to this song
+    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent>;
+    /// is this song looped?
+    fn looped(&self) -> bool {
+        false
+    }
 }
 
 impl SongWriter for MidiSong {
-    fn into_song(self) -> MidiSong {
-        self
+    fn song_id(&self) -> Option<SongId> {
+        Some(self.id)
+    }
+    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
+        self.commands.iter().copied()
+    }
+    fn looped(&self) -> bool {
+        self.looped
     }
 }

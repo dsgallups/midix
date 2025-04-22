@@ -18,7 +18,7 @@ use midix::{
     reader::ReaderError,
 };
 
-use crate::synth::{MidiSong, SongWriter, TimedMidiEvent};
+use crate::synth::{MidiSong, TimedMidiEvent};
 
 /// Sound font asset. Wraps a midix MidiFile
 #[derive(Asset, TypePath)]
@@ -36,39 +36,9 @@ impl MidiFile {
     pub fn inner(&self) -> &Mf<'static> {
         &self.inner
     }
-}
 
-/// Loader for sound fonts
-#[derive(Default)]
-pub struct MidiFileLoader;
-
-impl AssetLoader for MidiFileLoader {
-    type Asset = MidiFile;
-    type Settings = ();
-    type Error = ReaderError;
-    async fn load(
-        &self,
-        reader: &mut dyn Reader,
-        _settings: &(),
-        _load_context: &mut LoadContext<'_>,
-    ) -> Result<Self::Asset, Self::Error> {
-        let mut bytes = Vec::new();
-        reader.read_to_end(&mut bytes).await.unwrap();
-
-        let inner = Mf::parse(bytes)?;
-
-        let res = MidiFile::new(inner);
-
-        Ok(res)
-    }
-
-    fn extensions(&self) -> &[&str] {
-        &["mid"]
-    }
-}
-
-impl SongWriter for MidiFile {
-    fn into_song(self) -> MidiSong {
+    /// uses owned self to make a song sendable to the synth
+    pub fn into_song(self) -> MidiSong {
         let midi = self.inner;
 
         let mut commands = Vec::new();
@@ -152,10 +122,8 @@ impl SongWriter for MidiFile {
         }
         MidiSong::new(commands)
     }
-}
-
-impl SongWriter for &MidiFile {
-    fn into_song(self) -> MidiSong {
+    /// uses reference to make a song
+    pub fn to_song(&self) -> MidiSong {
         let midi = &self.inner;
 
         let mut commands = Vec::new();
@@ -240,5 +208,33 @@ impl SongWriter for &MidiFile {
             }
         }
         MidiSong::new(commands)
+    }
+}
+/// Loader for sound fonts
+#[derive(Default)]
+pub struct MidiFileLoader;
+
+impl AssetLoader for MidiFileLoader {
+    type Asset = MidiFile;
+    type Settings = ();
+    type Error = ReaderError;
+    async fn load(
+        &self,
+        reader: &mut dyn Reader,
+        _settings: &(),
+        _load_context: &mut LoadContext<'_>,
+    ) -> Result<Self::Asset, Self::Error> {
+        let mut bytes = Vec::new();
+        reader.read_to_end(&mut bytes).await.unwrap();
+
+        let inner = Mf::parse(bytes)?;
+
+        let res = MidiFile::new(inner);
+
+        Ok(res)
+    }
+
+    fn extensions(&self) -> &[&str] {
+        &["mid"]
     }
 }
