@@ -215,8 +215,8 @@ pub fn update_command_text(
             VoiceEvent::ChannelPressureAfterTouch { velocity } => {
                 format!("ChannelPressure after touch: {velocity} velocity")
             }
-            VoiceEvent::ControlChange { controller, value } => {
-                format!("Control Change: {controller:?} with value {value}")
+            VoiceEvent::ControlChange(controller) => {
+                format!("Control Change: {controller:?}")
             }
         };
         all_cmds.push_front(val);
