@@ -162,11 +162,13 @@ impl Future for SinkTask {
 
                     new_messages_pushed = true;
                     if let SongType::Identified { id, looped } = song_type {
-                        self.keep(MidiSong {
-                            id,
-                            events: commands.clone(),
-                            looped,
-                        });
+                        if looped {
+                            self.keep(MidiSong {
+                                id,
+                                events: commands.clone(),
+                                looped,
+                            });
+                        }
                     }
 
                     self.queue_commands(song_type.id(), commands, elapsed);
