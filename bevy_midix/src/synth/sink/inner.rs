@@ -1,6 +1,6 @@
 use midix::prelude::ChannelVoiceMessage;
 
-use super::SongId;
+use crate::song::SongId;
 
 pub struct InnerCommand {
     pub time_to_send: u64,

@@ -2,9 +2,7 @@ use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
-use crate::synth::MidiSong;
-
-use super::{Beat, ChannelModifier};
+use super::{Beat, ChannelModifier, MidiSong};
 
 /// Presets for a channel for a simple song
 #[derive(Copy, Clone, Debug)]

@@ -18,7 +18,7 @@ use midix::{
     reader::ReaderError,
 };
 
-use crate::synth::MidiSong;
+use crate::song::MidiSong;
 
 /// Sound font asset. Wraps a midix MidiFile
 #[derive(Asset, TypePath)]

@@ -16,7 +16,9 @@ This Sink will send events to another thread that will constantly poll/flush com
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use midix::prelude::*;
 
-use super::{MidiSong, SinkCommand, SongId, SongType, inner::InnerCommand};
+use crate::song::{MidiSong, SongId};
+
+use super::{SinkCommand, SongType, inner::InnerCommand};
 
 #[derive(Default)]
 pub struct CommandQueue(VecDeque<InnerCommand>);
