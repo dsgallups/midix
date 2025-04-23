@@ -7,9 +7,6 @@ Bevy plugin that uses [`midix`](https://crates.io/crates/midix),
 
 Read from MIDI devices, MIDI files, and programmable input, and output to user audio with a soundfont!
 
-## Features
-- Enable `web` for WASM compatibility
-
 ## Example
 ```rust, no_run
 use std::time::Duration;

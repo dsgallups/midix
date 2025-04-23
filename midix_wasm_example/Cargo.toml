@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.16.0-rc.5", features = ["web"] }
-bevy_midix = { path = "../bevy_midix", features = ["web"] }
+bevy_midix = { path = "../bevy_midix" }
 itertools = "0.14.0"
 
 # This is used by trunk as it doesn't support custom profiles: https://github.com/trunk-rs/trunk/issues/605

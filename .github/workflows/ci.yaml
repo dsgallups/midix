@@ -65,6 +65,24 @@ jobs:
         with:
           command: clippy
           args: --features bevy
+
+  check-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup | Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build | Check (wasm)
+        run: cargo check --target wasm32-unknown-unknown
+
   test:
     strategy:
       matrix:
