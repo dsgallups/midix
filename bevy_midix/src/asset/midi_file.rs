@@ -39,8 +39,16 @@ impl MidiFile {
 
     /// uses owned self to make a song sendable to the synth
     pub fn into_song(self) -> MidiSong {
-        let midi = self.inner;
+        self.inner.into()
+    }
+    /// uses reference to make a song
+    pub fn to_song(&self) -> MidiSong {
+        (&self.inner).into()
+    }
+}
 
+impl<'a> From<Mf<'a>> for MidiSong {
+    fn from(midi: Mf<'a>) -> Self {
         let mut commands = Vec::new();
         let tracks = midi.tracks();
 
@@ -122,10 +130,10 @@ impl MidiFile {
         }
         MidiSong::new(commands)
     }
-    /// uses reference to make a song
-    pub fn to_song(&self) -> MidiSong {
-        let midi = &self.inner;
+}
 
+impl<'a> From<&Mf<'a>> for MidiSong {
+    fn from(midi: &Mf<'a>) -> Self {
         let mut commands = Vec::new();
         let tracks = midi.tracks();
 
@@ -210,6 +218,7 @@ impl MidiFile {
         MidiSong::new(commands)
     }
 }
+
 /// Loader for sound fonts
 #[derive(Default)]
 pub struct MidiFileLoader;
