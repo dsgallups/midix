@@ -1,11 +1,11 @@
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web"))]
 use std::time::{Duration, Instant};
 use std::{
     collections::VecDeque,
     pin::Pin,
     task::{Context, Poll},
 };
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "web")]
 use web_time::{Duration, Instant};
 
 use bevy::log::info;
