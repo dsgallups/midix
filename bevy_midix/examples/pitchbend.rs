@@ -81,6 +81,6 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
 
     synth.handle_event(ChannelVoiceMessage::new(
         Channel::One,
-        VoiceEvent::note_on(key, Velocity::max()),
+        VoiceEvent::note_on(key, Velocity::MAX),
     ));
 }

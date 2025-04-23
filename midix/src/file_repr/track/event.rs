@@ -32,7 +32,7 @@ impl Debug for TrackEvent<'_> {
 
 impl<'a> TrackEvent<'a> {
     /// Create a new event with a given time
-    pub fn new(delta_time: u32, event: TrackMessage<'a>) -> Self {
+    pub const fn new(delta_time: u32, event: TrackMessage<'a>) -> Self {
         Self {
             delta_ticks: delta_time,
             event,
@@ -93,12 +93,12 @@ impl<'a> TrackEvent<'a> {
     ///
     /// The actual value should be interpreted by the MIDI file's
     /// [`Timing`] event.
-    pub fn delta_ticks(&self) -> u32 {
+    pub const fn delta_ticks(&self) -> u32 {
         self.delta_ticks
     }
 
     /// Get a refrence to the message for the track event
-    pub fn event(&self) -> &TrackMessage<'a> {
+    pub const fn event(&self) -> &TrackMessage<'a> {
         &self.event
     }
 

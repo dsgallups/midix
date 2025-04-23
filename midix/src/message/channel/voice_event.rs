@@ -51,16 +51,16 @@ pub enum VoiceEvent {
 
 impl VoiceEvent {
     /// Create a note on voice event
-    pub fn note_on(key: Key, velocity: Velocity) -> Self {
+    pub const fn note_on(key: Key, velocity: Velocity) -> Self {
         Self::NoteOn { key, velocity }
     }
     /// Create a note off voice event
-    pub fn note_off(key: Key, velocity: Velocity) -> Self {
+    pub const fn note_off(key: Key, velocity: Velocity) -> Self {
         Self::NoteOff { key, velocity }
     }
 
     /// Turn self into a ChannelVoiceMessage
-    pub fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
+    pub const fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(channel, self)
     }
     /// Set a new instrument to use for the channel
@@ -116,7 +116,7 @@ impl VoiceEvent {
     ///
     /// TODO
     #[allow(dead_code)]
-    pub(crate) fn status_nibble(&self) -> u8 {
+    pub(crate) const fn status_nibble(&self) -> u8 {
         match self {
             VoiceEvent::NoteOff { .. } => 0x8,
             VoiceEvent::NoteOn { .. } => 0x9,

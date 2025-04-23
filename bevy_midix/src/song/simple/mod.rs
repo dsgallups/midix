@@ -26,7 +26,7 @@ impl Default for ChannelSettings {
     fn default() -> Self {
         Self {
             program: Program::new(1).unwrap(),
-            velocity: Velocity::max(),
+            velocity: Velocity::MAX,
         }
     }
 }
@@ -142,7 +142,7 @@ impl SimpleMidiSong {
 
                     next_beat_additions.push(ChannelVoiceMessage::new(
                         channel,
-                        VoiceEvent::note_off(*event.key().unwrap(), Velocity::max()),
+                        VoiceEvent::note_off(*event.key().unwrap(), Velocity::MAX),
                     ));
                 }
             }

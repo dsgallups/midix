@@ -18,8 +18,15 @@ impl Program {
         rep.try_into().map(Self)
     }
 
+    /// Does not check that the byte is valid!
+    #[inline]
+    pub const fn new_unchecked(byte: u8) -> Self {
+        Self(DataByte::new_unchecked(byte))
+    }
+
     /// Get a reference to the underlying byte for the program.
-    pub fn byte(&self) -> u8 {
+    #[inline]
+    pub const fn byte(&self) -> u8 {
         self.0.0
     }
 }

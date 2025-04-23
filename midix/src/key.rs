@@ -67,7 +67,7 @@ impl Key {
 
     /// Identifies the note of the key pressed
     #[inline]
-    pub fn note(&self) -> Note {
+    pub const fn note(&self) -> Note {
         Note::from_data_byte(&self.0)
     }
 
@@ -75,14 +75,14 @@ impl Key {
     ///
     /// See [`Note::is_sharp`] for an example
     #[inline]
-    pub fn is_sharp(&self) -> bool {
+    pub const fn is_sharp(&self) -> bool {
         self.note().is_sharp()
     }
 
     /// Returns true if the note of the key is flat. Same as `is_sharp`
     /// See [`Note::is_flat`] for an example
     #[inline]
-    pub fn is_flat(&self) -> bool {
+    pub const fn is_flat(&self) -> bool {
         self.note().is_flat()
     }
 
@@ -295,7 +295,7 @@ impl Note {
     /// assert!(note.is_sharp());
     /// ```
     #[inline]
-    pub fn is_sharp(&self) -> bool {
+    pub const fn is_sharp(&self) -> bool {
         use Note::*;
         matches!(self, CSharp | DSharp | FSharp | GSharp | ASharp)
     }
@@ -311,13 +311,13 @@ impl Note {
     /// assert!(note.is_flat());
     /// ```
     #[inline]
-    pub fn is_flat(&self) -> bool {
+    pub const fn is_flat(&self) -> bool {
         self.is_sharp()
     }
 
     /// Identify the note from a key byte.
     #[inline]
-    pub fn from_data_byte(key: &DataByte) -> Self {
+    pub const fn from_data_byte(key: &DataByte) -> Self {
         use Note::*;
         let note = key.value() % 12;
 
@@ -356,7 +356,7 @@ impl Note {
     }
 
     /// Create a [`Key`] given this note and a provided [`Octave`]
-    pub fn with_octave(self, octave: Octave) -> Key {
+    pub const fn with_octave(self, octave: Octave) -> Key {
         Key::new(self, octave)
     }
 }
@@ -404,7 +404,7 @@ pub struct Octave(i8);
 
 impl Octave {
     /// Identify an octave from a key byte.
-    pub fn from_data_byte(key: &DataByte) -> Self {
+    pub const fn from_data_byte(key: &DataByte) -> Self {
         let octave = key.value() / 12;
 
         Self(octave as i8 - 1)

@@ -36,17 +36,17 @@ impl PitchBend {
     }
 
     /// Returns a reference to the pitch bend's least significant byte.
-    pub fn lsb(&self) -> u8 {
+    pub const fn lsb(&self) -> u8 {
         self.lsb.0
     }
 
     /// Returns a reference to the pitch bend's most significant byte.
-    pub fn msb(&self) -> u8 {
+    pub const fn msb(&self) -> u8 {
         self.msb.0
     }
 
     /// Represents a pitch bend
-    pub fn value(&self) -> u16 {
+    pub const fn value(&self) -> u16 {
         let lsb = self.lsb.value();
         let msb = self.msb.value();
         let combined: u16 = ((msb as u16) << 8) | (lsb as u16);

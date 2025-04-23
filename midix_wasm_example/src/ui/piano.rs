@@ -140,7 +140,7 @@ pub fn handle_input(
                     warn!("{key} pressed");
                     *background_color = PRESSED.into();
                     let event =
-                        VoiceEvent::note_on(*key, Velocity::max()).send_to_channel(Channel::One);
+                        VoiceEvent::note_on(*key, Velocity::MAX).send_to_channel(Channel::One);
                     synth.handle_event(event);
                 } else {
                     *background_color = HOVERED.into();
@@ -238,7 +238,7 @@ fn on_mouse_up(
     let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
     warn!("{key} unpressed");
 
-    let event = VoiceEvent::note_on(*key, Velocity::zero()).send_to_channel(Channel::One);
+    let event = VoiceEvent::note_on(*key, Velocity::ZERO).send_to_channel(Channel::One);
     // could make this beter and revert to hover, but lazy
     *background_color = HOVERED.into();
     synth.handle_event(event);
@@ -252,6 +252,6 @@ fn on_mouse_leave(
 ) {
     let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
     *background_color = BackgroundColor(bg_color(key.is_sharp()));
-    let event = VoiceEvent::note_on(*key, Velocity::zero()).send_to_channel(Channel::One);
+    let event = VoiceEvent::note_on(*key, Velocity::ZERO).send_to_channel(Channel::One);
     synth.handle_event(event);
 }

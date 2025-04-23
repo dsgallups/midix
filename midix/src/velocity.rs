@@ -6,6 +6,11 @@ use core::fmt;
 pub struct Velocity(DataByte);
 
 impl Velocity {
+    /// Returns a max velocity
+    pub const MAX: Velocity = Velocity(DataByte::new_unchecked(127));
+    /// Returns a velocity of zero.
+    pub const ZERO: Velocity = Velocity(DataByte::new_unchecked(0));
+
     /// Creates a new velocity from the provided byte
     ///
     /// Checks for correctness (leading 0 bit)
@@ -16,23 +21,18 @@ impl Velocity {
         rep.try_into().map(Self)
     }
 
-    /// Returns a max velocity
-    pub fn max() -> Self {
-        Self(DataByte::new_unchecked(127))
-    }
-
-    /// Returns a velocity of zero.
-    pub fn zero() -> Self {
-        Self(DataByte::new_unchecked(0))
+    /// Creates a new velocity without checking the bytes' validity.
+    pub const fn new_unchecked(byte: u8) -> Self {
+        Self(DataByte::new_unchecked(byte))
     }
 
     /// Get a reference to the underlying byte
-    pub fn byte(&self) -> u8 {
+    pub const fn byte(&self) -> u8 {
         self.0.0
     }
 
     /// Get the dynamic of the velocity...fortississississimo
-    pub fn dynamic(&self) -> Dynamic {
+    pub const fn dynamic(&self) -> Dynamic {
         match self.byte() {
             0 => Dynamic::off(),
             1..16 => Dynamic::ppp(),
@@ -95,47 +95,47 @@ impl fmt::Display for Dynamic {
 
 impl Dynamic {
     /// No sound
-    pub fn off() -> Self {
+    pub const fn off() -> Self {
         Self::Off
     }
 
     /// very quiet
-    pub fn ppp() -> Self {
+    pub const fn ppp() -> Self {
         Self::Pianississimo
     }
 
     /// pretty quiet
-    pub fn pp() -> Self {
+    pub const fn pp() -> Self {
         Self::Pianissimo
     }
 
     /// quiet
-    pub fn p() -> Self {
+    pub const fn p() -> Self {
         Self::Piano
     }
 
     /// kinda quiet
-    pub fn mp() -> Self {
+    pub const fn mp() -> Self {
         Self::MezzoPiano
     }
 
     /// kinda loud
-    pub fn mf() -> Self {
+    pub const fn mf() -> Self {
         Self::MezzoForte
     }
 
     /// loud
-    pub fn f() -> Self {
+    pub const fn f() -> Self {
         Self::Forte
     }
 
     /// pretty loud
-    pub fn ff() -> Self {
+    pub const fn ff() -> Self {
         Self::Fortissimo
     }
 
     /// very loud
-    pub fn fff() -> Self {
+    pub const fn fff() -> Self {
         Self::Fortississimo
     }
 }

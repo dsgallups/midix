@@ -71,16 +71,16 @@ pub enum Controller {
 
 impl Controller {
     /// Mute all (without immediacy)
-    pub fn mute_all() -> Self {
+    pub const fn mute_all() -> Self {
         Self::Mute(DataByte::ZERO)
     }
     /// Mute all voices immediately
-    pub fn mute_all_immediately() -> Self {
+    pub const fn mute_all_immediately() -> Self {
         Self::MuteImmediately(DataByte::ZERO)
     }
 
     /// Reset all controllers/voices to defaults
-    pub fn reset_all() -> Self {
+    pub const fn reset_all() -> Self {
         Self::ResetAllControllers(DataByte::ZERO)
     }
 
@@ -122,7 +122,7 @@ impl Controller {
         Ok(controller)
     }
     /// Converts self to a vector of bytes.
-    pub fn to_bytes(&self) -> [u8; 2] {
+    pub const fn to_bytes(&self) -> [u8; 2] {
         use Controller::*;
         match self {
             BankSelection(byte) => [0x00, byte.value()],
@@ -150,31 +150,3 @@ impl Controller {
         }
     }
 }
-
-// Identifies a device
-// #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-// pub struct Controller(DataByte);
-
-// impl Controller {
-//     /// Interpret a byte as a type of device
-//     ///
-//     /// Checks for correctness (leading 0 bit)
-//     pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
-//     where
-//         B: TryInto<DataByte, Error = E>,
-//         E: Into<io::Error>,
-//     {
-//         rep.try_into().map(Self).map_err(Into::into)
-//     }
-
-//     /// Get a reference to the underlying byte
-//     pub fn byte(&self) -> u8 {
-//         self.0.0
-//     }
-// }
-
-// impl fmt::Display for Controller {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         self.0.fmt(f)
-//     }
-// }

@@ -20,7 +20,7 @@ pub struct ChannelVoiceMessage {
 
 impl ChannelVoiceMessage {
     /// Create a new channel voice event from the channel and associated event type
-    pub fn new(channel: Channel, message: VoiceEvent) -> Self {
+    pub const fn new(channel: Channel, message: VoiceEvent) -> Self {
         let status = channel.to_byte() | (message.status_nibble() << 4);
         Self {
             status: StatusByte::new_unchecked(status),

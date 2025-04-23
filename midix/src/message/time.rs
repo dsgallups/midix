@@ -17,7 +17,7 @@ pub struct Ticked<T> {
 
 impl<T> Ticked<T> {
     /// Create a new timed event based on *accumulated* ticks
-    pub fn new(accumulated_ticks: u32, event: T) -> Self {
+    pub const fn new(accumulated_ticks: u32, event: T) -> Self {
         Self {
             accumulated_ticks,
             event,
@@ -25,12 +25,12 @@ impl<T> Ticked<T> {
     }
 
     /// Returns the accumulated ticks since the beginning of the track
-    pub fn accumulated_ticks(&self) -> u32 {
+    pub const fn accumulated_ticks(&self) -> u32 {
         self.accumulated_ticks
     }
 
     /// Returns the timed event
-    pub fn event(&self) -> &T {
+    pub const fn event(&self) -> &T {
         &self.event
     }
 }
@@ -49,12 +49,12 @@ impl<T> Timed<T> {
     /// Create a command to do something at a time.
     ///
     /// Timestamp is delta micros from now.
-    pub fn new(timestamp: u64, event: T) -> Self {
+    pub const fn new(timestamp: u64, event: T) -> Self {
         Self { timestamp, event }
     }
 
     /// Use a duration to create a timed type.
-    pub fn new_from_duration(duration: Duration, event: T) -> Self {
+    pub const fn new_from_duration(duration: Duration, event: T) -> Self {
         Self {
             timestamp: duration.as_micros() as u64,
             event,

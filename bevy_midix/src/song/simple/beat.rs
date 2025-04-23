@@ -30,8 +30,7 @@ pub struct ChannelBeat<'b, 's> {
 impl<'b, 's> ChannelBeat<'b, 's> {
     /// play a note for this channel. Does not override other notes that will be played.
     pub fn play(self, key: Key) -> &'b mut Beat<'s> {
-        let event =
-            ChannelVoiceMessage::new(self.channel, VoiceEvent::note_on(key, Velocity::max()));
+        let event = ChannelVoiceMessage::new(self.channel, VoiceEvent::note_on(key, Velocity::MAX));
 
         self.beat.song.add_event(self.beat.beat_no, event);
         self.beat
@@ -43,7 +42,7 @@ impl<'b, 's> ChannelBeat<'b, 's> {
         Keys: IntoIterator<Item = Key>,
     {
         let events = keys.into_iter().map(|key| {
-            ChannelVoiceMessage::new(self.channel, VoiceEvent::note_on(key, Velocity::max()))
+            ChannelVoiceMessage::new(self.channel, VoiceEvent::note_on(key, Velocity::MAX))
         });
         self.beat.song.add_events(self.beat.beat_no, events);
         self.beat

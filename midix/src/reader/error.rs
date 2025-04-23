@@ -24,7 +24,7 @@ pub enum ReaderErrorKind {
 }
 
 impl ReaderErrorKind {
-    pub(crate) fn chunk(chunk_err: ChunkError) -> Self {
+    pub(crate) const fn chunk(chunk_err: ChunkError) -> Self {
         Self::ParseError(ParseError::Chunk(chunk_err))
     }
 }
@@ -39,11 +39,11 @@ pub enum ReadError {
 
 impl ReaderError {
     /// Create a reader error from a position and kind
-    pub fn new(position: usize, kind: ReaderErrorKind) -> Self {
+    pub const fn new(position: usize, kind: ReaderErrorKind) -> Self {
         Self { position, kind }
     }
     /// True if out of bounds or unexpected end of file
-    pub fn is_out_of_bounds(&self) -> bool {
+    pub const fn is_out_of_bounds(&self) -> bool {
         matches!(
             self.kind,
             ReaderErrorKind::ReadError(ReadError::OutOfBounds)
@@ -51,7 +51,7 @@ impl ReaderError {
     }
 
     /// Create a new invalid data error
-    pub fn parse_error(position: usize, error: ParseError) -> Self {
+    pub const fn parse_error(position: usize, error: ParseError) -> Self {
         Self {
             position,
             kind: ReaderErrorKind::ParseError(error),
@@ -59,7 +59,7 @@ impl ReaderError {
     }
 
     /// Create a new out of bounds error
-    pub fn oob(position: usize) -> Self {
+    pub const fn oob(position: usize) -> Self {
         Self {
             position,
             kind: ReaderErrorKind::ReadError(ReadError::OutOfBounds),

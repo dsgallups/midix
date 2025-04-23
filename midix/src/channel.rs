@@ -60,7 +60,7 @@ pub enum Channel {
 
 impl Channel {
     /// Return an array of all channels ordered [`Channel::One`] through [`Channel::Sixteen`]
-    pub fn all() -> [Channel; 16] {
+    pub const fn all() -> [Channel; 16] {
         use Channel::*;
         [
             One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen,
@@ -69,22 +69,25 @@ impl Channel {
     }
 
     /// Send a voice event to this channel
-    pub fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
+    pub const fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(self, event)
     }
 
     /// Given a status byte from some [`ChannelVoiceMessage`], perform bitwise ops
     /// to get the channel
     #[must_use]
-    pub fn from_status(status: u8) -> Self {
+    pub const fn from_status(status: u8) -> Self {
         let channel = status & 0b0000_1111;
-        Channel::try_from(channel).unwrap()
+        // SAFETY: every produced value must be a valid discriminant.
+        //
+        // Channel will ALWAYS be between 0 and 15 here and is owned.
+        unsafe { core::mem::transmute(channel) }
     }
 
     /// Returns the 4-bit channel number (0-15)
     #[must_use]
-    pub fn to_byte(&self) -> u8 {
-        (*self).into()
+    pub const fn to_byte(&self) -> u8 {
+        *self as u8
     }
 }
 

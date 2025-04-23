@@ -66,7 +66,7 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
     for key in C_CHORD {
         synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
-            VoiceEvent::note_off(key, Velocity::max()),
+            VoiceEvent::note_off(key, Velocity::MAX),
         ));
     }
     if scale.voice_number == 127 {
@@ -82,7 +82,7 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
     for key in C_CHORD {
         synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
-            VoiceEvent::note_on(key, Velocity::max()),
+            VoiceEvent::note_on(key, Velocity::MAX),
         ));
     }
 }
