@@ -2,6 +2,16 @@ use crate::prelude::*;
 
 /// Represents a MIDI message, usually associated to a MIDI channel.
 ///
+/// There are seven different types of voice events.
+/// - note on: Play a particular note
+/// - note off: Stop playing a particular note
+/// - [control change](Controller): Things like panning, modulation, expression, holding a pedal and the alike.
+/// - [program change](Program): a way to change the underlying "voice" of a channel's instrument.
+/// - after touch: After a note's been played, modify the [`Velocity`] without having
+///   to send another note on command
+/// - channel pressure after touch: change the velocity for all currently playing notes. this one's pretty unusual to find.
+/// - [pitch bend](PitchBend): "curve" the frequency of a note.
+///
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
@@ -58,19 +68,30 @@ impl VoiceEvent {
     pub const fn note_off(key: Key, velocity: Velocity) -> Self {
         Self::NoteOff { key, velocity }
     }
-
-    /// Turn self into a ChannelVoiceMessage
-    pub const fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
-        ChannelVoiceMessage::new(channel, self)
+    /// Modify the velocity of a currently played key
+    pub const fn after_touch(key: Key, velocity: Velocity) -> Self {
+        Self::Aftertouch { key, velocity }
+    }
+    /// Modify the velocity of all currently played keys
+    pub const fn channel_after_touch(velocity: Velocity) -> Self {
+        Self::ChannelPressureAfterTouch { velocity }
     }
     /// Set a new instrument to use for the channel
-    pub fn program_change(program: Program) -> Self {
+    pub const fn program_change(program: Program) -> Self {
         Self::ProgramChange { program }
+    }
+    /// Adjust the "pitch" of a note
+    pub const fn pitch_bend(pitch_bend: PitchBend) -> Self {
+        Self::PitchBend(pitch_bend)
     }
 
     /// Create a new control change event with the provided controller
-    pub fn control_change(controller: Controller) -> Self {
+    pub const fn control_change(controller: Controller) -> Self {
         Self::ControlChange(controller)
+    }
+    /// Turn self into a ChannelVoiceMessage
+    pub const fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
+        ChannelVoiceMessage::new(channel, self)
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.

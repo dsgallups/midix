@@ -59,6 +59,14 @@ impl PitchBend {
         let msb = (rep & 0x00FF) as u8;
         Self::new(lsb, msb)
     }
+    /// Represents a u16, lsb then msb, as a pitch bend.
+    ///
+    /// Does not check for correctness.
+    pub const fn from_bits_unchecked(rep: u16) -> Self {
+        let lsb = (rep >> 8) as u8;
+        let msb = (rep & 0x00FF) as u8;
+        Self::new_unchecked(lsb, msb)
+    }
 }
 
 impl PitchBend {
@@ -99,19 +107,19 @@ impl PitchBend {
     ///
     /// Do not use this when writing to a midi file.
     #[inline]
-    pub fn as_int(self) -> i16 {
+    pub const fn as_int(self) -> i16 {
         self.value() as i16 - 0x2000
     }
 
     /// Returns an `f32` in the range `[-1.0, 1.0)`.
     #[inline]
-    pub fn as_f32(self) -> f32 {
+    pub const fn as_f32(self) -> f32 {
         self.as_int() as f32 * (1.0 / 0x2000 as f32)
     }
 
     /// Returns an `f64` in the range `[-1.0, 1.0)`.
     #[inline]
-    pub fn as_f64(self) -> f64 {
+    pub const fn as_f64(self) -> f64 {
         self.as_int() as f64 * (1.0 / 0x2000 as f64)
     }
 }

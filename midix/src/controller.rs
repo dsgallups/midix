@@ -1,6 +1,18 @@
 use crate::{prelude::*, reader::ReaderError};
 
-/// Identifies a modification to the controller
+/// Identifies a modification to the controller.
+///
+/// There's a lot of these, and they're really useful,
+/// but I don't yet have great explanations for all of these.
+///
+/// Additionally, this enum is marked as non_exhaustive. I've only included
+/// the most common controller values.
+///
+/// In general, you'll see there's a `Coarse` and `Fine` variant
+/// of these structs. That's because controller values are 2 bytes.
+///
+/// Often, you'll find that MIDI files only adjust the particular variant
+/// in a "coarse" manner.
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum Controller {

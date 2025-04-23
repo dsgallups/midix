@@ -3,7 +3,11 @@ use crate::{
     reader::{ReadError, ReaderError, ReaderErrorKind},
 };
 
-/// Represents a MIDI voice message,.
+/// Represents a MIDI voice message.
+///
+/// This means something that has
+/// 1. A channel to send data to
+/// 2. The event in question. See [`VoiceEvent`] for a list of possible events.
 ///
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all

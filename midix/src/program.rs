@@ -9,8 +9,6 @@ pub struct Program(DataByte);
 
 impl Program {
     /// Creates a new program command.
-    ///
-    /// Does not check for correctness.
     pub fn new<B>(rep: B) -> Result<Self, ParseError>
     where
         B: TryInto<DataByte, Error = ParseError>,
@@ -18,6 +16,8 @@ impl Program {
         rep.try_into().map(Self)
     }
 
+    /// Creates a new program command.
+    ///
     /// Does not check that the byte is valid!
     #[inline]
     pub const fn new_unchecked(byte: u8) -> Self {
