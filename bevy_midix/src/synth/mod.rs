@@ -119,7 +119,7 @@ impl Synth {
     /// If stop_voices is false, any currently playing notes will continue to be held.
     ///
     /// Note there is no pause.
-    pub fn stop_song(&self, song_id: SongId, stop_voices: bool) -> Result<(), SynthError> {
+    pub fn stop(&self, song_id: SongId, stop_voices: bool) -> Result<(), SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return Err(SynthError::NotReady);
