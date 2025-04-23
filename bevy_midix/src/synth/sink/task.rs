@@ -14,7 +14,10 @@ use bevy::log::info;
 This Sink will send events to another thread that will constantly poll/flush command out to the synth.
 */
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
-use midix::prelude::ChannelVoiceMessage;
+use midix::{
+    Controller,
+    prelude::{Channel, ChannelVoiceMessage, VoiceEvent},
+};
 
 use super::{MidiSong, SinkCommand, SongId, SongType, TimedMidiEvent, inner::InnerCommand};
 
@@ -169,10 +172,25 @@ impl Future for SinkTask {
 
                     self.queue_commands(song_type.id(), commands, elapsed);
                 }
-                SinkCommand::Stop(song_id) => {
-                    self.queue
-                        .retain(|command| command.parent.is_none_or(|id| id != song_id));
-                    self.keepsakes.retain(|info| info.song.id != song_id);
+                SinkCommand::Stop {
+                    song_id,
+                    stop_voices,
+                } => {
+                    if let Some(song_id) = song_id {
+                        self.queue
+                            .retain(|command| command.parent.is_none_or(|id| id != song_id));
+                        self.keepsakes.retain(|info| info.song.id != song_id);
+                    }
+                    if stop_voices {
+                        let events = Channel::all().into_iter().map(|channel| TimedMidiEvent {
+                            timestamp: 0,
+                            event: ChannelVoiceMessage::new(
+                                channel,
+                                VoiceEvent::control_change(Controller::mute_all()),
+                            ),
+                        });
+                        self.queue_commands(None, events, elapsed);
+                    }
                 }
             }
 

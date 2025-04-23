@@ -59,6 +59,15 @@ pub enum Channel {
 }
 
 impl Channel {
+    /// Return an array of all channels ordered [`Channel::One`] through [`Channel::Sixteen`]
+    pub fn all() -> [Channel; 16] {
+        use Channel::*;
+        [
+            One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen,
+            Fourteen, Fifteen, Sixteen,
+        ]
+    }
+
     /// Send a voice event to this channel
     pub fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(self, event)

@@ -116,13 +116,20 @@ impl Synth {
 
     /// Stop a certain song from playing.
     ///
-    /// Note there is no pause. TODO
-    pub fn stop(&self, id: SongId) -> Result<(), SynthError> {
+    /// If stop_voices is false, any currently playing notes will continue to be held.
+    ///
+    /// Note there is no pause.
+    pub fn stop_song(&self, song_id: SongId, stop_voices: bool) -> Result<(), SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return Err(SynthError::NotReady);
         };
-        sink_channel.send(SinkCommand::Stop(id)).unwrap();
+        sink_channel
+            .send(SinkCommand::Stop {
+                song_id: Some(song_id),
+                stop_voices,
+            })
+            .unwrap();
         Ok(())
     }
 

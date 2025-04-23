@@ -241,6 +241,11 @@ impl Debug for DataByte {
 }
 
 impl DataByte {
+    /// A zero databyte
+    pub const ZERO: DataByte = DataByte(0);
+    /// A max databyte
+    pub const MAX: DataByte = DataByte(0x7F);
+
     /// Check a new status byte
     pub fn new(byte: u8) -> Result<Self, ParseError> {
         byte.try_into()

@@ -70,6 +70,20 @@ pub enum Controller {
 }
 
 impl Controller {
+    /// Mute all (without immediacy)
+    pub fn mute_all() -> Self {
+        Self::Mute(DataByte::ZERO)
+    }
+    /// Mute all voices immediately
+    pub fn mute_all_immediately() -> Self {
+        Self::MuteImmediately(DataByte::ZERO)
+    }
+
+    /// Reset all controllers/voices to defaults
+    pub fn reset_all() -> Self {
+        Self::ResetAllControllers(DataByte::ZERO)
+    }
+
     pub(crate) fn read<'a, R>(reader: &mut Reader<R>) -> ReadResult<Self>
     where
         R: MidiSource<'a>,

@@ -44,7 +44,7 @@ impl SongType {
 }
 
 /// Command the sink to do something
-pub enum SinkCommand {
+pub(crate) enum SinkCommand {
     /// Play a new song
     NewSong {
         /// What kind of song is this?
@@ -53,7 +53,10 @@ pub enum SinkCommand {
         commands: Vec<TimedMidiEvent>,
     },
     /// Stop a song
-    Stop(SongId),
+    Stop {
+        song_id: Option<SongId>,
+        stop_voices: bool,
+    },
 }
 
 /// A set of commands

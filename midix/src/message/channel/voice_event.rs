@@ -68,6 +68,11 @@ impl VoiceEvent {
         Self::ProgramChange { program }
     }
 
+    /// Create a new control change event with the provided controller
+    pub fn control_change(controller: Controller) -> Self {
+        Self::ControlChange(controller)
+    }
+
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
     pub fn is_note_on(&self) -> bool {
         use VoiceEvent::*;
