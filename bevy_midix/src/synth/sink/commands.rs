@@ -111,3 +111,13 @@ impl SongWriter for TimedMidiEvent {
         iter::once(*self)
     }
 }
+impl SongWriter for Vec<TimedMidiEvent> {
+    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
+        self.iter().copied()
+    }
+}
+impl SongWriter for [TimedMidiEvent] {
+    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
+        self.iter().copied()
+    }
+}
