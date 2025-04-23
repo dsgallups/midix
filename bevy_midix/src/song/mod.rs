@@ -2,20 +2,14 @@
 Components to make songs programatically
 "#]
 
-mod channel_settings;
-pub use channel_settings::*;
-
-mod beat;
-pub use beat::*;
-
-mod simple_song;
-pub use simple_song::*;
-
-mod section;
-pub use section::*;
+pub mod simple;
+pub use simple::*;
 
 mod song_writer;
 pub use song_writer::*;
+
+mod builder;
+pub use builder::*;
 
 use bevy::asset::uuid::Uuid;
 use midix::prelude::*;
@@ -39,6 +33,10 @@ pub struct MidiSong {
 }
 
 impl MidiSong {
+    /// Returns a builder to build a midi song
+    pub fn builder() -> MidiSongBuilder {
+        MidiSongBuilder::default()
+    }
     /// Create a set of commands
     pub fn new(events: Vec<Timed<ChannelVoiceMessage>>) -> Self {
         Self {

@@ -1,8 +1,18 @@
+//! Utils for simple song making
 use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
-use super::{Beat, ChannelModifier, MidiSong};
+mod beat;
+pub use beat::*;
+
+mod channel_settings;
+pub use channel_settings::*;
+
+mod section;
+pub use section::*;
+
+use super::MidiSong;
 
 /// Presets for a channel for a simple song
 #[derive(Copy, Clone, Debug)]
