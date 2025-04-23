@@ -1,5 +1,5 @@
 use midix::{
-    Controller, Key, Program, Velocity,
+    Controller, Key, PitchBend, Program, Velocity,
     prelude::{Channel, ChannelVoiceMessage, Timed, VoiceEvent},
 };
 
@@ -43,7 +43,7 @@ impl ChannelBuilder<'_> {
     pub fn after_touch(&mut self, time: u64, key: Key, velocity: Velocity) -> &mut Self {
         self.builder.add(Timed::new(
             time,
-            ChannelVoiceMessage::new(self.channel, VoiceEvent::Aftertouch { key, velocity }),
+            ChannelVoiceMessage::new(self.channel, VoiceEvent::after_touch(key, velocity)),
         ));
         self
     }
@@ -61,10 +61,15 @@ impl ChannelBuilder<'_> {
     pub fn channel_after_touch(&mut self, time: u64, velocity: Velocity) -> &mut Self {
         self.builder.add(Timed::new(
             time,
-            ChannelVoiceMessage::new(
-                self.channel,
-                VoiceEvent::ChannelPressureAfterTouch { velocity },
-            ),
+            ChannelVoiceMessage::new(self.channel, VoiceEvent::channel_after_touch(velocity)),
+        ));
+        self
+    }
+    /// Bend the pitch
+    pub fn pitch_bend(&mut self, time: u64, pitch_bend: PitchBend) -> &mut Self {
+        self.builder.add(Timed::new(
+            time,
+            ChannelVoiceMessage::new(self.channel, VoiceEvent::pitch_bend(pitch_bend)),
         ));
         self
     }

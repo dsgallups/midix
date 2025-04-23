@@ -95,6 +95,10 @@ impl Controller {
     pub const fn reset_all() -> Self {
         Self::ResetAllControllers(DataByte::ZERO)
     }
+    /// A controller command not listed
+    pub const fn other(byte_1: DataByte, byte_2: DataByte) -> Self {
+        Self::Other { byte_1, byte_2 }
+    }
 
     pub(crate) fn read<'a, R>(reader: &mut Reader<R>) -> ReadResult<Self>
     where

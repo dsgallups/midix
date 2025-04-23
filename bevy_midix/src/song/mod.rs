@@ -29,7 +29,8 @@ impl Default for SongId {
 pub struct MidiSong {
     pub(crate) id: SongId,
     pub(crate) events: Vec<Timed<ChannelVoiceMessage>>,
-    pub(crate) looped: bool,
+    /// If true, this will loop when sent to the synthesizer.
+    pub looped: bool,
 }
 
 impl MidiSong {
