@@ -14,12 +14,9 @@ use bevy::log::info;
 This Sink will send events to another thread that will constantly poll/flush command out to the synth.
 */
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
-use midix::{
-    Controller,
-    prelude::{Channel, ChannelVoiceMessage, VoiceEvent},
-};
+use midix::prelude::*;
 
-use super::{MidiSong, SinkCommand, SongId, SongType, TimedMidiEvent, inner::InnerCommand};
+use super::{MidiSong, SinkCommand, SongId, SongType, inner::InnerCommand};
 
 #[derive(Default)]
 pub struct CommandQueue(VecDeque<InnerCommand>);
@@ -28,7 +25,7 @@ impl CommandQueue {
     fn queue_commands(
         &mut self,
         id: Option<SongId>,
-        events: impl IntoIterator<Item = TimedMidiEvent>,
+        events: impl IntoIterator<Item = Timed<ChannelVoiceMessage>>,
         elapsed: u64,
     ) {
         for message in events {
@@ -102,7 +99,7 @@ impl SinkTask {
 
     // make sure the commands are already sorted.
     fn keep(&mut self, song: MidiSong) {
-        let length = song.commands.last().map(|e| e.timestamp).unwrap_or(0);
+        let length = song.events.last().map(|e| e.timestamp).unwrap_or(0);
         self.keepsakes.push(SongInfo {
             song,
             last_repeated: Instant::now(),
@@ -116,7 +113,7 @@ impl SinkTask {
     fn queue_commands(
         &mut self,
         id: Option<SongId>,
-        events: impl IntoIterator<Item = TimedMidiEvent>,
+        events: impl IntoIterator<Item = Timed<ChannelVoiceMessage>>,
         elapsed: u64,
     ) {
         for message in events {
@@ -165,7 +162,7 @@ impl Future for SinkTask {
                     if let SongType::Identified { id, looped } = song_type {
                         self.keep(MidiSong {
                             id,
-                            commands: commands.clone(),
+                            events: commands.clone(),
                             looped,
                         });
                     }
@@ -182,12 +179,14 @@ impl Future for SinkTask {
                         self.keepsakes.retain(|info| info.song.id != song_id);
                     }
                     if stop_voices {
-                        let events = Channel::all().into_iter().map(|channel| TimedMidiEvent {
-                            timestamp: 0,
-                            event: ChannelVoiceMessage::new(
-                                channel,
-                                VoiceEvent::control_change(Controller::mute_all()),
-                            ),
+                        let events = Channel::all().into_iter().map(|channel| {
+                            Timed::new(
+                                0,
+                                ChannelVoiceMessage::new(
+                                    channel,
+                                    VoiceEvent::control_change(Controller::mute_all()),
+                                ),
+                            )
                         });
                         self.queue_commands(None, events, elapsed);
                     }
@@ -222,7 +221,7 @@ impl Future for SinkTask {
         let mut songs_to_clone = Vec::new();
         for info in self.keepsakes.iter_mut() {
             if info.last_repeated.elapsed().as_micros() as u64 >= info.length {
-                songs_to_clone.push((Some(info.song.id), info.song.commands.clone()));
+                songs_to_clone.push((Some(info.song.id), info.song.events.clone()));
                 info.last_repeated = Instant::now();
             }
         }

@@ -14,11 +14,11 @@ use bevy::{
 use midix::{
     events::LiveEvent,
     file::MidiFile as Mf,
-    prelude::{FormatType, Timing},
+    prelude::{FormatType, Timed, Timing},
     reader::ReaderError,
 };
 
-use crate::synth::{MidiSong, TimedMidiEvent};
+use crate::synth::MidiSong;
 
 /// Sound font asset. Wraps a midix MidiFile
 #[derive(Asset, TypePath)]
@@ -120,7 +120,7 @@ impl<'a> From<Mf<'a>> for MidiSong {
                         let tick = event.accumulated_ticks();
                         let micros = micros_per_tick * tick as f64;
 
-                        commands.push(TimedMidiEvent::new(micros as u64, *cv));
+                        commands.push(Timed::new(micros as u64, *cv));
                     }
                     _ => {
                         //idk
@@ -207,7 +207,7 @@ impl<'a> From<&Mf<'a>> for MidiSong {
                         let tick = event.accumulated_ticks();
                         let micros = micros_per_tick * tick as f64;
 
-                        commands.push(TimedMidiEvent::new(micros as u64, *cv));
+                        commands.push(Timed::new(micros as u64, *cv));
                     }
                     _ => {
                         //idk

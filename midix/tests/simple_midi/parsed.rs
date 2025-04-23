@@ -1,9 +1,4 @@
-use midix::{
-    Dynamic, Note, Octave,
-    events::LiveEvent,
-    file::{MidiFile, TimedEvent},
-    prelude::{Channel, VoiceEvent},
-};
+use midix::{Dynamic, Note, Octave, events::LiveEvent, prelude::*};
 
 #[test]
 fn test_parse() {
@@ -26,7 +21,7 @@ fn test_parse() {
     note_off(events.next().unwrap(), 384, One, Note::E, 5);
 }
 fn note_on(
-    e: &TimedEvent<LiveEvent<'_>>,
+    e: &Ticked<LiveEvent<'_>>,
     accumulated_ticks: u32,
     channel: Channel,
     note: Note,
@@ -48,7 +43,7 @@ fn note_on(
 }
 
 fn note_off(
-    e: &TimedEvent<LiveEvent<'_>>,
+    e: &Ticked<LiveEvent<'_>>,
     accumulated_ticks: u32,
     channel: Channel,
     note: Note,

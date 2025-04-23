@@ -3,6 +3,7 @@ use alloc::vec::Vec;
 use crate::{
     channel::Channel,
     events::LiveEvent,
+    message::Ticked,
     prelude::{BytesText, SmpteOffset, Tempo, TimeSignature, TrackEvent, TrackMessage},
 };
 
@@ -12,7 +13,7 @@ A set of track events
 #[derive(Debug, Clone, PartialEq)]
 pub struct Track<'a> {
     info: TrackInfo<'a>,
-    events: Vec<TimedEvent<LiveEvent<'a>>>,
+    events: Vec<Ticked<LiveEvent<'a>>>,
 }
 
 impl<'a> Track<'a> {
@@ -41,7 +42,7 @@ impl<'a> Track<'a> {
                     continue;
                 }
             };
-            track_events.push(TimedEvent::new(accumulated_ticks, event));
+            track_events.push(Ticked::new(accumulated_ticks, event));
         }
 
         // update track_event's time_since_start, since it currently
@@ -63,7 +64,7 @@ impl<'a> Track<'a> {
         &self.info
     }
     /// Get the timed events for the track
-    pub fn events(&self) -> &[TimedEvent<LiveEvent<'a>>] {
+    pub fn events(&self) -> &[Ticked<LiveEvent<'a>>] {
         self.events.as_slice()
     }
 }
@@ -80,36 +81,6 @@ pub struct TrackInfo<'a> {
     pub tempo: Tempo,
     /// this is intentionally allowed if the file doesn't identify as using smpte.
     pub smpte_offset: Option<SmpteOffset>,
-}
-
-#[doc = r#"
-A wrapper around some type with an associated time
-"#]
-#[derive(Debug, Clone, PartialEq)]
-pub struct TimedEvent<T> {
-    /// In microseconds. Can be ticks, or microseconds
-    accumulated_ticks: u32,
-    event: T,
-}
-
-impl<T> TimedEvent<T> {
-    /// Create a new timed event based on *accumulated* ticks
-    pub fn new(accumulated_ticks: u32, event: T) -> Self {
-        Self {
-            accumulated_ticks,
-            event,
-        }
-    }
-
-    /// Returns the accumulated ticks since the beginning of the track
-    pub fn accumulated_ticks(&self) -> u32 {
-        self.accumulated_ticks
-    }
-
-    /// Returns the timed event
-    pub fn event(&self) -> &T {
-        &self.event
-    }
 }
 
 #[test]

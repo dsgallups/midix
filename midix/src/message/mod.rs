@@ -48,6 +48,8 @@ pub mod channel;
 pub use channel::*;
 pub mod system;
 pub use system::*;
+pub mod time;
+pub use time::*;
 
 #[doc = r#"
 An enumeration of all possible midi messages

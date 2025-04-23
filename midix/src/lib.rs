@@ -55,7 +55,7 @@ pub mod prelude {
         events::*,
         file::*,
         file_repr::{chunk::*, meta::*, track::*, *},
-        message::{MidiMessage, channel::*, system::*},
+        message::{MidiMessage, channel::*, system::*, time::*},
         *,
     };
 

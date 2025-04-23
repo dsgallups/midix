@@ -1,13 +1,7 @@
 use std::iter;
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Duration;
-
-#[cfg(target_arch = "wasm32")]
-use web_time::Duration;
-
 use bevy::asset::uuid::Uuid;
-use midix::prelude::ChannelVoiceMessage;
+use midix::prelude::*;
 
 use crate::synth::SongWriter;
 
@@ -50,7 +44,7 @@ pub(crate) enum SinkCommand {
         /// What kind of song is this?
         song_type: SongType,
         /// The associated events with the song
-        commands: Vec<TimedMidiEvent>,
+        commands: Vec<Timed<ChannelVoiceMessage>>,
     },
     /// Stop a song
     Stop {
@@ -63,16 +57,16 @@ pub(crate) enum SinkCommand {
 #[derive(Clone, Debug)]
 pub struct MidiSong {
     pub(crate) id: SongId,
-    pub(crate) commands: Vec<TimedMidiEvent>,
+    pub(crate) events: Vec<Timed<ChannelVoiceMessage>>,
     pub(crate) looped: bool,
 }
 
 impl MidiSong {
     /// Create a set of commands
-    pub fn new(commands: Vec<TimedMidiEvent>) -> Self {
+    pub fn new(events: Vec<Timed<ChannelVoiceMessage>>) -> Self {
         Self {
             id: SongId::default(),
-            commands,
+            events,
             looped: false,
         }
     }
@@ -84,49 +78,32 @@ impl MidiSong {
     /// set's the speed of the commands. Not absolute.
     pub fn set_speed(mut self, speed: f64) -> Self {
         let speed = 1. / speed;
-        self.commands
+        self.events
             .iter_mut()
             .for_each(|cmd| cmd.timestamp = (cmd.timestamp as f64 * speed) as u64);
         self
     }
-}
 
-/// Send a command to the synth to play a note
-#[derive(Copy, Clone, Debug)]
-pub struct TimedMidiEvent {
-    /// Micros
-    pub(crate) timestamp: u64,
-    pub(crate) event: ChannelVoiceMessage,
-}
-impl TimedMidiEvent {
-    /// Create a command to play a note to the synth.
+    /// Returns the all timed midi events for the song.
     ///
-    /// Timestamp is delta micros from now.
-    pub fn new(timestamp: u64, event: ChannelVoiceMessage) -> Self {
-        Self { timestamp, event }
-    }
-
-    /// Use a duration to create a timed midi event
-    pub fn new_from_duration(duration: Duration, event: ChannelVoiceMessage) -> Self {
-        Self {
-            timestamp: duration.as_micros() as u64,
-            event,
-        }
+    /// Not guaranteed to be sorted.
+    pub fn events(&self) -> &[Timed<ChannelVoiceMessage>] {
+        &self.events
     }
 }
 
-impl SongWriter for TimedMidiEvent {
-    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
+impl SongWriter for Timed<ChannelVoiceMessage> {
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
         iter::once(*self)
     }
 }
-impl SongWriter for Vec<TimedMidiEvent> {
-    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
+impl SongWriter for Vec<Timed<ChannelVoiceMessage>> {
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
         self.iter().copied()
     }
 }
-impl SongWriter for [TimedMidiEvent] {
-    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
+impl SongWriter for [Timed<ChannelVoiceMessage>] {
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
         self.iter().copied()
     }
 }

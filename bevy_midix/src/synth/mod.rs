@@ -5,7 +5,7 @@ Synthesizer resources, setup and plugins
 use crate::prelude::SoundFont;
 use bevy::prelude::*;
 use crossbeam_channel::Sender;
-use midix::prelude::ChannelVoiceMessage;
+use midix::prelude::{ChannelVoiceMessage, Timed};
 use std::sync::Mutex;
 use thiserror::Error;
 use tinyaudio::OutputDevice;
@@ -108,7 +108,7 @@ impl Synth {
         sink_channel
             .send(SinkCommand::NewSong {
                 song_type,
-                commands: song.commands().collect(),
+                commands: song.events().collect(),
             })
             .unwrap();
         Ok(id)
@@ -165,19 +165,27 @@ pub trait SongWriter {
         None
     }
     /// A list of timed events relevant to this song
-    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent>;
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>>;
     /// is this song looped?
     fn looped(&self) -> bool {
         false
     }
+    // /// Helper method that will divide events into individual channels
+    // fn divide_events_into_channels(&self) -> FnvHashMap<Channel, Vec<Timed<ChannelVoiceMessage>>> {
+    //     let mut map = FnvHashMap::default();
+
+    //     for event in self.events() {}
+
+    //     todo!()
+    // }
 }
 
 impl SongWriter for MidiSong {
     fn song_id(&self) -> Option<SongId> {
         Some(self.id)
     }
-    fn commands(&self) -> impl Iterator<Item = TimedMidiEvent> {
-        self.commands.iter().copied()
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
+        self.events.iter().copied()
     }
     fn looped(&self) -> bool {
         self.looped
