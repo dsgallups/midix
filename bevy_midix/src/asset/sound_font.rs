@@ -4,33 +4,33 @@ Asset types
 TODO
 "#]
 
-use std::io::Read;
+use std::{io::Read, sync::Arc};
 use thiserror::Error;
 
 use bevy::{
     asset::{AssetLoader, LoadContext, io::Reader},
     prelude::*,
 };
-use midix_synth::{prelude::SoundFontError, soundfont::SoundFont as Sf};
+use rustysynth::SoundFont as Sf;
 
 /// Sound font asset
 #[derive(Asset, TypePath)]
 pub struct SoundFont {
-    pub(crate) file: Sf,
+    pub(crate) file: Arc<Sf>,
 }
 
 impl SoundFont {
     /// Create a new
-    fn new<R: Read + ?Sized>(file: &mut R) -> Result<Self, SoundFontError> {
-        let sf = Sf::new(file)?;
+    fn new<R: Read>(file: &mut R) -> Self {
+        let sf = Sf::new(file).unwrap();
 
-        Ok(Self { file: sf })
+        Self { file: Arc::new(sf) }
     }
 }
 
 /// Possible errors that can be produced by [`CustomAssetLoader`]
 #[derive(Debug, Error)]
-enum SoundFontLoadError {
+pub enum SoundFontLoadError {
     /// An [IO](std::io) Error
     #[error("Could not load asset: {0}")]
     Io(#[from] std::io::Error),
@@ -43,7 +43,7 @@ pub struct SoundFontLoader;
 impl AssetLoader for SoundFontLoader {
     type Asset = SoundFont;
     type Settings = ();
-    type Error = SoundFontError;
+    type Error = SoundFontLoadError;
     async fn load(
         &self,
         reader: &mut dyn Reader,
@@ -57,7 +57,7 @@ impl AssetLoader for SoundFontLoader {
         reader.read_to_end(&mut bytes).await?;
 
         info!("Loaded!");
-        let res = SoundFont::new(&mut bytes.as_slice())?;
+        let res = SoundFont::new(&mut bytes.as_slice());
 
         Ok(res)
     }
