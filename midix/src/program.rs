@@ -9,8 +9,6 @@ pub struct Program(DataByte);
 
 impl Program {
     /// Creates a new program command.
-    ///
-    /// Does not check for correctness.
     pub fn new<B, E>(rep: B) -> Result<Self, std::io::Error>
     where
         B: TryInto<DataByte, Error = E>,
