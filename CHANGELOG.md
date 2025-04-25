@@ -1,5 +1,22 @@
-# 3.2.0
-## `bevy_midix` (April 15, 2025)
+# `bevy_midix` v3.3.0
+- Update to bevy 0.16
+- Uses `rustysynth` under the hood.
+
+This is not a breaking change as the underlying synth is not publicly exposed.
+
+# `midix` v3.2.0
+- Update to bevy 0.16
+
+
+# `bevy_midix` v3.2.2
+- Updated dependency on `midix_synth`
+- Audio channel no longer holds a lock! This never should've been done and I've learned my lesson.
+
+## `midix_synth` (v0.0.4)
+- Lots of refactoring, namely how voices are managed
+
+
+# `bevy_midix` v3.2.0
 - feat: WASM compatability with example!
 
 # 3.1.0 (April 13, 2025)
