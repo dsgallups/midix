@@ -2,14 +2,85 @@
 Components to make songs programatically
 "#]
 
-mod channel_settings;
-pub use channel_settings::*;
+pub mod simple;
+pub use simple::*;
 
-mod beat;
-pub use beat::*;
+mod song_writer;
+pub use song_writer::*;
 
-mod simple_song;
-pub use simple_song::*;
+mod builder;
+pub use builder::*;
 
-mod section;
-pub use section::*;
+use bevy::asset::uuid::Uuid;
+use midix::prelude::*;
+
+/// The identifier of a certain midi song
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
+pub struct SongId(Uuid);
+
+impl Default for SongId {
+    fn default() -> Self {
+        SongId(Uuid::new_v4())
+    }
+}
+
+/// A set of commands
+#[derive(Clone, Debug)]
+pub struct MidiSong {
+    pub(crate) id: SongId,
+    pub(crate) events: Vec<Timed<ChannelVoiceMessage>>,
+    /// If true, this will loop when sent to the synthesizer.
+    pub looped: bool,
+}
+
+impl MidiSong {
+    /// Returns a builder to build a midi song
+    pub fn builder() -> MidiSongBuilder {
+        MidiSongBuilder::default()
+    }
+    /// Create a set of commands
+    pub fn new(events: Vec<Timed<ChannelVoiceMessage>>) -> Self {
+        Self {
+            id: SongId::default(),
+            events,
+            looped: false,
+        }
+    }
+    /// Get a mutable reference to the events
+    pub fn events_mut(&mut self) -> &mut Vec<Timed<ChannelVoiceMessage>> {
+        &mut self.events
+    }
+
+    /// Commands should be looped
+    pub fn set_looped(mut self) -> Self {
+        self.looped = true;
+        self
+    }
+    /// set's the speed of the commands. Not absolute.
+    pub fn set_speed(mut self, speed: f64) -> Self {
+        let speed = 1. / speed;
+        self.events
+            .iter_mut()
+            .for_each(|cmd| cmd.timestamp = (cmd.timestamp as f64 * speed) as u64);
+        self
+    }
+
+    /// Returns the all timed midi events for the song.
+    ///
+    /// Not guaranteed to be sorted.
+    pub fn events(&self) -> &[Timed<ChannelVoiceMessage>] {
+        &self.events
+    }
+}
+
+impl SongWriter for MidiSong {
+    fn song_id(&self) -> Option<SongId> {
+        Some(self.id)
+    }
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
+        self.events.iter().copied()
+    }
+    fn looped(&self) -> bool {
+        self.looped
+    }
+}

@@ -1,6 +1,6 @@
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web"))]
 use std::time::Duration;
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "web")]
 use web_time::Duration;
 
 use bevy::{
@@ -88,15 +88,15 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
     if scale.note_on {
         info!("Note on {}!", scale.current_key);
         //play note on
-        synth.handle_event(ChannelVoiceMessage::new(
+        _ = synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
-            VoiceEvent::note_on(scale.current_key, Velocity::max()),
+            VoiceEvent::note_on(scale.current_key, Velocity::MAX),
         ));
     } else {
         info!("Note off {}!", scale.current_key);
-        synth.handle_event(ChannelVoiceMessage::new(
+        _ = synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
-            VoiceEvent::note_off(scale.current_key, Velocity::max()),
+            VoiceEvent::note_off(scale.current_key, Velocity::MAX),
         ));
         scale.calculate_next_key()
     }

@@ -29,7 +29,7 @@ impl<'a> SectionBeat<'a> {
     /// Add one note to play for the beat
     pub fn play(self, key: Key) -> &'a mut SimpleSection {
         let events = self.section.beat.entry(self.beat_no).or_default();
-        events.push(VoiceEvent::note_on(key, Velocity::max()));
+        events.push(VoiceEvent::note_on(key, Velocity::MAX));
         self.section
     }
 }

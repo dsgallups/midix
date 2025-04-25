@@ -18,14 +18,14 @@ mi = 1: minor key
 pub struct KeySignature([u8; 2]);
 impl KeySignature {
     /// Create a new key signature from a byte slice
-    pub fn new_from_bytes(v: [u8; 2]) -> Self {
+    pub const fn new_from_bytes(v: [u8; 2]) -> Self {
         Self(v)
     }
 
     /// Count the number of flats or sharps. a positive number
     /// indicates a number of sharps. a negative number indicates
     /// a number of flats.
-    pub fn sharp_flat_count(&self) -> i8 {
+    pub const fn sharp_flat_count(&self) -> i8 {
         self.0[0] as i8
     }
 
@@ -39,7 +39,7 @@ impl KeySignature {
         self.sharp_flat_count().neg().min(0).unsigned_abs()
     }
     /// True if the key is identified as minor
-    pub fn minor_key(&self) -> bool {
+    pub const fn minor_key(&self) -> bool {
         self.0[1] == 1
     }
 }

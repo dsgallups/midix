@@ -30,12 +30,12 @@ impl SongPositionPointer {
     }
 
     /// Get the least significant byte from a SongPositionPointer
-    pub fn lsb(&self) -> DataByte {
+    pub const fn lsb(&self) -> DataByte {
         self.lsb
     }
 
     /// Get the most significant byte from a SongPositionPointer
-    pub fn msb(&self) -> DataByte {
+    pub const fn msb(&self) -> DataByte {
         self.msb
     }
 }

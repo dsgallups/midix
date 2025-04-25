@@ -171,18 +171,21 @@ impl core::fmt::Debug for StatusByte {
 
 impl StatusByte {
     /// Check a new status byte
+    #[inline]
     pub fn new(byte: u8) -> Result<Self, ParseError> {
         byte.try_into()
     }
 
     /// Only use if the value is already been checked or
     /// constructed such that it cannot have a leading 0 bit
-    pub(crate) fn new_unchecked(byte: u8) -> Self {
+    #[inline]
+    pub const fn new_unchecked(byte: u8) -> Self {
         Self(byte)
     }
 
     /// Get the underlying byte of the status
-    pub fn byte(&self) -> u8 {
+    #[inline]
+    pub const fn byte(&self) -> u8 {
         self.0
     }
 }
@@ -197,38 +200,6 @@ impl TryFrom<u8> for StatusByte {
     }
 }
 
-// impl<'a> TryFrom<Cow<'a, u8>> for StatusByte {
-//     type Error = io::Error;
-//     fn try_from(byte: Cow<'a, u8>) -> Result<Self, Self::Error> {
-//         (0x80..=0xFF)
-//             .contains(byte.as_ref())
-//             .then_some(Self(*byte))
-//             .ok_or(io::Error::new(
-//                 ErrorKind::InvalidData,
-//                 "Expected Status byte",
-//             ))
-//     }
-// }
-
-// impl<'a> TryFrom<&'a u8> for StatusByte {
-//     type Error = io::Error;
-//     fn try_from(byte: &'a u8) -> Result<Self, Self::Error> {
-//         (0x80..=0xFF)
-//             .contains(byte)
-//             .then_some(Self(*byte))
-//             .ok_or(io::Error::new(
-//                 ErrorKind::InvalidData,
-//                 "Expected Status byte",
-//             ))
-//     }
-// }
-
-// impl fmt::Display for StatusByte {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         write!(f, "{:02X}", self.0)
-//     }
-// }
-
 #[doc = r#"
 Data Byte is between [0x00 and 0x7F]
 "#]
@@ -241,18 +212,26 @@ impl Debug for DataByte {
 }
 
 impl DataByte {
+    /// A zero databyte
+    pub const ZERO: DataByte = DataByte(0);
+    /// A max databyte
+    pub const MAX: DataByte = DataByte(0x7F);
+
     /// Check a new status byte
+    #[inline]
     pub fn new(byte: u8) -> Result<Self, ParseError> {
         byte.try_into()
     }
 
     /// Create a data byte without checking for the leading 0.
+    #[inline]
     pub const fn new_unchecked(byte: u8) -> Self {
         Self(byte)
     }
 
     /// Get the underlying byte of the data
-    pub fn value(&self) -> u8 {
+    #[inline]
+    pub const fn value(&self) -> u8 {
         self.0
     }
 }

@@ -1,10 +1,11 @@
 use std::sync::Mutex;
 
 use bevy::{prelude::*, tasks::IoTaskPool};
+use crossbeam_channel::Receiver;
 use itertools::Itertools;
 use midix::prelude::ChannelVoiceMessage;
 use rustysynth::{Synthesizer, SynthesizerSettings};
-use tinyaudio::run_output_device;
+use tinyaudio::{OutputDeviceParameters, run_output_device};
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
@@ -30,6 +31,12 @@ pub struct SynthParams {
     /// Sample rate of your audio data. Typical values are: 11025 Hz, 22050 Hz, 44100 Hz (default), 48000 Hz,
     /// 96000 Hz
     pub sample_rate: usize,
+
+    /// Enable reverb and chorus for the synthesizer
+    pub enable_reverb_and_chorus: bool,
+
+    /// Inserts an [`EventReader<ChannelVoiceMessage>`] that are messages send to the synth.. Disabled by default (queue will overflow if unused).
+    pub synth_event_reader: bool,
 }
 
 impl Default for SynthParams {
@@ -38,6 +45,8 @@ impl Default for SynthParams {
             channel_count: 2,
             sample_rate: 44100,
             channel_sample_count: 441,
+            enable_reverb_and_chorus: true,
+            synth_event_reader: false,
         }
     }
 }
@@ -63,6 +72,13 @@ impl Plugin for SynthPlugin {
                 )
                     .chain(),
             );
+
+        if self.params.synth_event_reader {
+            app.add_event::<ChannelVoiceMessage>().add_systems(
+                PreUpdate,
+                poll_receiver.run_if(in_state(SynthStatus::Loaded)),
+            );
+        }
     }
 }
 
@@ -89,7 +105,11 @@ impl Synth {
     }
 }
 
-fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
+fn load_audio_font(
+    mut commands: Commands,
+    mut synth: ResMut<Synth>,
+    assets: Res<Assets<SoundFont>>,
+) {
     let SynthState::LoadHandle { sound_font } = &synth.synthesizer else {
         warn!(
             "loading the audio font is out of sync. This is an issue with bevy_midix. Please file an issue!"
@@ -102,28 +122,58 @@ fn load_audio_font(mut synth: ResMut<Synth>, assets: Res<Assets<SoundFont>>) {
 
     // the synth need not know about anything but a message to play instantaneously.
     let (synth_sender, synth_receiver) = crossbeam_channel::unbounded::<ChannelVoiceMessage>();
-    let synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
+    let mut synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
+    synth_settings.enable_reverb_and_chorus = synth.params.enable_reverb_and_chorus;
 
     let mut synthesizer = Synthesizer::new(&sound_font.file, &synth_settings).unwrap();
 
     let mut left = vec![0f32; synth.params.channel_sample_count];
     let mut right = vec![0f32; synth.params.channel_sample_count];
 
-    let _device = run_output_device(synth.params, {
-        move |data| {
-            for command in synth_receiver.try_iter() {
-                let data1 = command.data_1_byte() as i32;
-                let data2 = command.data_2_byte().unwrap_or(0) as i32;
-                let channel = command.channel().to_byte() as i32;
-                let command = (command.status() & 0b1111_0000) as i32;
-                synthesizer.process_midi_message(channel, command, data1, data2);
+    let output_device_params = OutputDeviceParameters {
+        channels_count: synth.params.channel_count,
+        sample_rate: synth.params.sample_rate,
+        channel_sample_count: synth.params.channel_sample_count,
+    };
+
+    let _device = if synth.params.synth_event_reader {
+        let (send, recv) = crossbeam_channel::unbounded();
+        commands.insert_resource(SynthCommandReaderReceiver { receiver: recv });
+
+        run_output_device(output_device_params, {
+            move |data| {
+                for command in synth_receiver.try_iter() {
+                    // I am uneasy about this.
+                    send.try_send(command).unwrap();
+                    let data1 = command.data_1_byte() as i32;
+                    let data2 = command.data_2_byte().unwrap_or(0) as i32;
+                    let channel = (command.status() & 0b0000_1111) as i32;
+                    let command = (command.status() & 0b1111_0000) as i32;
+                    synthesizer.process_midi_message(channel, command, data1, data2);
+                }
+                synthesizer.render(&mut left[..], &mut right[..]);
+                for (i, value) in left.iter().interleave(right.iter()).enumerate() {
+                    data[i] = *value;
+                }
             }
-            synthesizer.render(&mut left[..], &mut right[..]);
-            for (i, value) in left.iter().interleave(right.iter()).enumerate() {
-                data[i] = *value;
+        })
+    } else {
+        run_output_device(output_device_params, {
+            move |data| {
+                for command in synth_receiver.try_iter() {
+                    let data1 = command.data_1_byte() as i32;
+                    let data2 = command.data_2_byte().unwrap_or(0) as i32;
+                    let channel = (command.status() & 0b0000_1111) as i32;
+                    let command = (command.status() & 0b1111_0000) as i32;
+                    synthesizer.process_midi_message(channel, command, data1, data2);
+                }
+                synthesizer.render(&mut left[..], &mut right[..]);
+                for (i, value) in left.iter().interleave(right.iter()).enumerate() {
+                    data[i] = *value;
+                }
             }
-        }
-    })
+        })
+    }
     .unwrap();
 
     let (sink_sender, sink_receiver) = crossbeam_channel::unbounded();
@@ -146,4 +196,18 @@ fn state_out_of_sync(synth: Res<Synth>, current_state: Res<State<SynthStatus>>) 
 
 fn sync_states(synth: Res<Synth>, mut next_state: ResMut<NextState<SynthStatus>>) {
     next_state.set(synth.status_should_be());
+}
+
+/// This is a reader that will recieve commands sent to the synth.
+#[derive(Resource, Component, Clone)]
+struct SynthCommandReaderReceiver {
+    receiver: Receiver<ChannelVoiceMessage>,
+}
+
+/// connects the channel with the resource
+fn poll_receiver(
+    mut ev: EventWriter<ChannelVoiceMessage>,
+    command_receiver: Res<SynthCommandReaderReceiver>,
+) {
+    ev.write_batch(command_receiver.receiver.try_iter());
 }

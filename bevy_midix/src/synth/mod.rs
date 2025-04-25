@@ -2,18 +2,22 @@
 Synthesizer resources, setup and plugins
 "#]
 
-use crate::prelude::SoundFont;
+use crate::{
+    prelude::SoundFont,
+    song::{SongId, SongWriter},
+};
 use bevy::prelude::*;
 use crossbeam_channel::Sender;
 use midix::prelude::ChannelVoiceMessage;
 use std::sync::Mutex;
-use tinyaudio::{OutputDevice, OutputDeviceParameters};
+use thiserror::Error;
+use tinyaudio::OutputDevice;
 
 mod plugin;
 pub use plugin::*;
 
 mod sink;
-pub use sink::*;
+pub(crate) use sink::*;
 
 enum SynthState {
     NotLoaded,
@@ -23,8 +27,16 @@ enum SynthState {
     Loaded {
         synth_channel: Sender<ChannelVoiceMessage>,
         /// the sink channel will process delayed events and interface with the synth channel directly
-        sink_channel: Sender<SinkCommands>,
+        sink_channel: Sender<SinkCommand>,
     },
+}
+
+/// Errors related to synthing
+#[derive(Error, Debug)]
+pub enum SynthError {
+    /// The synthesizer isn't ready yet (soundfont not loaded)
+    #[error("The synthesizer isn't ready yet (soundfont not loaded)")]
+    NotReady,
 }
 
 /// Plays audio commands with the provided soundfont
@@ -34,7 +46,7 @@ enum SynthState {
 /// see [`ChannelVoiceMessage`] for the list of options
 #[derive(Resource)]
 pub struct Synth {
-    params: OutputDeviceParameters,
+    params: SynthParams,
     synthesizer: SynthState,
     _device: Option<Mutex<OutputDevice>>,
 }
@@ -55,32 +67,80 @@ impl Synth {
     /// A good default is 441
     pub fn new(params: SynthParams) -> Self {
         Self {
-            params: OutputDeviceParameters {
-                channels_count: params.channel_count,
-                sample_rate: params.sample_rate,
-                channel_sample_count: params.channel_sample_count,
-            },
+            params,
             ..Default::default()
         }
     }
 
     /// Send an event for the synth to play instantly
-    pub fn handle_event(&self, event: ChannelVoiceMessage) {
+    ///
+    /// # Errors
+    ///
+    /// If the synth is not ready for commands. See [`Synth::is_ready`]
+    pub fn handle_event(&self, event: ChannelVoiceMessage) -> Result<(), SynthError> {
         let SynthState::Loaded { synth_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
-            return;
+            return Err(SynthError::NotReady);
         };
         synth_channel.send(event).unwrap();
+        Ok(())
     }
 
-    /// Push something that makes the synth do things
-    pub fn push_audio(&self, song: &impl MidiCommandSource) {
+    /// Push something that makes the synth do things.
+    ///
+    /// Returns a songid IF it already has one, or IF one was generated (because of looping)
+    ///
+    /// # Errors
+    ///
+    /// If the synth is not ready for commands. See [`Synth::is_ready`]
+    pub fn push_audio(&self, song: impl SongWriter) -> Result<Option<SongId>, SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
-            return;
+            return Err(SynthError::NotReady);
         };
-        let commands = song.to_commands();
-        sink_channel.send(commands).unwrap();
+        let (id, song_type) = match (song.song_id(), song.looped()) {
+            (Some(id), _) => (
+                Some(id),
+                SongType::Identified {
+                    id,
+                    looped: song.looped(),
+                },
+            ),
+            (None, true) => {
+                let id = SongId::default();
+                (Some(id), SongType::Identified { id, looped: true })
+            }
+            _ => (None, SongType::Anonymous),
+        };
+
+        sink_channel
+            .send(SinkCommand::NewSong {
+                song_type,
+                commands: song.events().collect(),
+            })
+            .unwrap();
+        Ok(id)
+    }
+
+    /// Stop a certain song from playing.
+    ///
+    /// If stop_voices is false, any currently playing notes will continue to be held.
+    ///
+    /// # Errors
+    ///
+    /// If the synth is not ready for commands. See [`Synth::is_ready`]
+    pub fn stop(&self, song_id: SongId, stop_voices: bool) -> Result<(), SynthError> {
+        let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
+            error!("An event was passed to the synth, but the soundfont has not been loaded!");
+            return Err(SynthError::NotReady);
+        };
+        sink_channel
+            .send(SinkCommand::Stop {
+                song_id: Some(song_id),
+                stop_voices,
+            })
+            .unwrap();
+        Ok(())
     }
 
     /// Returns true if the sound font has been loaded!
@@ -97,24 +157,10 @@ impl Synth {
 
 impl Default for Synth {
     fn default() -> Self {
-        let params = OutputDeviceParameters {
-            channels_count: 2,
-            sample_rate: 44100,
-            channel_sample_count: 441,
-        };
         Self {
-            params,
+            params: SynthParams::default(),
             synthesizer: SynthState::NotLoaded,
             _device: None,
         }
     }
-}
-
-/// This defines a song, a file, or otherwise
-/// that has timestamps associated with midi events.
-///
-/// this is named as such not to conflict with [`midix::MidiSource`]
-pub trait MidiCommandSource {
-    /// Create sink commands this type.
-    fn to_commands(&self) -> SinkCommands;
 }

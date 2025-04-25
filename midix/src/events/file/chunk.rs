@@ -46,7 +46,8 @@ impl<'a> From<UnknownChunk<'a>> for ChunkEvent<'a> {
 
 impl ChunkEvent<'_> {
     /// True if the event is the end of a file
-    pub fn is_eof(&self) -> bool {
+    #[inline]
+    pub const fn is_eof(&self) -> bool {
         matches!(self, Self::EOF)
     }
 }

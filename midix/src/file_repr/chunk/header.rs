@@ -83,27 +83,27 @@ impl RawHeaderChunk {
 
     /// Get the describing format defined by the header. Includes information about the number
     /// of tracks identified.
-    pub fn format(&self) -> &RawFormat {
+    pub const fn format(&self) -> &RawFormat {
         &self.format
     }
 
     /// Get the describing format type by the header
     ///
     /// identified as `<format>` in the docs
-    pub fn format_type(&self) -> FormatType {
+    pub const fn format_type(&self) -> FormatType {
         self.format.format_type()
     }
 
     /// Get the number of tracks identified in the header
     ///
     /// identified as `<ntrks>` in the docs
-    pub fn num_tracks(&self) -> u16 {
+    pub const fn num_tracks(&self) -> u16 {
         self.format.num_tracks()
     }
     /// Get the timing property of the header
     ///
     /// identified as `<division>` in the docs
-    pub fn timing(&self) -> Timing {
+    pub const fn timing(&self) -> Timing {
         self.timing
     }
 }
@@ -128,7 +128,7 @@ pub struct TicksPerQuarterNote {
 }
 impl TicksPerQuarterNote {
     /// Returns the ticks per quarter note for the file.
-    pub fn ticks_per_quarter_note(&self) -> u16 {
+    pub const fn ticks_per_quarter_note(&self) -> u16 {
         let v = u16::from_be_bytes(self.inner);
         v & 0x7FFF
     }
@@ -163,13 +163,14 @@ impl SmpteHeader {
             ticks_per_frame,
         })
     }
+
     /// Returns the frames per second
-    pub fn fps(&self) -> SmpteFps {
+    pub const fn fps(&self) -> SmpteFps {
         self.fps
     }
 
     /// Returns the ticks per frame
-    pub fn ticks_per_frame(&self) -> u8 {
+    pub const fn ticks_per_frame(&self) -> u8 {
         self.ticks_per_frame.0
     }
 }
@@ -178,14 +179,14 @@ impl Timing {
     /// The tickrate per quarter note defines what a "quarter note" means.
     ///
     /// The leading bit of the u16 is disregarded, so 1-32767
-    pub fn new_ticks_per_quarter_note(tpqn: u16) -> Self {
+    pub const fn new_ticks_per_quarter_note(tpqn: u16) -> Self {
         let msb = (tpqn >> 8) as u8;
         let lsb = (tpqn & 0x00FF) as u8;
         Self::TicksPerQuarterNote(TicksPerQuarterNote { inner: [msb, lsb] })
     }
 
     /// Define the timing in terms of fps and ticks per frame
-    pub fn new_smpte(fps: SmpteFps, ticks_per_frame: DataByte) -> Self {
+    pub const fn new_smpte(fps: SmpteFps, ticks_per_frame: DataByte) -> Self {
         Self::Smpte(SmpteHeader {
             fps,
             ticks_per_frame,
@@ -211,7 +212,7 @@ impl Timing {
     }
     /// Returns Some if the midi timing is defined
     /// as ticks per quarter note
-    pub fn ticks_per_quarter_note(&self) -> Option<u16> {
+    pub const fn ticks_per_quarter_note(&self) -> Option<u16> {
         match self {
             Self::TicksPerQuarterNote(t) => Some(t.ticks_per_quarter_note()),
             _ => None,

@@ -34,7 +34,7 @@ pub enum SystemRealTimeMessage {
 
 impl SystemRealTimeMessage {
     /// Get the underlying byte
-    pub fn byte(&self) -> u8 {
+    pub const fn byte(&self) -> u8 {
         use SystemRealTimeMessage::*;
         match self {
             TimingClock => 0xF8,
@@ -48,7 +48,7 @@ impl SystemRealTimeMessage {
     }
 
     /// Interpret a byte as a [`SystemRealTimeMessage`]
-    pub fn from_byte(rep: u8) -> Self {
+    pub const fn from_byte(rep: u8) -> Self {
         use SystemRealTimeMessage::*;
         match rep {
             0xF8 => TimingClock,

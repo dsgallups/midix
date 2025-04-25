@@ -55,26 +55,26 @@ impl TimeSignature {
     }
 
     /// Interpret a byte slice as a time signature
-    pub fn new_from_bytes(v: [u8; 4]) -> Self {
+    pub const fn new_from_bytes(v: [u8; 4]) -> Self {
         Self(v)
     }
     /// numerator of the time signature
-    pub fn num(&self) -> u8 {
+    pub const fn num(&self) -> u8 {
         self.0[0]
     }
     /// A negative power of two.
     ///
     /// if this returns 3, then 2^3 = 8, so it's representative of an eigth
-    pub fn den(&self) -> u8 {
+    pub const fn den(&self) -> u8 {
         self.0[1]
     }
     /// midi clocks in a metronome click
-    pub fn clocks_per_click(&self) -> u8 {
+    pub const fn clocks_per_click(&self) -> u8 {
         self.0[2]
     }
 
     ///(24 MIDI clocks = 1 crotchet = 1 beat). 24 midi clocks is a MIDI quarter note
-    pub fn notated_32nds_per_24_clocks(&self) -> u8 {
+    pub const fn notated_32nds_per_24_clocks(&self) -> u8 {
         self.0[3]
     }
 }

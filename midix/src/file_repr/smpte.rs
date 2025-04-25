@@ -20,7 +20,7 @@ pub enum SmpteFps {
 impl SmpteFps {
     /// Most likely want to use this.
     /// Drop 30 (TwentyNine) is 30 here.
-    pub fn as_division(&self) -> u8 {
+    pub const fn as_division(&self) -> u8 {
         match self {
             Self::TwentyFour => 24,
             Self::TwentyFive => 25,
@@ -35,7 +35,7 @@ impl SmpteFps {
     ///
     /// However, that's not to say this logic isn't faulty. If it is,
     /// please file an issue.
-    pub fn as_f64(&self) -> f64 {
+    pub const fn as_f64(&self) -> f64 {
         match self {
             Self::TwentyFour => 24.,
             Self::TwentyFive => 25.,

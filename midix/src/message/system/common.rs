@@ -26,7 +26,7 @@ pub enum SystemCommonMessage<'a> {
 }
 impl SystemCommonMessage<'_> {
     #[allow(dead_code)]
-    fn status(&self) -> u8 {
+    const fn status(&self) -> u8 {
         use SystemCommonMessage::*;
         match self {
             SystemExclusive(_) => 0xF0,
@@ -65,6 +65,7 @@ impl FromLiveEventBytes for SystemCommonMessage<'_> {
                     .collect::<Vec<_>>();
                 SystemCommonMessage::SystemExclusive(SystemExclusiveMessage::new(data))
             }
+            //TODO: this needs to be implemented
             /*0xF1 if data.len() >= 1 => {
                 //MTC Quarter Frame
                 SystemCommonMessage::MidiTimeCodeQuarterFrame {
@@ -123,7 +124,7 @@ pub enum MtcQuarterFrameMessage {
 
 impl MtcQuarterFrameMessage {
     /// Represents the message as a byte
-    pub fn as_byte(&self) -> u8 {
+    pub const fn as_byte(&self) -> u8 {
         use MtcQuarterFrameMessage::*;
         match self {
             FramesLow => 0,
@@ -136,25 +137,4 @@ impl MtcQuarterFrameMessage {
             HoursHigh => 7,
         }
     }
-
-    // /// Creates a new message from a byte. This type always checks for correctness.
-    // pub fn new(code: u8) -> Result<MtcQuarterFrameMessage, std::io::Error> {
-    //     use MtcQuarterFrameMessage::*;
-    //     Ok(match code {
-    //         0 => FramesLow,
-    //         1 => FramesHigh,
-    //         2 => SecondsLow,
-    //         3 => SecondsHigh,
-    //         4 => MinutesLow,
-    //         5 => MinutesHigh,
-    //         6 => HoursLow,
-    //         7 => HoursHigh,
-    //         _ => {
-    //             return Err(io_error!(
-    //                 ErrorKind::InvalidData,
-    //                 "Invalid MtcQuarterFrameMessage"
-    //             ));
-    //         }
-    //     })
-    // }
 }

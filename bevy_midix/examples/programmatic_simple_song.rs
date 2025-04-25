@@ -1,6 +1,6 @@
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web"))]
 use std::time::Duration;
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "web")]
 use web_time::Duration;
 
 use bevy::{
@@ -152,5 +152,5 @@ fn make_song(synth: Res<Synth>, mut play_again: Local<Option<PlaySongAgain>>, ti
     //         .play_notes([base_key, higher_key]);
     // }
 
-    synth.push_audio(&song);
+    synth.push_audio(song.into_song()).unwrap();
 }

@@ -1,25 +1,48 @@
-use midix::prelude::ChannelVoiceMessage;
+use midix::prelude::*;
 
-/// A set of commands
-pub struct SinkCommands(pub(crate) Vec<SinkCommand>);
+use crate::song::SongId;
 
-impl SinkCommands {
-    /// Create a set of commands
-    pub fn new(commands: Vec<SinkCommand>) -> Self {
-        Self(commands)
+/// The type of song that will be sent to the synth
+#[derive(Clone, Copy)]
+pub(crate) enum SongType {
+    /// No identifier, and therefore, no looping
+    Anonymous,
+    /// An identifier, and therefore, looping
+    Identified {
+        /// The song identifer
+        id: SongId,
+        /// true if it loops
+        looped: bool,
+    },
+}
+
+impl SongType {
+    pub(crate) fn id(&self) -> Option<SongId> {
+        match self {
+            SongType::Anonymous => None,
+            SongType::Identified { id, .. } => Some(*id),
+        }
     }
 }
 
-/// Send a command to the synth to play a note
-pub struct SinkCommand {
-    pub(crate) timestamp: u64,
-    pub(crate) event: ChannelVoiceMessage,
+/// Command the sink to do something
+pub(crate) enum SinkCommand {
+    /// Play a new song
+    NewSong {
+        /// What kind of song is this?
+        song_type: SongType,
+        /// The associated events with the song
+        commands: Vec<Timed<ChannelVoiceMessage>>,
+    },
+    /// Stop a song
+    Stop {
+        song_id: Option<SongId>,
+        stop_voices: bool,
+    },
 }
-impl SinkCommand {
-    /// Create a command to play a note to the synth.
-    ///
-    /// Timestamp is delta micros from now.
-    pub fn new(timestamp: u64, event: ChannelVoiceMessage) -> Self {
-        Self { timestamp, event }
-    }
+
+pub(crate) struct InnerCommand {
+    pub(crate) time_to_send: u64,
+    pub(crate) parent: Option<SongId>,
+    pub(crate) command: ChannelVoiceMessage,
 }

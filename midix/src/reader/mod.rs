@@ -100,7 +100,7 @@ impl<R> Reader<R> {
         self.reader
     }
 
-    pub(crate) fn set_last_error_offset(&mut self, offset: usize) {
+    pub(crate) const fn set_last_error_offset(&mut self, offset: usize) {
         self.state.set_last_error_offset(offset);
     }
 
@@ -110,12 +110,12 @@ impl<R> Reader<R> {
     }
 
     /// Gets a reference to the underlying reader
-    pub fn get_ref(&self) -> &R {
+    pub const fn get_ref(&self) -> &R {
         &self.reader
     }
 
     /// Gets a mutable reference to the underlying reader
-    pub fn get_mut(&mut self) -> &mut R {
+    pub const fn get_mut(&mut self) -> &mut R {
         &mut self.reader
     }
 }

@@ -41,7 +41,7 @@ impl RawFormat {
     /// Returns the number of tracks identified by the format.
     ///
     /// [`RawFormat::SingleMultiChannel`] will always return 1.
-    pub fn num_tracks(&self) -> u16 {
+    pub const fn num_tracks(&self) -> u16 {
         use RawFormat::*;
         match &self {
             SingleMultiChannel => 1,

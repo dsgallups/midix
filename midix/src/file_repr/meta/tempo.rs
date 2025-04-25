@@ -27,7 +27,7 @@ impl Tempo {
     }
 
     /// The count of microseconds per midi quarter-note
-    pub fn micros_per_quarter_note(&self) -> u32 {
+    pub const fn micros_per_quarter_note(&self) -> u32 {
         self.0
     }
 }

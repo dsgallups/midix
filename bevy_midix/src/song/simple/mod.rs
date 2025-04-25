@@ -1,10 +1,18 @@
+//! Utils for simple song making
 use bevy::prelude::*;
 use fnv::FnvHashMap;
 use midix::prelude::*;
 
-use crate::synth::{MidiCommandSource, SinkCommand, SinkCommands};
+mod beat;
+pub use beat::*;
 
-use super::{Beat, ChannelModifier};
+mod channel_settings;
+pub use channel_settings::*;
+
+mod section;
+pub use section::*;
+
+use super::MidiSong;
 
 /// Presets for a channel for a simple song
 #[derive(Copy, Clone, Debug)]
@@ -18,7 +26,7 @@ impl Default for ChannelSettings {
     fn default() -> Self {
         Self {
             program: Program::new(1).unwrap(),
-            velocity: Velocity::max(),
+            velocity: Velocity::MAX,
         }
     }
 }
@@ -90,8 +98,9 @@ impl SimpleMidiSong {
     }
 }
 
-impl MidiCommandSource for SimpleMidiSong {
-    fn to_commands(&self) -> SinkCommands {
+impl SimpleMidiSong {
+    /// Turns this midi song into a song that can be used for the synth to handle
+    pub fn into_song(self) -> MidiSong {
         let micros_per_beat = 60_000_000. / self.beats_per_minute;
 
         let mut next_beat_additions = Vec::new();
@@ -115,7 +124,7 @@ impl MidiCommandSource for SimpleMidiSong {
                 let iter = next_beat_additions
                     .iter()
                     .copied()
-                    .map(|nb| SinkCommand::new(timestamp, nb))
+                    .map(|nb| Timed::new(timestamp, nb))
                     .collect::<Vec<_>>();
 
                 next_beat_additions.clear();
@@ -133,7 +142,7 @@ impl MidiCommandSource for SimpleMidiSong {
 
                     next_beat_additions.push(ChannelVoiceMessage::new(
                         channel,
-                        VoiceEvent::note_off(*event.key().unwrap(), Velocity::max()),
+                        VoiceEvent::note_off(*event.key().unwrap(), Velocity::MAX),
                     ));
                 }
             }
@@ -141,10 +150,10 @@ impl MidiCommandSource for SimpleMidiSong {
                 additions_for_this_beat
                     .into_iter()
                     .chain(events.iter().copied())
-                    .map(|msg| SinkCommand::new(timestamp, msg)),
+                    .map(|msg| Timed::new(timestamp, msg)),
             );
         }
 
-        SinkCommands::new(commands)
+        MidiSong::new(commands)
     }
 }

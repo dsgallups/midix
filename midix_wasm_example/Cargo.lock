@@ -2721,6 +2721,7 @@ dependencies = [
  "bevy",
  "num_enum",
  "thiserror 2.0.12",
+ "web-time",
 ]
 
 [[package]]

@@ -2,7 +2,10 @@
 # Identifier for a MIDI Channel
 "]
 
-use core::fmt;
+use core::{
+    fmt,
+    ops::{Add, AddAssign, Sub, SubAssign},
+};
 
 use num_enum::{IntoPrimitive, TryFromPrimitive};
 
@@ -14,6 +17,7 @@ use crate::message::{ChannelVoiceMessage, VoiceEvent};
 #[derive(
     Clone, Copy, PartialEq, Eq, Debug, Hash, IntoPrimitive, TryFromPrimitive, PartialOrd, Ord,
 )]
+#[cfg_attr(feature = "bevy", derive(bevy::prelude::Component))]
 #[repr(u8)]
 pub enum Channel {
     /// 0bxxxx0000
@@ -55,23 +59,35 @@ pub enum Channel {
 }
 
 impl Channel {
+    /// Return an array of all channels ordered [`Channel::One`] through [`Channel::Sixteen`]
+    pub const fn all() -> [Channel; 16] {
+        use Channel::*;
+        [
+            One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen,
+            Fourteen, Fifteen, Sixteen,
+        ]
+    }
+
     /// Send a voice event to this channel
-    pub fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
+    pub const fn send_event(self, event: VoiceEvent) -> ChannelVoiceMessage {
         ChannelVoiceMessage::new(self, event)
     }
 
     /// Given a status byte from some [`ChannelVoiceMessage`], perform bitwise ops
     /// to get the channel
     #[must_use]
-    pub fn from_status(status: u8) -> Self {
+    pub const fn from_status(status: u8) -> Self {
         let channel = status & 0b0000_1111;
-        Channel::try_from(channel).unwrap()
+        // SAFETY: every produced value must be a valid discriminant.
+        //
+        // Channel will ALWAYS be between 0 and 15 here and is owned.
+        unsafe { core::mem::transmute(channel) }
     }
 
     /// Returns the 4-bit channel number (0-15)
     #[must_use]
-    pub fn to_byte(&self) -> u8 {
-        (*self).into()
+    pub const fn to_byte(&self) -> u8 {
+        *self as u8
     }
 }
 
@@ -80,6 +96,65 @@ impl fmt::Display for Channel {
         let res: u8 = (*self).into();
         res.fmt(f)
     }
+}
+
+impl Add<u8> for Channel {
+    type Output = Channel;
+    fn add(self, rhs: u8) -> Self::Output {
+        // convert to the raw repr, add, then map back
+        let mut next = (self as u8).saturating_add(rhs);
+        if next > 15 {
+            next = 15;
+        }
+
+        assert!((0..16).contains(&next));
+        // SAFETY: every produced value must be a valid discriminant.
+        //
+        // We check that next is not greater than 15.
+        unsafe { core::mem::transmute(next) }
+    }
+}
+
+impl AddAssign<u8> for Channel {
+    fn add_assign(&mut self, rhs: u8) {
+        *self = *self + rhs;
+    }
+}
+
+#[test]
+fn test_add_channel() {
+    let channel = Channel::Two;
+    assert_eq!(channel + 0, Channel::Two);
+    assert_eq!(channel + 1, Channel::Three);
+    assert_eq!(channel + 28, Channel::Sixteen);
+    assert_eq!(channel + 140, Channel::Sixteen);
+}
+
+impl Sub<u8> for Channel {
+    type Output = Channel;
+    fn sub(self, rhs: u8) -> Self::Output {
+        // wrapping behaviour; pick `checked_sub` or `overflowing_sub` if you prefer
+        let next = (self as u8).saturating_sub(rhs);
+
+        assert!((0..16).contains(&next));
+        // SAFETY: all values map to valid discriminants here
+        unsafe { core::mem::transmute(next) }
+    }
+}
+
+impl SubAssign<u8> for Channel {
+    fn sub_assign(&mut self, rhs: u8) {
+        *self = *self - rhs;
+    }
+}
+
+#[test]
+fn test_sub_channel() {
+    let channel = Channel::Five;
+    assert_eq!(channel - 0, Channel::Five);
+    assert_eq!(channel - 1, Channel::Four);
+    assert_eq!(channel - 5, Channel::One);
+    assert_eq!(channel - 8, Channel::One);
 }
 
 #[test]

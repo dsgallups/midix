@@ -3,23 +3,28 @@ use crate::{
     reader::{ReadError, ReaderError, ReaderErrorKind},
 };
 
-/// Represents a MIDI voice message,.
+/// Represents a MIDI voice message.
+///
+/// This means something that has
+/// 1. A channel to send data to
+/// 2. The event in question. See [`VoiceEvent`] for a list of possible events.
 ///
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[cfg_attr(feature = "bevy", derive(bevy::prelude::Event))]
 pub struct ChannelVoiceMessage {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel as the status' lsb contains the channel
     status: StatusByte,
     /// The MIDI message type and associated data.
-    event: VoiceEvent,
+    pub event: VoiceEvent,
 }
 
 impl ChannelVoiceMessage {
     /// Create a new channel voice event from the channel and associated event type
-    pub fn new(channel: Channel, message: VoiceEvent) -> Self {
+    pub const fn new(channel: Channel, message: VoiceEvent) -> Self {
         let status = channel.to_byte() | (message.status_nibble() << 4);
         Self {
             status: StatusByte::new_unchecked(status),

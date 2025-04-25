@@ -1,6 +1,6 @@
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(feature = "web"))]
 use std::time::Duration;
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "web")]
 use web_time::Duration;
 
 use bevy::{
@@ -68,7 +68,7 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
         message.data_1_byte(),
         message.data_2_byte().unwrap()
     );
-    synth.handle_event(ChannelVoiceMessage::new(
+    _ = synth.handle_event(ChannelVoiceMessage::new(
         Channel::One,
         VoiceEvent::PitchBend(PitchBend::new(0, msb).unwrap()),
     ));
@@ -79,8 +79,8 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
     const BASE_OCTAVE: i8 = 4;
     let key = Key::new(Note::C, Octave::new(BASE_OCTAVE));
 
-    synth.handle_event(ChannelVoiceMessage::new(
+    _ = synth.handle_event(ChannelVoiceMessage::new(
         Channel::One,
-        VoiceEvent::note_on(key, Velocity::max()),
+        VoiceEvent::note_on(key, Velocity::MAX),
     ));
 }

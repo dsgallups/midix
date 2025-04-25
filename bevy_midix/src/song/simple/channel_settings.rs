@@ -93,7 +93,7 @@ impl<'b, 's> BeatChannel<'b, 's> {
         let events = keys.into_iter().map(|key| {
             ChannelVoiceMessage::new(
                 self.channel_mod.channel,
-                VoiceEvent::note_on(key, Velocity::max()),
+                VoiceEvent::note_on(key, Velocity::MAX),
             )
         });
         self.channel_mod.song.add_events(self.beat, events);

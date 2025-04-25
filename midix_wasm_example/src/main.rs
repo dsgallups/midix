@@ -70,7 +70,7 @@ fn handle_mididata(
 
         info!("Data: {:?}", data.message);
         //todo
-        synth.handle_event(event);
+        _ = synth.handle_event(event);
         ev.write(ExampleInputEvent {
             voice: *event.event(),
         });

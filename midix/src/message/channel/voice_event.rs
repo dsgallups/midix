@@ -2,11 +2,29 @@ use crate::prelude::*;
 
 /// Represents a MIDI message, usually associated to a MIDI channel.
 ///
+/// There are seven different types of voice events.
+/// - note on: Play a particular note
+/// - note off: Stop playing a particular note
+/// - [control change](Controller): Things like panning, modulation, expression, holding a pedal and the alike.
+/// - [program change](Program): a way to change the underlying "voice" of a channel's instrument.
+/// - after touch: After a note's been played, modify the [`Velocity`] without having
+///   to send another note on command
+/// - channel pressure after touch: change the velocity for all currently playing notes. this one's pretty unusual to find.
+/// - [pitch bend](PitchBend): "curve" the frequency of a note.
+///
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub enum VoiceEvent {
+    /// Modify the value of a MIDI controller.
+    ControlChange(Controller),
+
+    /// Change the program (also known as instrument) for a channel.
+    ProgramChange {
+        /// The new program (instrument) to use for the channel.
+        program: Program,
+    },
     /// Stop playing a note.
     NoteOff {
         /// The MIDI key to stop playing.
@@ -32,14 +50,7 @@ pub enum VoiceEvent {
         /// The new velocity for the key.
         velocity: Velocity,
     },
-    /// Modify the value of a MIDI controller.
-    ControlChange(Controller),
 
-    /// Change the program (also known as instrument) for a channel.
-    ProgramChange {
-        /// The new program (instrument) to use for the channel.
-        program: Program,
-    },
     /// Change the note velocity of a whole channel at once, without starting new notes.
     ChannelPressureAfterTouch {
         /// The new velocity for all notes currently playing in the channel.
@@ -51,21 +62,37 @@ pub enum VoiceEvent {
 
 impl VoiceEvent {
     /// Create a note on voice event
-    pub fn note_on(key: Key, velocity: Velocity) -> Self {
+    pub const fn note_on(key: Key, velocity: Velocity) -> Self {
         Self::NoteOn { key, velocity }
     }
     /// Create a note off voice event
-    pub fn note_off(key: Key, velocity: Velocity) -> Self {
+    pub const fn note_off(key: Key, velocity: Velocity) -> Self {
         Self::NoteOff { key, velocity }
     }
-
-    /// Turn self into a ChannelVoiceMessage
-    pub fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
-        ChannelVoiceMessage::new(channel, self)
+    /// Modify the velocity of a currently played key
+    pub const fn after_touch(key: Key, velocity: Velocity) -> Self {
+        Self::Aftertouch { key, velocity }
+    }
+    /// Modify the velocity of all currently played keys
+    pub const fn channel_after_touch(velocity: Velocity) -> Self {
+        Self::ChannelPressureAfterTouch { velocity }
     }
     /// Set a new instrument to use for the channel
-    pub fn program_change(program: Program) -> Self {
+    pub const fn program_change(program: Program) -> Self {
         Self::ProgramChange { program }
+    }
+    /// Adjust the "pitch" of a note
+    pub const fn pitch_bend(pitch_bend: PitchBend) -> Self {
+        Self::PitchBend(pitch_bend)
+    }
+
+    /// Create a new control change event with the provided controller
+    pub const fn control_change(controller: Controller) -> Self {
+        Self::ControlChange(controller)
+    }
+    /// Turn self into a ChannelVoiceMessage
+    pub const fn send_to_channel(self, channel: Channel) -> ChannelVoiceMessage {
+        ChannelVoiceMessage::new(channel, self)
     }
 
     /// Returns true if the note is on. This excludes note on where the velocity is zero.
@@ -111,7 +138,7 @@ impl VoiceEvent {
     ///
     /// TODO
     #[allow(dead_code)]
-    pub(crate) fn status_nibble(&self) -> u8 {
+    pub(crate) const fn status_nibble(&self) -> u8 {
         match self {
             VoiceEvent::NoteOff { .. } => 0x8,
             VoiceEvent::NoteOn { .. } => 0x9,

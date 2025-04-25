@@ -2,10 +2,15 @@ use crate::prelude::*;
 use core::fmt;
 
 /// Identifies the velocity of a key press, or a key unpress, or an aftertouch.
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub struct Velocity(DataByte);
 
 impl Velocity {
+    /// Returns a max velocity
+    pub const MAX: Velocity = Velocity(DataByte::new_unchecked(127));
+    /// Returns a velocity of zero.
+    pub const ZERO: Velocity = Velocity(DataByte::new_unchecked(0));
+
     /// Creates a new velocity from the provided byte
     ///
     /// Checks for correctness (leading 0 bit)
@@ -16,23 +21,18 @@ impl Velocity {
         rep.try_into().map(Self)
     }
 
-    /// Returns a max velocity
-    pub fn max() -> Self {
-        Self(DataByte::new_unchecked(127))
-    }
-
-    /// Returns a velocity of zero.
-    pub fn zero() -> Self {
-        Self(DataByte::new_unchecked(0))
+    /// Creates a new velocity without checking the bytes' validity.
+    pub const fn new_unchecked(byte: u8) -> Self {
+        Self(DataByte::new_unchecked(byte))
     }
 
     /// Get a reference to the underlying byte
-    pub fn byte(&self) -> u8 {
+    pub const fn byte(&self) -> u8 {
         self.0.0
     }
 
     /// Get the dynamic of the velocity...fortississississimo
-    pub fn dynamic(&self) -> Dynamic {
+    pub const fn dynamic(&self) -> Dynamic {
         match self.byte() {
             0 => Dynamic::off(),
             1..16 => Dynamic::ppp(),
@@ -76,49 +76,66 @@ pub enum Dynamic {
     Fortississimo,
 }
 
+impl fmt::Display for Dynamic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Dynamic::*;
+        match self {
+            Off => write!(f, "off"),
+            Pianissimo => write!(f, "pp"),
+            Piano => write!(f, "p"),
+            Pianississimo => write!(f, "ppp"),
+            MezzoPiano => write!(f, "mp"),
+            MezzoForte => write!(f, "mf"),
+            Forte => write!(f, "f"),
+            Fortissimo => write!(f, "ff"),
+            Fortississimo => write!(f, "fff"),
+        }
+    }
+}
+
 impl Dynamic {
     /// No sound
-    pub fn off() -> Self {
+    pub const fn off() -> Self {
         Self::Off
     }
 
     /// very quiet
-    pub fn ppp() -> Self {
+    pub const fn ppp() -> Self {
         Self::Pianississimo
     }
 
     /// pretty quiet
-    pub fn pp() -> Self {
+    pub const fn pp() -> Self {
         Self::Pianissimo
     }
 
     /// quiet
-    pub fn p() -> Self {
+    pub const fn p() -> Self {
         Self::Piano
     }
 
     /// kinda quiet
-    pub fn mp() -> Self {
+    pub const fn mp() -> Self {
         Self::MezzoPiano
     }
 
     /// kinda loud
-    pub fn mf() -> Self {
+    pub const fn mf() -> Self {
         Self::MezzoForte
     }
 
     /// loud
-    pub fn f() -> Self {
+    pub const fn f() -> Self {
         Self::Forte
     }
 
     /// pretty loud
-    pub fn ff() -> Self {
+    pub const fn ff() -> Self {
         Self::Fortissimo
     }
 
     /// very loud
-    pub fn fff() -> Self {
+    pub const fn fff() -> Self {
         Self::Fortississimo
     }
 }
