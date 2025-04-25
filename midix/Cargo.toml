@@ -19,7 +19,7 @@ bevy = ["dep:bevy"]
 debug = ["bevy"]
 
 [dependencies]
-bevy = { version = "0.16.0-rc.5", optional = true, default-features = false }
+bevy = { version = "0.16.0", optional = true, default-features = false }
 num_enum = { version = "0.7.3", default-features = false }
 thiserror = { version = "2.0", default-features = false }
 
