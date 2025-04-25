@@ -1,12 +1,10 @@
-use std::iter;
-
 use midix::prelude::*;
 
-use crate::{song::SongId, synth::SongWriter};
+use crate::song::SongId;
 
 /// The type of song that will be sent to the synth
 #[derive(Clone, Copy)]
-pub enum SongType {
+pub(crate) enum SongType {
     /// No identifier, and therefore, no looping
     Anonymous,
     /// An identifier, and therefore, looping
@@ -43,18 +41,8 @@ pub(crate) enum SinkCommand {
     },
 }
 
-impl SongWriter for Timed<ChannelVoiceMessage> {
-    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
-        iter::once(*self)
-    }
-}
-impl SongWriter for Vec<Timed<ChannelVoiceMessage>> {
-    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
-        self.iter().copied()
-    }
-}
-impl SongWriter for [Timed<ChannelVoiceMessage>] {
-    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
-        self.iter().copied()
-    }
+pub(crate) struct InnerCommand {
+    pub(crate) time_to_send: u64,
+    pub(crate) parent: Option<SongId>,
+    pub(crate) command: ChannelVoiceMessage,
 }

@@ -1,3 +1,5 @@
+use std::iter;
+
 use fnv::FnvHashMap;
 use midix::prelude::{Channel, ChannelVoiceMessage, Timed, VoiceEvent};
 
@@ -28,5 +30,21 @@ pub trait SongWriter {
         }
 
         map
+    }
+}
+
+impl SongWriter for Timed<ChannelVoiceMessage> {
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
+        iter::once(*self)
+    }
+}
+impl SongWriter for Vec<Timed<ChannelVoiceMessage>> {
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
+        self.iter().copied()
+    }
+}
+impl SongWriter for [Timed<ChannelVoiceMessage>] {
+    fn events(&self) -> impl Iterator<Item = Timed<ChannelVoiceMessage>> {
+        self.iter().copied()
     }
 }

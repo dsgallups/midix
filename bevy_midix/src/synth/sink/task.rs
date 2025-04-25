@@ -18,7 +18,7 @@ use midix::prelude::*;
 
 use crate::song::{MidiSong, SongId};
 
-use super::{SinkCommand, SongType, inner::InnerCommand};
+use super::{SinkCommand, SongType, commands::InnerCommand};
 
 #[derive(Default)]
 pub struct CommandQueue(VecDeque<InnerCommand>);

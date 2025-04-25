@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
 use bevy::{prelude::*, tasks::IoTaskPool};
+use crossbeam_channel::Receiver;
 use itertools::Itertools;
 use midix::prelude::ChannelVoiceMessage;
 use rustysynth::{Synthesizer, SynthesizerSettings};
@@ -8,7 +9,7 @@ use tinyaudio::{OutputDeviceParameters, run_output_device};
 
 use crate::asset::{SoundFont, SoundFontLoader};
 
-use super::{SinkTask, Synth, SynthCommandReaderReceiver, SynthState, receiver};
+use super::{SinkTask, Synth, SynthState};
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
@@ -75,7 +76,7 @@ impl Plugin for SynthPlugin {
         if self.params.synth_event_reader {
             app.add_event::<ChannelVoiceMessage>().add_systems(
                 PreUpdate,
-                receiver::poll_receiver.run_if(in_state(SynthStatus::Loaded)),
+                poll_receiver.run_if(in_state(SynthStatus::Loaded)),
             );
         }
     }
@@ -195,4 +196,18 @@ fn state_out_of_sync(synth: Res<Synth>, current_state: Res<State<SynthStatus>>) 
 
 fn sync_states(synth: Res<Synth>, mut next_state: ResMut<NextState<SynthStatus>>) {
     next_state.set(synth.status_should_be());
+}
+
+/// This is a reader that will recieve commands sent to the synth.
+#[derive(Resource, Component, Clone)]
+struct SynthCommandReaderReceiver {
+    receiver: Receiver<ChannelVoiceMessage>,
+}
+
+/// connects the channel with the resource
+fn poll_receiver(
+    mut ev: EventWriter<ChannelVoiceMessage>,
+    command_receiver: Res<SynthCommandReaderReceiver>,
+) {
+    ev.write_batch(command_receiver.receiver.try_iter());
 }

@@ -17,10 +17,7 @@ mod plugin;
 pub use plugin::*;
 
 mod sink;
-pub use sink::*;
-
-mod receiver;
-use receiver::*;
+pub(crate) use sink::*;
 
 enum SynthState {
     NotLoaded,
