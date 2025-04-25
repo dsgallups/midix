@@ -2,7 +2,7 @@ use crate::prelude::*;
 use core::fmt;
 
 /// Identifies the velocity of a key press, or a key unpress, or an aftertouch.
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub struct Velocity(DataByte);
 
 impl Velocity {

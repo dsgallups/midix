@@ -76,23 +76,31 @@ impl Synth {
     }
 
     /// Send an event for the synth to play instantly
-    pub fn handle_event(&self, event: ChannelVoiceMessage) {
+    ///
+    /// # Errors
+    ///
+    /// If the synth is not ready for commands. See [`Synth::is_ready`]
+    pub fn handle_event(&self, event: ChannelVoiceMessage) -> Result<(), SynthError> {
         let SynthState::Loaded { synth_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
-            return;
+            return Err(SynthError::NotReady);
         };
         synth_channel.send(event).unwrap();
+        Ok(())
     }
 
     /// Push something that makes the synth do things.
     ///
     /// Returns a songid IF it already has one, or IF one was generated (because of looping)
+    ///
+    /// # Errors
+    ///
+    /// If the synth is not ready for commands. See [`Synth::is_ready`]
     pub fn push_audio(&self, song: impl SongWriter) -> Result<Option<SongId>, SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return Err(SynthError::NotReady);
         };
-        //let song = song.into_song();
         let (id, song_type) = match (song.song_id(), song.looped()) {
             (Some(id), _) => (
                 Some(id),
@@ -121,7 +129,9 @@ impl Synth {
     ///
     /// If stop_voices is false, any currently playing notes will continue to be held.
     ///
-    /// Note there is no pause.
+    /// # Errors
+    ///
+    /// If the synth is not ready for commands. See [`Synth::is_ready`]
     pub fn stop(&self, song_id: SongId, stop_voices: bool) -> Result<(), SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");

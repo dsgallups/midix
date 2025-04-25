@@ -8,7 +8,7 @@ use std::{
 #[cfg(feature = "web")]
 use web_time::{Duration, Instant};
 
-use bevy::log::info;
+use bevy::log::{debug, info};
 /*
 
 This Sink will send events to another thread that will constantly poll/flush command out to the synth.
@@ -33,7 +33,7 @@ impl CommandQueue {
         for message in events {
             let amt = elapsed + message.timestamp;
 
-            info!(
+            debug!(
                 "Message will be played in {}",
                 Duration::from_micros(amt).as_secs_f64()
             );
@@ -121,7 +121,7 @@ impl SinkTask {
         for message in events {
             let amt = elapsed + message.timestamp;
 
-            info!(
+            debug!(
                 "Message will be played in {}",
                 Duration::from_micros(amt).as_secs_f64()
             );

@@ -14,7 +14,7 @@ use crate::{prelude::*, reader::ReaderError};
 /// Often, you'll find that MIDI files only adjust the particular variant
 /// in a "coarse" manner.
 #[non_exhaustive]
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub enum Controller {
     /// 0x00
     BankSelection(DataByte),

@@ -64,7 +64,7 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
     ];
     info!("Voice {}!", scale.voice_number);
     for key in C_CHORD {
-        synth.handle_event(ChannelVoiceMessage::new(
+        _ = synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
             VoiceEvent::note_off(key, Velocity::MAX),
         ));
@@ -74,13 +74,13 @@ fn iterate_voices(synth: Res<Synth>, time: Res<Time>, mut scale: Local<VoiceChan
     } else {
         scale.voice_number += 1;
     }
-    synth.handle_event(ChannelVoiceMessage::new(
+    _ = synth.handle_event(ChannelVoiceMessage::new(
         Channel::One,
         // unwrapping is okay, because we don't go past 127.
         VoiceEvent::program_change(Program::new(scale.voice_number).unwrap()),
     ));
     for key in C_CHORD {
-        synth.handle_event(ChannelVoiceMessage::new(
+        _ = synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
             VoiceEvent::note_on(key, Velocity::MAX),
         ));

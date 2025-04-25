@@ -7,7 +7,7 @@ use crate::prelude::*;
 /// A value of `0x3FFF` indicates full bend upwards.
 ///
 /// This value is available via [`PitchBend::value`]
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub struct PitchBend {
     lsb: DataByte,
     msb: DataByte,

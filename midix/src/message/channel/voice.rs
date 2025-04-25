@@ -19,7 +19,7 @@ pub struct ChannelVoiceMessage {
     /// Used for getting the channel as the status' lsb contains the channel
     status: StatusByte,
     /// The MIDI message type and associated data.
-    event: VoiceEvent,
+    pub event: VoiceEvent,
 }
 
 impl ChannelVoiceMessage {

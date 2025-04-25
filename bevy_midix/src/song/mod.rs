@@ -46,6 +46,11 @@ impl MidiSong {
             looped: false,
         }
     }
+    /// Get a mutable reference to the events
+    pub fn events_mut(&mut self) -> &mut Vec<Timed<ChannelVoiceMessage>> {
+        &mut self.events
+    }
+
     /// Commands should be looped
     pub fn set_looped(mut self) -> Self {
         self.looped = true;

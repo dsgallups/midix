@@ -4,7 +4,7 @@ use core::fmt;
 /// Identifies an instrument
 ///
 /// TODO docs
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub struct Program(DataByte);
 
 impl Program {

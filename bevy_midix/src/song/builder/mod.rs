@@ -9,9 +9,10 @@ use super::MidiSong;
 ///
 /// This struct does not consider beats per minute or anything of that sort.
 ///
-/// Straight micros.
+/// Straight micros, delta seconds.
 #[derive(Default, Clone, Debug)]
 pub struct MidiSongBuilder {
+    accumulated_time: u64,
     events: Vec<Timed<ChannelVoiceMessage>>,
 }
 
@@ -24,8 +25,11 @@ impl MidiSongBuilder {
         }
     }
 
-    /// Add a timed channel voice message.
-    pub fn add(&mut self, event: Timed<ChannelVoiceMessage>) -> &mut Self {
+    /// Add a timed channel voice message. event should be in DELTA micros.
+    pub fn add(&mut self, mut event: Timed<ChannelVoiceMessage>) -> &mut Self {
+        self.accumulated_time += event.timestamp;
+        event.timestamp = self.accumulated_time;
+
         self.events.push(event);
         self
     }
@@ -34,7 +38,11 @@ impl MidiSongBuilder {
         &mut self,
         events: impl IntoIterator<Item = Timed<ChannelVoiceMessage>>,
     ) -> &mut Self {
-        self.events.extend(events);
+        self.events.extend(events.into_iter().map(|mut event| {
+            self.accumulated_time += event.timestamp;
+            event.timestamp = self.accumulated_time;
+            event
+        }));
         self
     }
 

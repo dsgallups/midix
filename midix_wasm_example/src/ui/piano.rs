@@ -141,7 +141,7 @@ pub fn handle_input(
                     *background_color = PRESSED.into();
                     let event =
                         VoiceEvent::note_on(*key, Velocity::MAX).send_to_channel(Channel::One);
-                    synth.handle_event(event);
+                    _ = synth.handle_event(event);
                 } else {
                     *background_color = HOVERED.into();
                 }
@@ -241,7 +241,7 @@ fn on_mouse_up(
     let event = VoiceEvent::note_on(*key, Velocity::ZERO).send_to_channel(Channel::One);
     // could make this beter and revert to hover, but lazy
     *background_color = HOVERED.into();
-    synth.handle_event(event);
+    _ = synth.handle_event(event);
 }
 
 // because Interaction::Pressed doesn't do anything if you leave pressed.
@@ -253,5 +253,5 @@ fn on_mouse_leave(
     let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
     *background_color = BackgroundColor(bg_color(key.is_sharp()));
     let event = VoiceEvent::note_on(*key, Velocity::ZERO).send_to_channel(Channel::One);
-    synth.handle_event(event);
+    _ = synth.handle_event(event);
 }

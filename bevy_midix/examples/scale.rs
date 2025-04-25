@@ -88,13 +88,13 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
     if scale.note_on {
         info!("Note on {}!", scale.current_key);
         //play note on
-        synth.handle_event(ChannelVoiceMessage::new(
+        _ = synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
             VoiceEvent::note_on(scale.current_key, Velocity::MAX),
         ));
     } else {
         info!("Note off {}!", scale.current_key);
-        synth.handle_event(ChannelVoiceMessage::new(
+        _ = synth.handle_event(ChannelVoiceMessage::new(
             Channel::One,
             VoiceEvent::note_off(scale.current_key, Velocity::MAX),
         ));

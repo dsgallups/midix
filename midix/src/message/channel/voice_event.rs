@@ -15,8 +15,16 @@ use crate::prelude::*;
 /// If you wish to parse a MIDI message from a slice of raw MIDI bytes, use the
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub enum VoiceEvent {
+    /// Modify the value of a MIDI controller.
+    ControlChange(Controller),
+
+    /// Change the program (also known as instrument) for a channel.
+    ProgramChange {
+        /// The new program (instrument) to use for the channel.
+        program: Program,
+    },
     /// Stop playing a note.
     NoteOff {
         /// The MIDI key to stop playing.
@@ -42,14 +50,7 @@ pub enum VoiceEvent {
         /// The new velocity for the key.
         velocity: Velocity,
     },
-    /// Modify the value of a MIDI controller.
-    ControlChange(Controller),
 
-    /// Change the program (also known as instrument) for a channel.
-    ProgramChange {
-        /// The new program (instrument) to use for the channel.
-        program: Program,
-    },
     /// Change the note velocity of a whole channel at once, without starting new notes.
     ChannelPressureAfterTouch {
         /// The new velocity for all notes currently playing in the channel.

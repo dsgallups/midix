@@ -38,7 +38,7 @@ impl<T> Ticked<T> {
 /// A wrapper around some type with an associated timestamp in micros.
 ///
 /// This differs from `Ticked`, which does not necessarily represent itself in time.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Timed<T> {
     /// Micros
     pub timestamp: u64,
