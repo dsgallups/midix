@@ -25,7 +25,7 @@ tinyaudio = "1.1.0"
 itertools = "0.14.0"
 
 [dependencies.bevy]
-version = "0.16.0-rc.5"
+version = "0.16.0"
 default-features = false
 features = [
     "multi_threaded",
@@ -37,5 +37,5 @@ features = [
 ]
 
 [dev-dependencies.bevy]
-version = "0.16.0-rc.5"
+version = "0.16.0"
 default-features = true

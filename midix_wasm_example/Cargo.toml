@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.16.0-rc.5", features = ["web"] }
+bevy = { version = "0.16.0", features = ["web"] }
 bevy_midix = { path = "../bevy_midix", features = ["web"] }
 itertools = "0.14.0"
 
