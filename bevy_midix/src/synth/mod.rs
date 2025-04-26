@@ -133,19 +133,16 @@ impl Synth {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return Err(SynthError::NotReady);
         };
-        let (id, song_type) = match (song.song_id(), song.looped()) {
-            (Some(id), _) => (
-                Some(id),
-                SongType::Identified {
-                    id,
-                    looped: song.looped(),
-                },
-            ),
-            (None, true) => {
+        let (id, song_type) = match (song.song_id(), song.looped(), song.paused()) {
+            (Some(id), looped, paused) => (Some(id), SongType::Identified { id, looped, paused }),
+            (None, looped, paused) => {
                 let id = SongId::default();
-                (Some(id), SongType::Identified { id, looped: true })
+                if looped || paused {
+                    (Some(id), SongType::Identified { id, looped, paused })
+                } else {
+                    (None, SongType::Anonymous)
+                }
             }
-            _ => (None, SongType::Anonymous),
         };
 
         sink_channel.send(SinkCommand::NewSong {

@@ -31,6 +31,9 @@ pub trait SongWriter {
 
         map
     }
+    fn paused(&self) -> bool {
+        false
+    }
 }
 
 impl SongWriter for Timed<ChannelVoiceMessage> {

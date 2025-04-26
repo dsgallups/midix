@@ -5,7 +5,7 @@ use crate::song::SongId;
 /// The type of song that will be sent to the synth
 #[derive(Clone, Copy)]
 pub(crate) enum SongType {
-    /// No identifier, and therefore, no looping
+    /// No identifier, and therefore, no special props
     Anonymous,
     /// An identifier, and therefore, looping
     Identified {
@@ -13,6 +13,8 @@ pub(crate) enum SongType {
         id: SongId,
         /// true if it loops
         looped: bool,
+        /// true if it starts paused
+        paused: bool,
     },
 }
 
@@ -36,6 +38,8 @@ pub(crate) enum SinkCommand {
         /// The associated events with the song
         commands: Vec<Timed<ChannelVoiceMessage>>,
     },
+    /// Play a song
+    Play(SongId),
     /// Stop a song
     Stop {
         song_id: Option<SongId>,
