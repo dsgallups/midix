@@ -33,13 +33,13 @@ impl Debug for TrackMessage<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ChannelVoice(c) => {
-                write!(f, "{:?}", c)
+                write!(f, "{c:?}")
             }
             Self::SystemExclusive(s) => {
-                write!(f, "{:?}", s)
+                write!(f, "{s:?}")
             }
             Self::Meta(m) => {
-                write!(f, "{:?}", m)
+                write!(f, "{m:?}")
             }
         }
     }

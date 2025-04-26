@@ -64,7 +64,7 @@ fn make_song(synth: Res<Synth>, mut play_again: Local<Option<PlaySongAgain>>, ti
 
     use Channel::*;
 
-    println!("voice: {}", count);
+    println!("voice: {count}");
     song.channel(One)
         .program_change(0, Program::new(count).unwrap())
         .note_on(0, key!(C, 4), Velocity::new_unchecked(127))
