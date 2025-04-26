@@ -27,6 +27,8 @@ impl SongType {
 
 /// Command the sink to do something
 pub(crate) enum SinkCommand {
+    /// Play an event in time x
+    PlayEvent(Timed<ChannelVoiceMessage>),
     /// Play a new song
     NewSong {
         /// What kind of song is this?

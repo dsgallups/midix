@@ -2,6 +2,7 @@
 use std::time::{Duration, Instant};
 use std::{
     collections::VecDeque,
+    iter,
     pin::Pin,
     task::{Context, Poll},
 };
@@ -109,7 +110,7 @@ impl SinkTask {
         })
     }
 
-    // song commands should already be sorted.
+    // song commands already be sorted, or should sort.
     //
     // elapsed is in micros
     fn queue_commands(
@@ -151,6 +152,13 @@ impl Future for SinkTask {
             },
         } {
             match messages {
+                SinkCommand::PlayEvent(event) => {
+                    // we will always sort. there is no guarantee that events after this aren't before/after this event.
+                    //
+                    // However, there could be a performance optimization here.
+                    new_messages_pushed = true;
+                    self.queue_commands(None, iter::once(event), elapsed);
+                }
                 SinkCommand::NewSong {
                     song_type,
                     mut commands,
