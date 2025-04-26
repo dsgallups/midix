@@ -77,7 +77,7 @@ impl Synth {
     /// # Errors
     ///
     /// If the synth is not ready for commands. See [`Synth::is_ready`]
-    pub fn handle_event(&self, event: ChannelVoiceMessage) -> Result<(), SynthError> {
+    pub fn push_event(&self, event: ChannelVoiceMessage) -> Result<(), SynthError> {
         let SynthState::Loaded { synth_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return Err(SynthError::NotReady);
