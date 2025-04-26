@@ -20,6 +20,9 @@ pub trait SongWriter {
     fn looped(&self) -> bool {
         false
     }
+    fn paused(&self) -> bool {
+        false
+    }
     /// Helper method that will divide events into individual channels
     fn divide_events_into_channels(&self) -> FnvHashMap<Channel, Vec<Timed<VoiceEvent>>> {
         let mut map: FnvHashMap<Channel, Vec<Timed<VoiceEvent>>> = FnvHashMap::default();

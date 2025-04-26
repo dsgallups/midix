@@ -17,7 +17,7 @@ This Sink will send events to another thread that will constantly poll/flush com
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use midix::prelude::*;
 
-use crate::song::{MidiSong, SongId};
+use crate::song::SongId;
 
 use super::{SinkCommand, SongType, commands::InnerCommand};
 
@@ -77,11 +77,12 @@ pub(crate) struct SinkTask {
     commands: Receiver<SinkCommand>,
     queue: CommandQueue,
     /// Stored songs that are looping
-    keepsakes: Vec<SongInfo>,
+    loops: Vec<LoopedSong>,
 }
 
-struct SongInfo {
-    song: MidiSong,
+struct LoopedSong {
+    id: SongId,
+    events: Vec<Timed<ChannelVoiceMessage>>,
     last_repeated: Instant,
     length: u64,
 }
@@ -96,15 +97,16 @@ impl SinkTask {
             synth_channel,
             commands,
             queue: CommandQueue::default(),
-            keepsakes: Vec::new(),
+            loops: Vec::new(),
         }
     }
 
     // make sure the commands are already sorted.
-    fn keep(&mut self, song: MidiSong) {
-        let length = song.events.last().map(|e| e.timestamp).unwrap_or(0);
-        self.keepsakes.push(SongInfo {
-            song,
+    fn keep_looping(&mut self, id: SongId, events: Vec<Timed<ChannelVoiceMessage>>) {
+        let length = events.last().map(|e| e.timestamp).unwrap_or(0);
+        self.loops.push(LoopedSong {
+            id,
+            events,
             last_repeated: Instant::now(),
             length,
         })
@@ -171,11 +173,7 @@ impl Future for SinkTask {
                     new_messages_pushed = true;
                     if let SongType::Identified { id, looped } = song_type {
                         if looped {
-                            self.keep(MidiSong {
-                                id,
-                                events: commands.clone(),
-                                looped,
-                            });
+                            self.keep_looping(id, commands.clone());
                         }
                     }
 
@@ -188,7 +186,7 @@ impl Future for SinkTask {
                     if let Some(song_id) = song_id {
                         self.queue
                             .retain(|command| command.parent.is_none_or(|id| id != song_id));
-                        self.keepsakes.retain(|info| info.song.id != song_id);
+                        self.loops.retain(|info| info.id != song_id);
                     }
                     if stop_voices {
                         let events = Channel::all().into_iter().map(|channel| {
@@ -231,9 +229,9 @@ impl Future for SinkTask {
 
         //finally, queue any songs that have elapsed their length
         let mut songs_to_clone = Vec::new();
-        for info in self.keepsakes.iter_mut() {
+        for info in self.loops.iter_mut() {
             if info.last_repeated.elapsed().as_micros() as u64 >= info.length {
-                songs_to_clone.push((Some(info.song.id), info.song.events.clone()));
+                songs_to_clone.push((Some(info.id), info.events.clone()));
                 info.last_repeated = Instant::now();
             }
         }

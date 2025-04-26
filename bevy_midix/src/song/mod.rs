@@ -31,6 +31,8 @@ pub struct MidiSong {
     pub(crate) events: Vec<Timed<ChannelVoiceMessage>>,
     /// If true, this will loop when sent to the synthesizer.
     pub looped: bool,
+    /// If true, then this song starts paused.
+    pub paused: bool,
 }
 
 impl MidiSong {
@@ -44,11 +46,17 @@ impl MidiSong {
             id: SongId::default(),
             events,
             looped: false,
+            paused: false,
         }
     }
     /// Get a mutable reference to the events
     pub fn events_mut(&mut self) -> &mut Vec<Timed<ChannelVoiceMessage>> {
         &mut self.events
+    }
+
+    pub fn set_paused(mut self) -> Self {
+        self.paused = true;
+        self
     }
 
     /// Commands should be looped
@@ -82,5 +90,8 @@ impl SongWriter for MidiSong {
     }
     fn looped(&self) -> bool {
         self.looped
+    }
+    fn paused(&self) -> bool {
+        self.paused
     }
 }

@@ -9,7 +9,7 @@ use crate::{
 use bevy::prelude::*;
 use crossbeam_channel::{SendError, Sender};
 use midix::prelude::{ChannelVoiceMessage, Timed};
-use std::sync::Mutex;
+use std::{collections::HashMap, sync::Mutex};
 use thiserror::Error;
 use tinyaudio::OutputDevice;
 
@@ -61,6 +61,12 @@ impl From<SendError<ChannelVoiceMessage>> for SynthError {
     }
 }
 
+/// doesn't care if looped. the resource should not
+/// time this.
+struct StoredSong {
+    events: Vec<Timed<ChannelVoiceMessage>>,
+}
+
 /// Plays audio commands with the provided soundfont
 ///
 /// Pass the synth midi events via the `Synth::handle_event` method
@@ -70,6 +76,7 @@ impl From<SendError<ChannelVoiceMessage>> for SynthError {
 pub struct Synth {
     params: SynthParams,
     synthesizer: SynthState,
+    store: HashMap<SongId, StoredSong>,
     _device: Option<Mutex<OutputDevice>>,
 }
 
@@ -190,6 +197,7 @@ impl Default for Synth {
     fn default() -> Self {
         Self {
             params: SynthParams::default(),
+            store: HashMap::default(),
             synthesizer: SynthState::NotLoaded,
             _device: None,
         }
