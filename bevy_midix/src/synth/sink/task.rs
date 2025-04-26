@@ -19,7 +19,7 @@ use midix::prelude::*;
 
 use crate::song::SongId;
 
-use super::{SinkCommand, SongType, commands::InnerCommand};
+use super::{SinkCommand, commands::InnerCommand};
 
 #[derive(Default)]
 pub struct CommandQueue(VecDeque<InnerCommand>);
@@ -162,7 +162,8 @@ impl Future for SinkTask {
                     self.queue_commands(None, iter::once(event), elapsed);
                 }
                 SinkCommand::NewSong {
-                    song_type,
+                    id,
+                    looped,
                     mut commands,
                 } => {
                     if commands.is_empty() {
@@ -171,13 +172,11 @@ impl Future for SinkTask {
                     commands.sort_by_key(|m| m.timestamp);
 
                     new_messages_pushed = true;
-                    if let SongType::Identified { id, looped } = song_type {
-                        if looped {
-                            self.keep_looping(id, commands.clone());
-                        }
+                    if looped {
+                        self.keep_looping(id, commands.clone());
                     }
 
-                    self.queue_commands(song_type.id(), commands, elapsed);
+                    self.queue_commands(Some(id), commands, elapsed);
                 }
                 SinkCommand::Stop {
                     song_id,

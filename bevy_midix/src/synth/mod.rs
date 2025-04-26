@@ -135,30 +135,31 @@ impl Synth {
     /// # Errors
     ///
     /// If the synth is not ready for commands. See [`Synth::is_ready`]
-    pub fn push_audio(&self, song: impl SongWriter) -> Result<Option<SongId>, SynthError> {
+    pub fn push_audio(&mut self, song: impl SongWriter) -> Result<SongId, SynthError> {
         let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
             error!("An event was passed to the synth, but the soundfont has not been loaded!");
             return Err(SynthError::NotReady);
         };
-        let (id, song_type) = match (song.song_id(), song.looped()) {
-            (Some(id), _) => (
-                Some(id),
-                SongType::Identified {
-                    id,
-                    looped: song.looped(),
-                },
-            ),
-            (None, true) => {
-                let id = SongId::default();
-                (Some(id), SongType::Identified { id, looped: true })
-            }
-            _ => (None, SongType::Anonymous),
-        };
 
-        sink_channel.send(SinkCommand::NewSong {
-            song_type,
-            commands: song.events().collect(),
-        })?;
+        let id = song.song_id().unwrap_or_default();
+
+        let looped = song.looped();
+
+        self.store.insert(
+            id,
+            StoredSong {
+                events: song.events().collect(),
+            },
+        );
+
+        if !song.paused() {
+            sink_channel.send(SinkCommand::NewSong {
+                id,
+                looped,
+                commands: song.events().collect(),
+            })?;
+        }
+
         Ok(id)
     }
 

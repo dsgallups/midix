@@ -35,7 +35,7 @@ fn load_sf2(mut commands: Commands, asset_server: Res<AssetServer>, mut synth: R
 }
 
 fn play_song(
-    synth: Res<Synth>,
+    mut synth: ResMut<Synth>,
     file: Res<LoadedFile>,
     assets: Res<Assets<MidiFile>>,
     mut run: Local<bool>,

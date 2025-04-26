@@ -44,7 +44,11 @@ impl Default for PlaySongAgain {
         Self { timer, count: 0 }
     }
 }
-fn make_song(synth: Res<Synth>, mut play_again: Local<Option<PlaySongAgain>>, timer: Res<Time>) {
+fn make_song(
+    mut synth: ResMut<Synth>,
+    mut play_again: Local<Option<PlaySongAgain>>,
+    timer: Res<Time>,
+) {
     if !synth.is_ready() {
         return;
     }
