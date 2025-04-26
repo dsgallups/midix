@@ -66,14 +66,12 @@ impl fmt::Display for SoundFontError {
             SoundFontError::RiffChunkNotFound => write!(f, "the RIFF chunk was not found"),
             SoundFontError::InvalidRiffChunkType { expected, actual } => write!(
                 f,
-                "the type of the RIFF chunk must be '{}', but was '{}'",
-                expected, actual
+                "the type of the RIFF chunk must be '{expected}', but was '{actual}'",
             ),
             SoundFontError::ListChunkNotFound => write!(f, "the LIST chunk was not found"),
             SoundFontError::InvalidListChunkType { expected, actual } => write!(
                 f,
-                "the type of the LIST chunk must be '{}', but was '{}'",
-                expected, actual
+                "the type of the LIST chunk must be '{expected}', but was '{actual}'",
             ),
             SoundFontError::ListContainsUnknownId(id) => {
                 write!(f, "the INFO list contains an unknown ID '{id}'")
@@ -81,7 +79,7 @@ impl fmt::Display for SoundFontError {
             SoundFontError::SampleDataNotFound => write!(f, "no valid sample data was found"),
             SoundFontError::UnsupportedSampleFormat => write!(f, "SoundFont3 is not yet supported"),
             SoundFontError::SubChunkNotFound(id) => {
-                write!(f, "the '{}' sub-chunk was not found", id)
+                write!(f, "the '{id}' sub-chunk was not found")
             }
             SoundFontError::InvalidPresetList => write!(f, "the preset list is invalid"),
             SoundFontError::InvalidInstrumentId {
