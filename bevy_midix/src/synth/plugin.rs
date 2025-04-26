@@ -1,7 +1,7 @@
 use std::{sync::Mutex, time::Instant};
 
 use bevy::{prelude::*, tasks::IoTaskPool};
-use crossbeam_channel::{Receiver, TryIter};
+use crossbeam_channel::{Receiver, Sender, TryIter};
 use itertools::Itertools;
 use midix::prelude::ChannelVoiceMessage;
 use rustysynth::{Synthesizer, SynthesizerSettings};
@@ -89,12 +89,20 @@ impl Plugin for SynthPlugin {
                     .chain(),
             );
 
-        if self.params.synth_event_reader == SynthEventOpt::EventWriter {
-            app.add_event::<SynthEvent>().add_systems(
-                PreUpdate,
-                poll_receiver.run_if(in_state(SynthStatus::Loaded)),
-            );
-        }
+        match self.params.synth_event_reader {
+            SynthEventOpt::EventWriter => {
+                app.init_resource::<SynthEventReceiver>()
+                    .add_event::<SynthEvent>()
+                    .add_systems(
+                        PreUpdate,
+                        poll_receiver.run_if(in_state(SynthStatus::Loaded)),
+                    );
+            }
+            SynthEventOpt::ReceiverOnly => {
+                app.init_resource::<SynthEventReceiver>();
+            }
+            _ => {}
+        };
     }
 }
 
@@ -122,7 +130,7 @@ impl Synth {
 }
 
 fn load_audio_font(
-    mut commands: Commands,
+    receiver: Option<ResMut<SynthEventReceiver>>,
     mut synth: ResMut<Synth>,
     assets: Res<Assets<SoundFont>>,
 ) {
@@ -152,17 +160,12 @@ fn load_audio_font(
         channel_sample_count: synth.params.channel_sample_count,
     };
 
-    let _device = if synth.params.synth_event_reader == SynthEventOpt::EventWriter
-        || synth.params.synth_event_reader == SynthEventOpt::ReceiverOnly
-    {
-        let (send, recv) = crossbeam_channel::unbounded();
-        commands.insert_resource(SynthEventReceiver { receiver: recv });
-
+    let _device = if let Some(mut receiver) = receiver {
+        let send = receiver.take_sender();
         run_output_device(output_device_params, {
             move |data| {
                 for command in synth_receiver.try_iter() {
                     // I am uneasy about this.
-
                     send.try_send(SynthEvent {
                         received: Instant::now(),
                         message: command,
@@ -238,7 +241,19 @@ pub struct SynthEvent {
 /// this directly and poll all the events
 #[derive(Resource, Component, Clone)]
 pub struct SynthEventReceiver {
+    // holds onto this until the synth thread spawns
+    sender: Option<Sender<SynthEvent>>,
     receiver: Receiver<SynthEvent>,
+}
+
+impl Default for SynthEventReceiver {
+    fn default() -> Self {
+        let (sender, receiver) = crossbeam_channel::unbounded();
+        Self {
+            sender: Some(sender),
+            receiver,
+        }
+    }
 }
 
 impl SynthEventReceiver {
@@ -256,6 +271,10 @@ impl SynthEventReceiver {
     /// Get a reference to the underlying receiver
     pub fn receiver(&self) -> &Receiver<SynthEvent> {
         &self.receiver
+    }
+
+    pub(crate) fn take_sender(&mut self) -> Sender<SynthEvent> {
+        self.sender.take().unwrap()
     }
 }
 
