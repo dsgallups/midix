@@ -37,6 +37,10 @@ pub enum SynthError {
     /// The synthesizer isn't ready yet (soundfont not loaded)
     #[error("The synthesizer isn't ready yet (soundfont not loaded)")]
     NotReady,
+
+    /// The [`SongId`] passed into [`Synth::play`] or [`Synth::pause`] was not found.
+    #[error("The Song with id {0:?} was not found")]
+    SongNotFound(SongId),
     /// Disconnected from sink. This is usually because the thread panicked somehow.
     ///
     /// If this is unexpected, please file an issue with logs!
@@ -61,10 +65,12 @@ impl From<SendError<ChannelVoiceMessage>> for SynthError {
     }
 }
 
-/// doesn't care if looped. the resource should not
-/// time this.
-struct StoredSong {
-    events: Vec<Timed<ChannelVoiceMessage>>,
+/// Contains information about a song that is kept in the synth's memory
+pub struct StoredSong {
+    /// The events for the stored song
+    pub events: Vec<Timed<ChannelVoiceMessage>>,
+    /// Are these events supposed to loop?
+    pub looped: bool,
 }
 
 /// Plays audio commands with the provided soundfont
@@ -128,6 +134,37 @@ impl Synth {
         Ok(())
     }
 
+    /// Play a song.
+    ///
+    /// TODO: only plays from beginning
+    pub fn play(&self, id: SongId) -> Result<(), SynthError> {
+        let Some(song) = self.store.get(&id) else {
+            return Err(SynthError::SongNotFound(id));
+        };
+        let SynthState::Loaded { sink_channel, .. } = &self.synthesizer else {
+            error!("An event was passed to the synth, but the soundfont has not been loaded!");
+            return Err(SynthError::NotReady);
+        };
+        sink_channel.send(SinkCommand::NewSong {
+            id,
+            looped: song.looped,
+            commands: song.events.clone(),
+        })?;
+
+        Ok(())
+    }
+
+    /// Remove a song from the store of kept songs.
+    ///
+    /// The song will still play, but pausing and playing will fail.
+    ///
+    /// returns the underlying song when dropped
+    pub fn drop(&mut self, song: &SongId) -> Result<StoredSong, SynthError> {
+        self.store
+            .remove(song)
+            .ok_or(SynthError::SongNotFound(*song))
+    }
+
     /// Push something that makes the synth do things.
     ///
     /// Returns a songid IF it already has one, or IF one was generated (because of looping)
@@ -149,6 +186,7 @@ impl Synth {
             id,
             StoredSong {
                 events: song.events().collect(),
+                looped,
             },
         );
 
@@ -164,6 +202,9 @@ impl Synth {
     }
 
     /// Stop a certain song from playing.
+    ///
+    /// The synth will continue to hold the song. Call [`Synth::drop`] if it should
+    /// also be removed from memory.
     ///
     /// If stop_voices is false, any currently playing notes will continue to be held.
     ///

@@ -20,6 +20,7 @@ pub trait SongWriter {
     fn looped(&self) -> bool {
         false
     }
+    /// Is this song paused, or does it play instantly?
     fn paused(&self) -> bool {
         false
     }

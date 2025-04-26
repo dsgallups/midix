@@ -53,7 +53,7 @@ impl MidiSong {
     pub fn events_mut(&mut self) -> &mut Vec<Timed<ChannelVoiceMessage>> {
         &mut self.events
     }
-
+    /// Start the song paused
     pub fn set_paused(mut self) -> Self {
         self.paused = true;
         self
