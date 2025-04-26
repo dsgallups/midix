@@ -9,7 +9,7 @@ use std::{
 #[cfg(feature = "web")]
 use web_time::{Duration, Instant};
 
-use bevy::log::{debug, info};
+use bevy::log::debug;
 /*
 
 This Sink will send events to another thread that will constantly poll/flush command out to the synth.
@@ -217,7 +217,7 @@ impl Future for SinkTask {
         {
             let message = self.queue.pop_front().unwrap();
 
-            info!(
+            debug!(
                 "({}) {:?}",
                 message.command.channel(),
                 message.command.event()

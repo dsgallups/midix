@@ -1,7 +1,7 @@
-use std::sync::Mutex;
+use std::{sync::Mutex, time::Instant};
 
 use bevy::{prelude::*, tasks::IoTaskPool};
-use crossbeam_channel::Receiver;
+use crossbeam_channel::{Receiver, TryIter};
 use itertools::Itertools;
 use midix::prelude::ChannelVoiceMessage;
 use rustysynth::{Synthesizer, SynthesizerSettings};
@@ -36,7 +36,23 @@ pub struct SynthParams {
     pub enable_reverb_and_chorus: bool,
 
     /// Inserts an [`EventReader<ChannelVoiceMessage>`] that are messages send to the synth.. Disabled by default (queue will overflow if unused).
-    pub synth_event_reader: bool,
+    pub synth_event_reader: SynthEventOpt,
+}
+
+/// Options for reading ALL events sent to the synth
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SynthEventOpt {
+    /// Do not insert an event reader
+    None,
+    /// Insert a [`SynthEventReceiver`], but do not insert an event writer.
+    ///
+    /// e.g. "I will handle the events myself for a single thing that needs to know"
+    ReceiverOnly,
+    /// Insert an [`EventWriter<SynthEvent>`] that will propagate events.
+    ///
+    /// Note: if you also use [`SynthEventReceiver`] in your systems, be prepared to miss
+    /// events from this writer! (the receiver does not clone a shared buffer)
+    EventWriter,
 }
 
 impl Default for SynthParams {
@@ -46,7 +62,7 @@ impl Default for SynthParams {
             sample_rate: 44100,
             channel_sample_count: 441,
             enable_reverb_and_chorus: true,
-            synth_event_reader: false,
+            synth_event_reader: SynthEventOpt::None,
         }
     }
 }
@@ -73,8 +89,8 @@ impl Plugin for SynthPlugin {
                     .chain(),
             );
 
-        if self.params.synth_event_reader {
-            app.add_event::<ChannelVoiceMessage>().add_systems(
+        if self.params.synth_event_reader == SynthEventOpt::EventWriter {
+            app.add_event::<SynthEvent>().add_systems(
                 PreUpdate,
                 poll_receiver.run_if(in_state(SynthStatus::Loaded)),
             );
@@ -136,15 +152,22 @@ fn load_audio_font(
         channel_sample_count: synth.params.channel_sample_count,
     };
 
-    let _device = if synth.params.synth_event_reader {
+    let _device = if synth.params.synth_event_reader == SynthEventOpt::EventWriter
+        || synth.params.synth_event_reader == SynthEventOpt::ReceiverOnly
+    {
         let (send, recv) = crossbeam_channel::unbounded();
-        commands.insert_resource(SynthCommandReaderReceiver { receiver: recv });
+        commands.insert_resource(SynthEventReceiver { receiver: recv });
 
         run_output_device(output_device_params, {
             move |data| {
                 for command in synth_receiver.try_iter() {
                     // I am uneasy about this.
-                    send.try_send(command).unwrap();
+
+                    send.try_send(SynthEvent {
+                        received: Instant::now(),
+                        message: command,
+                    })
+                    .unwrap();
                     let data1 = command.data_1_byte() as i32;
                     let data2 = command.data_2_byte().unwrap_or(0) as i32;
                     let channel = (command.status() & 0b0000_1111) as i32;
@@ -198,16 +221,45 @@ fn sync_states(synth: Res<Synth>, mut next_state: ResMut<NextState<SynthStatus>>
     next_state.set(synth.status_should_be());
 }
 
+/// Wraps a message and timestamp upon the synth
+/// receiving a message
+#[derive(Event)]
+pub struct SynthEvent {
+    /// The instant the synth thread received the message
+    pub received: Instant,
+    /// The message in question
+    pub message: ChannelVoiceMessage,
+}
+
 /// This is a reader that will recieve commands sent to the synth.
+///
+/// You can propagate the receiver inner to an `EventWriter<SynthEvent>` if you
+/// have multiple systems that need to deal with events. Otherwise, you can use
+/// this directly and poll all the events
 #[derive(Resource, Component, Clone)]
-struct SynthCommandReaderReceiver {
-    receiver: Receiver<ChannelVoiceMessage>,
+pub struct SynthEventReceiver {
+    receiver: Receiver<SynthEvent>,
+}
+
+impl SynthEventReceiver {
+    /// Non blocking iterator of events
+    #[inline]
+    pub fn try_iter(&self) -> TryIter<'_, SynthEvent> {
+        self.receiver.try_iter()
+    }
+
+    /// Blocking iterator of events
+    #[inline]
+    pub fn iter(&self) -> crossbeam_channel::Iter<'_, SynthEvent> {
+        self.receiver.iter()
+    }
+    /// Get a reference to the underlying receiver
+    pub fn receiver(&self) -> &Receiver<SynthEvent> {
+        &self.receiver
+    }
 }
 
 /// connects the channel with the resource
-fn poll_receiver(
-    mut ev: EventWriter<ChannelVoiceMessage>,
-    command_receiver: Res<SynthCommandReaderReceiver>,
-) {
+fn poll_receiver(mut ev: EventWriter<SynthEvent>, command_receiver: Res<SynthEventReceiver>) {
     ev.write_batch(command_receiver.receiver.try_iter());
 }

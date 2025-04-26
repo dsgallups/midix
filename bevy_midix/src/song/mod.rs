@@ -36,6 +36,14 @@ pub struct MidiSong {
 }
 
 impl MidiSong {
+    /// Get the ID for this song.
+    ///
+    /// While MidiSong implements [`SongWriter`],
+    /// the value of ID is never optional in this case.
+    #[inline]
+    pub fn id(&self) -> SongId {
+        self.id
+    }
     /// Returns a builder to build a midi song
     pub fn builder() -> MidiSongBuilder {
         MidiSongBuilder::default()
