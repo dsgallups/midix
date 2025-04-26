@@ -1,6 +1,5 @@
-use std::iter;
+use std::{collections::HashMap, hash::BuildHasher, iter};
 
-use fnv::FnvHashMap;
 use midix::prelude::{Channel, ChannelVoiceMessage, Timed, VoiceEvent};
 
 use super::SongId;
@@ -24,9 +23,11 @@ pub trait SongWriter {
     fn paused(&self) -> bool {
         false
     }
-    /// Helper method that will divide events into individual channels
-    fn divide_events_into_channels(&self) -> FnvHashMap<Channel, Vec<Timed<VoiceEvent>>> {
-        let mut map: FnvHashMap<Channel, Vec<Timed<VoiceEvent>>> = FnvHashMap::default();
+    /// Helper method that will divide events into individual channels using a hasher of the caller's choice.
+    fn divide_events_into_channels<S: BuildHasher + Default>(
+        &self,
+    ) -> HashMap<Channel, Vec<Timed<VoiceEvent>>, S> {
+        let mut map: HashMap<Channel, Vec<Timed<VoiceEvent>>, S> = HashMap::default();
 
         for event in self.events() {
             let voice_events = map.entry(event.event.channel()).or_default();
