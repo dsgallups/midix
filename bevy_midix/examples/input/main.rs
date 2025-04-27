@@ -47,6 +47,6 @@ fn handle_mididata(midi_input: Res<MidiInput>, synth: Res<Synth>) {
         };
 
         info!("Data: {:?}", data.message);
-        _ = synth.handle_event(event);
+        _ = synth.push_event(event);
     }
 }

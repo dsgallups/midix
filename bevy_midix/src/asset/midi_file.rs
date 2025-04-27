@@ -21,6 +21,8 @@ use midix::{
 use crate::song::MidiSong;
 
 /// Sound font asset. Wraps a midix MidiFile
+///
+/// TODO(before v4: do not wrap midix MidiFile)
 #[derive(Asset, TypePath)]
 pub struct MidiFile {
     inner: Mf<'static>,
