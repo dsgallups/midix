@@ -49,22 +49,32 @@ impl PitchBend {
     pub const fn value(&self) -> u16 {
         let lsb = self.lsb.value();
         let msb = self.msb.value();
-        let combined: u16 = ((msb as u16) << 8) | (lsb as u16);
+        let combined: u16 = ((msb as u16) << 7) | (lsb as u16);
         combined
     }
 
-    /// Represents a u16, lsb then msb, as a pitch bend
+    /// Represents a u16, lsb then msb, as a pitch bend.
+    ///
+    /// Note that this treats the u16 as two u7 values, each preceded by a leading 0, to match the
+    /// two bytes of a pitch bend MIDI message, i.e. `0lllllll 0mmmmmmm`. See [`PitchBend::from_u16`]
+    /// for converting a u16 value to a pitch bend.
+    ///
+    /// Returns a `ParseError` if any of the bytes have a value greater than 127.
     pub fn from_bits(rep: u16) -> Result<Self, ParseError> {
         let lsb = (rep >> 8) as u8;
-        let msb = (rep & 0x00FF) as u8;
+        let msb = rep as u8;
         Self::new(lsb, msb)
     }
     /// Represents a u16, lsb then msb, as a pitch bend.
     ///
+    /// Note that this treats the u16 as two u7 values, each preceded by a leading 0, to match the
+    /// two bytes of a pitch bend MIDI message, i.e. `0lllllll 0mmmmmmm`. See [`PitchBend::from_u16`]
+    /// for converting a u16 value to a pitch bend.
+    ///
     /// Does not check for correctness.
     pub const fn from_bits_unchecked(rep: u16) -> Self {
         let lsb = (rep >> 8) as u8;
-        let msb = (rep & 0x00FF) as u8;
+        let msb = rep as u8;
         Self::new_unchecked(lsb, msb)
     }
 }
@@ -79,12 +89,22 @@ impl PitchBend {
     /// The maximum value of `0x3FFF`, indicating full bend upwards.
     pub const MAX_VALUE: u16 = 0x3FFF;
 
+    /// Converts a u16 value in the range [0, 0x3FFF] to a pitch bend, 0x2000 being no bend.
+    ///
+    /// Values outside this range will be clamped.
+    #[inline]
+    pub fn from_u16(rep: u16) -> Self {
+        let msb = (rep >> 7) as u8 & 127;
+        let lsb = (rep & 127) as u8;
+        Self::new_unchecked(lsb, msb)
+    }
+
     /// Create a `PitchBend` value from an int in the range `[-0x2000, 0x1FFF]`.
     ///
     /// Integers outside this range will be clamped.
     #[inline]
     pub fn from_int(int: i16) -> Self {
-        PitchBend::from_bits((int.clamp(-0x2000, 0x1FFF) + 0x2000) as u16).unwrap()
+        PitchBend::from_u16((int.clamp(-0x2000, 0x1FFF) + 0x2000) as u16)
     }
 
     /// Create a `PitchBend` value from a number in the range `[-1.0, 1.0)`.
