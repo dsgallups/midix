@@ -24,7 +24,7 @@ impl<'a> BytesText<'a> {
         #[cfg(feature = "std")]
         let _v = std::str::from_utf8_mut(_self_mut).map_err(|_| ParseError::InvalidUtf8)?;
         #[cfg(feature = "nightly")]
-        let _v = str::from_utf8_mut(self_mut).map_err(|_| ParseError::InvalidUtf8)?;
+        let _v = str::from_utf8_mut(_self_mut).map_err(|_| ParseError::InvalidUtf8)?;
         #[cfg(all(not(feature = "std"), not(feature = "nightly")))]
         panic!("cannot get mutable reference to text without `std` or `nightly` features enabled!",);
         #[cfg(any(feature = "std", feature = "nightly"))]
