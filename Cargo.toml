@@ -62,3 +62,7 @@ pretty_assertions = { default-features = false, features = [
 [dev-dependencies.bevy]
 version = "0.16"
 default-features = true
+
+[[example]]
+name = "2dpiano"
+required-features = ["bevy"]
