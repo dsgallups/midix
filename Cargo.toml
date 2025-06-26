@@ -15,7 +15,7 @@ exclude = ["assets/*"]
 
 [features]
 default = ["std"]
-all = ["std", "bevy"]
+all = ["std", "bevy", "web"]
 std = [
     "bevy/bevy_asset",
     "bevy_platform/std",
