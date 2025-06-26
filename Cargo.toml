@@ -66,3 +66,37 @@ default-features = true
 [[example]]
 name = "2dpiano"
 required-features = ["bevy"]
+
+[[example]]
+name = "input"
+path = "examples/input/main.rs"
+required-features = ["bevy"]
+
+[[example]]
+name = "input_2dpiano"
+path = "examples/input_2dpiano/main.rs"
+required-features = ["bevy"]
+
+[[example]]
+name = "iterate_voices"
+required-features = ["bevy"]
+
+[[example]]
+name = "pitchbend"
+required-features = ["bevy"]
+
+[[example]]
+name = "play_file"
+required-features = ["bevy"]
+
+[[example]]
+name = "programmatic_complex_song"
+required-features = ["bevy"]
+
+[[example]]
+name = "programmatic_simple_song"
+required-features = ["bevy"]
+
+[[example]]
+name = "scale"
+required-features = ["bevy"]
