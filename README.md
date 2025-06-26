@@ -92,7 +92,7 @@ Midix has been built with the bevy engine in mind. this feature uses `rustysynth
 
 ###  Example
 ```rust, no_run
-use std::time::Duration;
+use bevy_platform::prelude::*;
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,

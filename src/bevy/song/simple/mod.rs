@@ -1,12 +1,12 @@
 //! Utils for simple song making
 use crate::prelude::*;
 use ::bevy::prelude::*;
-use fnv::FnvHashMap;
 
 mod beat;
 pub use beat::*;
 
 mod channel_settings;
+use bevy_platform::collections::HashMap;
 pub use channel_settings::*;
 
 mod section;
@@ -41,9 +41,9 @@ impl Default for ChannelSettings {
 pub struct SimpleMidiSong {
     beats_per_minute: f64,
 
-    pub(crate) channel_presets: FnvHashMap<Channel, ChannelSettings>,
+    pub(crate) channel_presets: HashMap<Channel, ChannelSettings>,
 
-    beats: FnvHashMap<u64, Vec<ChannelVoiceMessage>>,
+    beats: HashMap<u64, Vec<ChannelVoiceMessage>>,
     last_beat: u64,
 }
 

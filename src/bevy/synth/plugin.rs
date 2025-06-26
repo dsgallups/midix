@@ -1,7 +1,6 @@
-use std::{sync::Mutex, time::Instant};
-
 use crate::prelude::ChannelVoiceMessage;
 use bevy::{prelude::*, tasks::IoTaskPool};
+use bevy_platform::{sync::Mutex, time::Instant};
 use crossbeam_channel::{Receiver, Sender, TryIter};
 use itertools::Itertools;
 use rustysynth::{Synthesizer, SynthesizerSettings};

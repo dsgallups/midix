@@ -8,8 +8,9 @@ use crate::{
     prelude::SoundFont,
 };
 use bevy::prelude::*;
+use bevy_platform::collections::HashMap;
+use bevy_platform::sync::Mutex;
 use crossbeam_channel::{SendError, Sender};
-use std::{collections::HashMap, sync::Mutex};
 use thiserror::Error;
 use tinyaudio::OutputDevice;
 

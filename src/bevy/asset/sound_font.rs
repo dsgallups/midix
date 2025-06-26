@@ -4,7 +4,8 @@ Asset types
 TODO
 "#]
 
-use std::{io::Read, sync::Arc};
+use alloc::sync::Arc;
+use bevy_platform::prelude::*;
 use thiserror::Error;
 
 use bevy::{
@@ -21,7 +22,7 @@ pub struct SoundFont {
 
 impl SoundFont {
     /// Create a new
-    fn new<R: Read>(file: &mut R) -> Self {
+    fn new(file: &mut &[u8]) -> Self {
         let sf = Sf::new(file).unwrap();
 
         Self { file: Arc::new(sf) }

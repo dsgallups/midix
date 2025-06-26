@@ -9,8 +9,7 @@ Read from MIDI devices, MIDI files, and programmable input, and output to user a
 
 ## Example
 ```rust, no_run
-use std::time::Duration;
-use bevy::{
+use bevy_platform::prelude::*;use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
 };

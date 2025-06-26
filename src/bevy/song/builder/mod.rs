@@ -1,6 +1,5 @@
 mod channel;
-use std::vec::Vec;
-
+use bevy_platform::prelude::*;
 pub use channel::*;
 
 use crate::prelude::{Channel, ChannelVoiceMessage, Timed};

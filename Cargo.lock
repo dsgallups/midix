@@ -2734,8 +2734,8 @@ name = "midix"
 version = "4.0.0-alpha"
 dependencies = [
  "bevy",
+ "bevy_platform",
  "crossbeam-channel",
- "fnv",
  "itertools 0.14.0",
  "midir",
  "num_enum",
@@ -2743,7 +2743,6 @@ dependencies = [
  "rustysynth",
  "thiserror 2.0.12",
  "tinyaudio",
- "web-time",
 ]
 
 [[package]]
