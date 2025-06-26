@@ -4,10 +4,10 @@ Module for the [`MidiPlugin`]
 use bevy::prelude::*;
 
 use crate::bevy::{
-    MidiSettings,
     asset::{LoadedMidiFile, MidiFileLoader},
     input::MidiInputPlugin,
     output::MidiOutputPlugin,
+    settings::MidiSettings,
     synth::{SynthParams, SynthPlugin},
 };
 

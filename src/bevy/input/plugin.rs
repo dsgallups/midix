@@ -1,4 +1,4 @@
-use crate::bevy::MidiSettings;
+use crate::bevy::settings::MidiSettings;
 
 use super::MidiInput;
 use bevy::prelude::*;

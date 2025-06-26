@@ -55,12 +55,14 @@ pub mod prelude {
         Common re-exports when working with `midix`
     "#]
     pub use crate::{
+        ChunkError, Controller, CowExt, DataByte, FileError, HeaderError, Key, Note, Octave,
+        ParseError, PitchBend, Program, SmpteError, SongPositionPointer, StatusByte, TrackError,
+        Velocity,
         channel::*,
         events::*,
         file::*,
         file_repr::{chunk::*, meta::*, track::*, *},
         message::{MidiMessage, channel::*, system::*, time::*},
-        *,
     };
 
     pub use crate::reader::{MidiSource, ReadResult, Reader};

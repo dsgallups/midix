@@ -14,7 +14,7 @@ pub use plugin::*;
 use bevy::prelude::*;
 use midir::{MidiOutputPort, SendError};
 
-use crate::{MidiMessageBytes, bevy::MidiSettings};
+use crate::{MidiMessageBytes, bevy::settings::MidiSettings};
 
 enum MidiOutputState {
     Listening(midir::MidiOutput),

@@ -1,3 +1,5 @@
+//! Contains the [`MidiSettings`] resource
+
 use bevy::prelude::*;
 pub use midir::Ignore;
 
