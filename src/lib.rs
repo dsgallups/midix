@@ -28,6 +28,7 @@ pub use program::*;
 
 mod velocity;
 pub use velocity::*;
+
 #[macro_use]
 mod key;
 pub use key::*;
@@ -45,6 +46,9 @@ pub use song_position_pointer::*;
 
 mod target;
 pub use target::*;
+
+#[cfg(feature = "bevy")]
+pub mod bevy;
 
 pub mod prelude {
     #![doc = r#"
@@ -66,5 +70,6 @@ pub mod prelude {
 
     pub use core::fmt::Display;
 
-    //pub(crate) use crate::utils::*;
+    #[cfg(feature = "bevy")]
+    pub use crate::bevy::prelude::*;
 }
