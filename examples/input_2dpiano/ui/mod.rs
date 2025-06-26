@@ -20,11 +20,16 @@ pub fn plugin(app: &mut App) {
             Update,
             menu::update_available_ports.run_if(in_state(UiState::Listening)),
         )
-        .add_systems(Startup, piano::spawn_piano)
-        .add_systems(Update, (piano::handle_input, piano::update_command_text))
+        .add_systems(OnEnter(UiState::Active), piano::spawn_piano)
+        .add_systems(OnExit(UiState::Active), piano::cleanup)
         .add_systems(
             Update,
-            piano::handle_midi_device_input.run_if(in_state(UiState::Active)),
+            (
+                piano::handle_input,
+                piano::handle_midi_device_input,
+                piano::update_command_text,
+            )
+                .run_if(in_state(UiState::Active)),
         );
 }
 

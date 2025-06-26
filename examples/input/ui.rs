@@ -1,12 +1,20 @@
 use bevy::{
-    color::palettes::{css::GREEN, tailwind::YELLOW_200},
+    color::palettes::{
+        css::{GREEN, RED},
+        tailwind::{YELLOW_200, YELLOW_300},
+    },
     prelude::*,
 };
 use midix::prelude::*;
-#[derive(Component)]
-pub struct MenuText;
 
-pub fn spawn_connect_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn plugin(app: &mut App) {
+    app.add_systems(Startup, setup)
+        .add_systems(Update, (update_available_ports, update_connection_status));
+}
+
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(Camera2d);
+
     let font = asset_server.load("fonts/FiraSans-Bold.ttf");
     commands
         .spawn((
@@ -16,7 +24,6 @@ pub fn spawn_connect_ui(mut commands: Commands, asset_server: Res<AssetServer>) 
                 font_size: 30.,
                 ..default()
             },
-            MenuText,
         ))
         .with_children(|commands| {
             commands.spawn((
@@ -52,13 +59,33 @@ pub fn spawn_connect_ui(mut commands: Commands, asset_server: Res<AssetServer>) 
                 TextColor(GREEN.into()),
                 AvailablePortsText,
             ));
+            commands.spawn((
+                TextSpan::default(),
+                TextFont {
+                    font: font.clone(),
+                    font_size: 30.0,
+                    ..default()
+                },
+                TextColor(RED.into()),
+                ConnectStatus,
+            ));
+            commands.spawn((
+                TextSpan::default(),
+                TextFont {
+                    font: font.clone(),
+                    font_size: 30.0,
+                    ..default()
+                },
+                TextColor(YELLOW_300.into()),
+                LastMidiEvent,
+            ));
         });
 }
 
 #[derive(Component)]
-pub struct AvailablePortsText;
+struct AvailablePortsText;
 
-pub fn update_available_ports(
+fn update_available_ports(
     input: Res<MidiInput>,
     mut instructions: Query<&mut TextSpan, With<AvailablePortsText>>,
 ) {
@@ -75,7 +102,25 @@ pub fn update_available_ports(
     }
 }
 
-pub fn cleanup(mut commands: Commands, menu: Query<Entity, With<MenuText>>) {
-    let menu = menu.single().unwrap();
-    commands.entity(menu).despawn();
+#[derive(Component)]
+struct ConnectStatus;
+
+// this should probably be part of Res<MidiInput>
+//
+// and may want to be able to accept input from many midi devices
+fn update_connection_status(
+    connections: Res<MidiInput>,
+    mut status: Query<(&mut TextSpan, &mut TextColor), With<ConnectStatus>>,
+) {
+    let (mut status, mut color) = status.single_mut().unwrap();
+    if connections.is_active() {
+        status.0 = "Connected".to_string();
+        color.0 = GREEN.into();
+    } else {
+        status.0 = "Disconnected".to_string();
+        color.0 = RED.into();
+    }
 }
+
+#[derive(Component)]
+struct LastMidiEvent;

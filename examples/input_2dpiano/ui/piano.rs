@@ -51,13 +51,22 @@ pub fn spawn_piano(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn((
             Node {
                 top: Val::Percent(25.),
-                right: Val::Px(5.),
+
                 ..Default::default()
             },
             InfoText,
             Text::default(),
         ))
         .with_children(|commands| {
+            commands.spawn((
+                TextSpan::new("Press ESC to disconnect\n"),
+                TextFont {
+                    font: font.clone(),
+                    font_size: 30.,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
             commands.spawn((
                 TextSpan::default(),
                 TextFont {
@@ -119,6 +128,16 @@ pub fn spawn_piano(mut commands: Commands, asset_server: Res<AssetServer>) {
             })
         });
 }
+pub fn cleanup(
+    mut commands: Commands,
+    piano: Query<Entity, With<Piano>>,
+    text: Query<Entity, With<InfoText>>,
+) {
+    let piano = piano.single().unwrap();
+    commands.entity(piano).despawn();
+    let text = text.single().unwrap();
+    commands.entity(text).despawn();
+}
 
 fn bg_color(sharp: bool) -> Color {
     if sharp { Color::BLACK } else { Color::WHITE }
@@ -141,7 +160,7 @@ pub fn handle_input(
                     *background_color = PRESSED.into();
                     let event =
                         VoiceEvent::note_on(*key, Velocity::MAX).send_to_channel(Channel::One);
-                    _ = synth.handle_event(event);
+                    _ = synth.push_event(event);
                 } else {
                     *background_color = HOVERED.into();
                 }
@@ -241,7 +260,7 @@ fn on_mouse_up(
     let event = VoiceEvent::note_on(*key, Velocity::ZERO).send_to_channel(Channel::One);
     // could make this beter and revert to hover, but lazy
     *background_color = HOVERED.into();
-    _ = synth.handle_event(event);
+    _ = synth.push_event(event);
 }
 
 // because Interaction::Pressed doesn't do anything if you leave pressed.
@@ -253,5 +272,5 @@ fn on_mouse_leave(
     let (mut background_color, key) = keys.get_mut(trigger.target()).unwrap();
     *background_color = BackgroundColor(bg_color(key.is_sharp()));
     let event = VoiceEvent::note_on(*key, Velocity::ZERO).send_to_channel(Channel::One);
-    _ = synth.handle_event(event);
+    _ = synth.push_event(event);
 }
