@@ -14,7 +14,10 @@ exclude = ["assets/*"]
 
 
 [features]
+default = ["std"]
+all = ["std", "bevy"]
 std = [
+    "bevy/bevy_asset",
     "bevy_platform/std",
     "thiserror/std",
     "num_enum/std",
@@ -31,18 +34,26 @@ bevy = [
     "dep:crossbeam-channel",
 ]
 debug = ["bevy"]
+example = [
+    "bevy",
+    "std",
+    "bevy/bevy_color",
+    "bevy/bevy_core_pipeline",
+    "bevy/bevy_ui",
+    "bevy/bevy_ui_picking_backend",
+    "bevy/bevy_winit",
+    "bevy/bevy_window",
+    "bevy/x11",
+    # note that the wasm example freezes since when this feature is not enabled! TODO
+    "bevy/multi_threaded",
+]
+
 
 [dependencies.bevy]
 version = "0.16"
 optional = true
 default-features = false
-features = [
-    "multi_threaded",
-    "bevy_asset",
-    "async_executor",
-    "bevy_log",
-    "bevy_state",
-]
+features = ["async_executor", "bevy_log", "bevy_state"]
 
 [dependencies]
 num_enum = { version = "0.7.3", default-features = false }
@@ -62,44 +73,44 @@ pretty_assertions = { default-features = false, features = [
     "alloc",
 ], version = "1.4" }
 
-[dev-dependencies.bevy]
-version = "0.16"
-default-features = true
+# [dev-dependencies.bevy]
+# version = "0.16"
+# default-features = true
 
 [[example]]
 name = "2dpiano"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "input"
 path = "examples/input/main.rs"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "input_2dpiano"
 path = "examples/input_2dpiano/main.rs"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "iterate_voices"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "pitchbend"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "play_file"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "programmatic_complex_song"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "programmatic_simple_song"
-required-features = ["bevy"]
+required-features = ["example"]
 
 [[example]]
 name = "scale"
-required-features = ["bevy"]
+required-features = ["example"]

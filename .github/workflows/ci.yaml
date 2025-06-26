@@ -87,8 +87,10 @@ jobs:
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
-      - name: Build & run tests
-        run: cargo test --features bevy
+      - name: Build & run unit and e2e tests
+        run: cargo test --lib --tests --no-default-features
+      - name: Build & run doctests
+        run: cargo test --doc --features bevy
   all-doc-tests:
     runs-on: ubuntu-latest
     steps:
