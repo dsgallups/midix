@@ -87,8 +87,10 @@ jobs:
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
-      - name: Build & run tests
-        run: cargo test --features bevy
+      - name: Build & run unit and e2e tests (no features)
+        run: cargo test --lib --tests --no-default-features
+      - name: Build & run unit and e2e tests (all features)
+        run: cargo test --lib --tests --features all
   all-doc-tests:
     runs-on: ubuntu-latest
     steps:
@@ -108,4 +110,4 @@ jobs:
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
       - name: Run doc tests with all features (this also compiles README examples)
-        run: cargo test --doc --features "std, bevy"
+        run: cargo test --doc --features bevy

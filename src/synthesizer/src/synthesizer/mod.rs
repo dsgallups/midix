@@ -22,10 +22,8 @@ mod channel;
 use channel::*;
 use voice::{RegionPair, Voice};
 
-use std::cmp;
-use std::collections::HashMap;
-
 use crate::{prelude::*, utils};
+use bevy_platform::prelude::*;
 
 /// An instance of the SoundFont synthesizer.
 pub struct Synthesizer {

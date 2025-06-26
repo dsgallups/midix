@@ -1,12 +1,10 @@
-use std::vec::Vec;
-
 use crate::{Key, Velocity, prelude::VoiceEvent};
-use fnv::FnvHashMap;
+use bevy_platform::{collections::HashMap, prelude::*};
 
 /// Create a section that can be used for looping
 #[derive(Default)]
 pub struct SimpleSection {
-    beat: FnvHashMap<u64, Vec<VoiceEvent>>,
+    beat: HashMap<u64, Vec<VoiceEvent>>,
 }
 impl SimpleSection {
     /// Get a [`SectionBeat`] to do things
@@ -17,7 +15,7 @@ impl SimpleSection {
         }
     }
     /// get the list of voice events
-    pub fn events(&self) -> &FnvHashMap<u64, Vec<VoiceEvent>> {
+    pub fn events(&self) -> &HashMap<u64, Vec<VoiceEvent>> {
         &self.beat
     }
 }

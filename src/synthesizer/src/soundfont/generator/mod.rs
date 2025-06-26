@@ -3,9 +3,8 @@
 mod r#type;
 pub(crate) use r#type::*;
 
-use std::io::Read;
-
 use crate::prelude::*;
+use bevy_platform::prelude::*;
 
 #[derive(Clone, Copy)]
 pub(crate) struct Generator {

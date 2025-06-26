@@ -3,8 +3,7 @@ Components to make songs programatically
 "#]
 
 pub mod simple;
-use std::vec::Vec;
-
+use bevy_platform::prelude::*;
 pub use simple::*;
 
 mod song_writer;

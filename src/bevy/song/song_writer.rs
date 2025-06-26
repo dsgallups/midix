@@ -1,6 +1,7 @@
-use std::{collections::HashMap, hash::BuildHasher, iter, vec::Vec};
+use core::{hash::BuildHasher, iter};
 
 use crate::prelude::{Channel, ChannelVoiceMessage, Timed, VoiceEvent};
+use bevy_platform::{collections::HashMap, prelude::*};
 
 use super::SongId;
 

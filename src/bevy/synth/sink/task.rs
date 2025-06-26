@@ -1,14 +1,18 @@
-#[cfg(not(feature = "web"))]
-use std::time::{Duration, Instant};
-use std::{
-    collections::VecDeque,
+use core::{
     iter,
     pin::Pin,
     task::{Context, Poll},
-    vec::Vec,
+    time::Duration,
 };
-#[cfg(feature = "web")]
-use web_time::{Duration, Instant};
+
+use alloc::collections::vec_deque::VecDeque;
+use bevy_platform::{prelude::*, time::Instant};
+
+//     iter,
+//     pin::Pin,
+//     task::{Context, Poll},
+//     vec::Vec,
+// };
 
 use ::bevy::log::debug;
 /*
@@ -87,7 +91,7 @@ struct LoopedSong {
     last_repeated: Instant,
     length: u64,
 }
-
+#[allow(dead_code)]
 impl SinkTask {
     pub fn new(
         synth_channel: Sender<ChannelVoiceMessage>,

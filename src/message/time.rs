@@ -1,9 +1,6 @@
 //! Events that require some representation of time
 
-#[cfg(not(feature = "web"))]
 use core::time::Duration;
-#[cfg(feature = "web")]
-use web_time::Duration;
 
 #[doc = r#"
 A wrapper around some type with an associated accumulated tick

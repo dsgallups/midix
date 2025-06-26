@@ -2,16 +2,17 @@
 Synthesizer resources, setup and plugins
 "#]
 
+use crate::bevy::song::{SongId, SongWriter};
 use crate::prelude::{ChannelVoiceMessage, Timed};
-use crate::{
-    bevy::song::{SongId, SongWriter},
-    prelude::SoundFont,
-};
 use bevy::prelude::*;
+use bevy_platform::collections::HashMap;
+use bevy_platform::sync::Mutex;
 use crossbeam_channel::{SendError, Sender};
-use std::{collections::HashMap, sync::Mutex};
 use thiserror::Error;
 use tinyaudio::OutputDevice;
+
+#[cfg(feature = "std")]
+use crate::bevy::prelude::SoundFont;
 
 mod plugin;
 pub use plugin::*;
@@ -21,9 +22,11 @@ pub(crate) use sink::*;
 
 enum SynthState {
     NotLoaded,
+    #[cfg(feature = "std")]
     LoadHandle {
         sound_font: Handle<SoundFont>,
     },
+    #[allow(dead_code)]
     Loaded {
         synth_channel: Sender<ChannelVoiceMessage>,
         /// the sink channel will process delayed events and interface with the synth channel directly
@@ -80,6 +83,7 @@ pub struct StoredSong {
 /// see [`ChannelVoiceMessage`] for the list of options
 #[derive(Resource)]
 pub struct Synth {
+    #[allow(dead_code)]
     params: SynthParams,
     synthesizer: SynthState,
     store: HashMap<SongId, StoredSong>,
@@ -228,6 +232,7 @@ impl Synth {
         matches!(self.synthesizer, SynthState::Loaded { .. })
     }
 
+    #[cfg(feature = "std")]
     /// Provide a handle to the soundfont file
     pub fn use_soundfont(&mut self, sound_font: Handle<SoundFont>) {
         self.synthesizer = SynthState::LoadHandle { sound_font };

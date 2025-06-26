@@ -90,8 +90,12 @@ assert_eq!(velocity.byte(), 96);
 
 Midix has been built with the bevy engine in mind. this feature uses `rustysynth` to play midi sounds under the hood!
 
+### Note
+When running the examples, try using `cargo run --example <EXAMPLE_NAME> --features example --release` for the best results!
+
 ###  Example
 ```rust, no_run
+use bevy_platform::prelude::*;
 use std::time::Duration;
 use bevy::{
     log::{Level, LogPlugin},

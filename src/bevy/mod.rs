@@ -10,7 +10,7 @@ Read from MIDI devices, MIDI files, and programmable input, and output to user a
 ## Example
 ```rust, no_run
 use std::time::Duration;
-use bevy::{
+use bevy_platform::prelude::*;use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
 };
@@ -113,6 +113,7 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
 "#]
 #![warn(missing_docs)]
 
+#[cfg(feature = "std")]
 pub mod asset;
 pub mod input;
 pub mod output;
@@ -124,7 +125,8 @@ pub mod song;
 
 /// Commonly re-exported types
 pub mod prelude {
-    pub use crate::bevy::{
-        asset::*, input::*, output::*, plugin::*, settings::*, song::*, synth::*,
-    };
+    pub use crate::bevy::{input::*, output::*, plugin::*, settings::*, song::*, synth::*};
+
+    #[cfg(feature = "std")]
+    pub use crate::bevy::asset::*;
 }

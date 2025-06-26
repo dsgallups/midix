@@ -1,15 +1,19 @@
-use std::{sync::Mutex, time::Instant};
-
-use crate::prelude::ChannelVoiceMessage;
-use bevy::{prelude::*, tasks::IoTaskPool};
+use crate::{bevy::synth::SynthState, prelude::ChannelVoiceMessage};
+use bevy::prelude::*;
+use bevy_platform::time::Instant;
 use crossbeam_channel::{Receiver, Sender, TryIter};
+
+#[cfg(feature = "std")]
+use bevy_platform::sync::Mutex;
+
+#[cfg(feature = "std")]
 use itertools::Itertools;
+#[cfg(feature = "std")]
 use rustysynth::{Synthesizer, SynthesizerSettings};
+#[cfg(feature = "std")]
 use tinyaudio::{OutputDeviceParameters, run_output_device};
 
-use crate::bevy::asset::{SoundFont, SoundFontLoader};
-
-use super::{SinkTask, Synth, SynthState};
+use crate::bevy::prelude::*;
 
 /// A lot of the docs for this struct have been copy/pasted from tiny_audio
 ///
@@ -76,13 +80,15 @@ pub struct SynthPlugin {
 
 impl Plugin for SynthPlugin {
     fn build(&self, app: &mut App) {
+        #[cfg(feature = "std")]
         app.init_asset::<SoundFont>()
-            .init_asset_loader::<SoundFontLoader>()
-            .init_state::<SynthStatus>()
+            .init_asset_loader::<SoundFontLoader>();
+        app.init_state::<SynthStatus>()
             .insert_resource(Synth::new(self.params))
             .add_systems(
                 PreUpdate,
                 (
+                    #[cfg(feature = "std")]
                     load_audio_font.run_if(in_state(SynthStatus::ShouldLoad)),
                     sync_states.run_if(state_out_of_sync),
                 )
@@ -110,6 +116,7 @@ impl Plugin for SynthPlugin {
 enum SynthStatus {
     #[default]
     NotLoaded,
+    #[cfg(feature = "std")]
     ShouldLoad,
     Loaded,
 }
@@ -117,6 +124,7 @@ impl SynthState {
     fn status_should_be(&self) -> SynthStatus {
         match self {
             Self::NotLoaded => SynthStatus::NotLoaded,
+            #[cfg(feature = "std")]
             Self::LoadHandle { .. } => SynthStatus::ShouldLoad,
             Self::Loaded { .. } => SynthStatus::Loaded,
         }
@@ -129,11 +137,14 @@ impl Synth {
     }
 }
 
+#[cfg(feature = "std")]
 fn load_audio_font(
     receiver: Option<ResMut<SynthEventReceiver>>,
     mut synth: ResMut<Synth>,
     assets: Res<Assets<SoundFont>>,
 ) {
+    use bevy::tasks::IoTaskPool;
+
     let SynthState::LoadHandle { sound_font } = &synth.synthesizer else {
         warn!(
             "loading the audio font is out of sync. This is an issue with bevy_midix. Please file an issue!"
@@ -242,7 +253,7 @@ pub struct SynthEvent {
 #[derive(Resource, Component, Clone)]
 pub struct SynthEventReceiver {
     // holds onto this until the synth thread spawns
-    sender: Option<Sender<SynthEvent>>,
+    _sender: Option<Sender<SynthEvent>>,
     receiver: Receiver<SynthEvent>,
 }
 
@@ -250,7 +261,7 @@ impl Default for SynthEventReceiver {
     fn default() -> Self {
         let (sender, receiver) = crossbeam_channel::unbounded();
         Self {
-            sender: Some(sender),
+            _sender: Some(sender),
             receiver,
         }
     }
@@ -272,9 +283,9 @@ impl SynthEventReceiver {
     pub fn receiver(&self) -> &Receiver<SynthEvent> {
         &self.receiver
     }
-
+    #[allow(dead_code)]
     pub(crate) fn take_sender(&mut self) -> Sender<SynthEvent> {
-        self.sender.take().unwrap()
+        self._sender.take().unwrap()
     }
 }
 
