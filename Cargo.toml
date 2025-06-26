@@ -14,7 +14,12 @@ exclude = ["assets/*"]
 
 
 [features]
-std = ["bevy_platform/std", "thiserror/std", "num_enum/std"]
+std = [
+    "bevy_platform/std",
+    "thiserror/std",
+    "num_enum/std",
+    "crossbeam-channel/std",
+]
 web = ["bevy_platform/web"]
 nightly = []
 bevy = [
