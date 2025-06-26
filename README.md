@@ -127,7 +127,7 @@ use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
 };
-use bevy_midix::{midix::prelude::*, prelude::*};
+use midix::prelude::*;
 fn main() {
     App::new()
         .add_plugins((

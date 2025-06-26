@@ -2,7 +2,7 @@ use midix::{Dynamic, Note, Octave, events::LiveEvent, prelude::*};
 
 #[test]
 fn test_parse() {
-    let parsed = MidiFile::parse(include_bytes!("./simple.mid")).unwrap();
+    let parsed = ParsedMidiFile::parse(include_bytes!("./simple.mid")).unwrap();
 
     assert_eq!(parsed.tracks().len(), 1);
 

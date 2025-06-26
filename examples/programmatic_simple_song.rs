@@ -8,7 +8,7 @@ use bevy::{
     prelude::*,
 };
 
-use bevy_midix::{midix::prelude::*, prelude::*};
+use midix::prelude::*;
 
 fn main() {
     App::new()

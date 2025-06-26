@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use bevy_midix::prelude::*;
-
+use midix::prelude::*;
 mod menu;
 mod piano;
 

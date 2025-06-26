@@ -24,12 +24,12 @@ use crate::{
 #[doc = r#"
 TODO
 "#]
-pub struct MidiFile<'a> {
+pub struct ParsedMidiFile<'a> {
     header: Header,
     format: Format<'a>,
 }
 
-impl<'a> MidiFile<'a> {
+impl<'a> ParsedMidiFile<'a> {
     /// Parse a set of bytes into a file struct
     pub fn parse<B>(bytes: B) -> ReadResult<Self>
     where

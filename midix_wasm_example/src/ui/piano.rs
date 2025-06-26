@@ -8,8 +8,8 @@ use bevy::{
     prelude::*,
     reflect::List,
 };
-use bevy_midix::{midix::prelude::*, prelude::*};
 use itertools::Itertools;
+use midix::prelude::*;
 
 use crate::ExampleInputEvent;
 

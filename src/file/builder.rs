@@ -5,7 +5,7 @@ use crate::{
     reader::{ReadError, ReaderErrorKind},
 };
 
-use super::MidiFile;
+use super::ParsedMidiFile;
 
 #[derive(Default)]
 pub enum FormatStage<'a> {
@@ -112,7 +112,7 @@ impl<'a> MidiFileBuilder<'a> {
             EOF => Err(ReaderErrorKind::ReadError(ReadError::OutOfBounds)),
         }
     }
-    pub fn build(self) -> Result<MidiFile<'a>, FileError> {
+    pub fn build(self) -> Result<ParsedMidiFile<'a>, FileError> {
         let FormatStage::Formatted(format) = self.format else {
             return Err(FileError::NoFormat);
         };
@@ -120,7 +120,7 @@ impl<'a> MidiFileBuilder<'a> {
             return Err(FileError::NoTiming);
         };
 
-        Ok(MidiFile {
+        Ok(ParsedMidiFile {
             format,
             header: Header::new(timing),
         })

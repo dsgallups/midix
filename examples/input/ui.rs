@@ -5,7 +5,7 @@ use bevy::{
     },
     prelude::*,
 };
-use bevy_midix::prelude::*;
+use midix::prelude::*;
 
 pub fn plugin(app: &mut App) {
     app.add_systems(Startup, setup)

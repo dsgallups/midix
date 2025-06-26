@@ -3,8 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use bevy_midix::{asset::MidiFile, prelude::*};
-
+use midix::prelude::*;
 fn main() {
     App::new()
         .add_plugins((

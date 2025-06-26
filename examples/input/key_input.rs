@@ -1,6 +1,5 @@
 use bevy::prelude::*;
-use bevy_midix::prelude::*;
-
+use midix::prelude::*;
 /// TODO: experimenting in here
 pub fn plugin(app: &mut App) {
     app.add_systems(Update, (refresh_inputs, connect, disconnect));

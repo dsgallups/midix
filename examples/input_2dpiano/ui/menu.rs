@@ -2,8 +2,7 @@ use bevy::{
     color::palettes::{css::GREEN, tailwind::YELLOW_200},
     prelude::*,
 };
-use bevy_midix::input::MidiInput;
-
+use midix::prelude::*;
 #[derive(Component)]
 pub struct MenuText;
 
