@@ -4,12 +4,14 @@ Module for the [`MidiPlugin`]
 use bevy::prelude::*;
 
 use crate::bevy::{
-    asset::{MidiFile, MidiFileLoader},
     input::MidiInputPlugin,
     output::MidiOutputPlugin,
     settings::MidiSettings,
     synth::{SynthParams, SynthPlugin},
 };
+
+#[cfg(feature = "std")]
+use crate::bevy::asset::{MidiFile, MidiFileLoader};
 
 /// Configure the parts you want to include (input, output, synth).
 ///
@@ -39,6 +41,7 @@ impl Default for MidiPlugin {
 
 impl Plugin for MidiPlugin {
     fn build(&self, app: &mut App) {
+        #[cfg(feature = "std")]
         app.init_asset_loader::<MidiFileLoader>()
             .init_asset::<MidiFile>();
         if let Some(settings) = self.input {

@@ -112,6 +112,7 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
 "#]
 #![warn(missing_docs)]
 
+#[cfg(feature = "std")]
 pub mod asset;
 pub mod input;
 pub mod output;
@@ -123,7 +124,8 @@ pub mod song;
 
 /// Commonly re-exported types
 pub mod prelude {
-    pub use crate::bevy::{
-        asset::*, input::*, output::*, plugin::*, settings::*, song::*, synth::*,
-    };
+    pub use crate::bevy::{input::*, output::*, plugin::*, settings::*, song::*, synth::*};
+
+    #[cfg(feature = "std")]
+    pub use crate::bevy::asset::*;
 }

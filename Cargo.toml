@@ -14,7 +14,8 @@ exclude = ["assets/*"]
 
 
 [features]
-# std = ["bevy_platform/std", "bevy/std", "thiserror/std", "num_enum/std"]
+std = ["bevy_platform/std", "thiserror/std", "num_enum/std"]
+web = ["bevy_platform/web"]
 nightly = []
 bevy = [
     "dep:bevy",

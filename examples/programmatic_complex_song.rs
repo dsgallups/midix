@@ -1,7 +1,4 @@
-#[cfg(not(feature = "web"))]
 use std::time::Duration;
-#[cfg(feature = "web")]
-use web_time::Duration;
 
 use bevy::{
     log::{Level, LogPlugin},

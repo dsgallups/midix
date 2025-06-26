@@ -91,7 +91,7 @@ struct LoopedSong {
     last_repeated: Instant,
     length: u64,
 }
-
+#[allow(dead_code)]
 impl SinkTask {
     pub fn new(
         synth_channel: Sender<ChannelVoiceMessage>,

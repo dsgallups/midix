@@ -28,7 +28,6 @@ impl SoundFont {
         Self { file: Arc::new(sf) }
     }
 }
-
 /// Possible errors that can be produced by [`CustomAssetLoader`]
 #[derive(Debug, Error)]
 pub enum SoundFontLoadError {
