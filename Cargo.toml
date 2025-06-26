@@ -1,15 +1,16 @@
 [package]
 name = "midix"
 version = "4.0.0-alpha"
-edition = "2024"
 authors = ["dsgallups <dsgallups@protonmail.com>"]
+edition = "2024"
 description = "MIDI structures designed for humans"
 repository = "https://github.com/dsgallups/midix"
 documentation = "https://docs.rs/midix"
 readme = "README.md"
-keywords = ["midi", "audio", "parser"]
+keywords = ["midi", "audio", "parser", "bevy"]
 categories = ["multimedia::audio", "multimedia::encoding", "multimedia"]
 license = "MIT OR Apache-2.0"
+exclude = ["assets/*"]
 
 
 [features]
@@ -27,7 +28,7 @@ bevy = [
 debug = ["bevy"]
 
 [dependencies.bevy]
-version = "0.16.0"
+version = "0.16"
 optional = true
 default-features = false
 features = [
@@ -54,3 +55,7 @@ rustysynth = { version = "1.3.5", optional = true }
 pretty_assertions = { default-features = false, features = [
     "alloc",
 ], version = "1.4" }
+
+[dev-dependencies.bevy]
+version = "0.16"
+default-features = true
