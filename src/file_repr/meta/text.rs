@@ -20,27 +20,19 @@ impl<'a> BytesText<'a> {
 
     /// Get a mutable reference to the underlying string
     pub fn to_mut(&mut self) -> Result<&mut str, ParseError> {
-        let _self_mut = self.inner.to_mut();
-        #[cfg(feature = "std")]
-        let _v = std::str::from_utf8_mut(_self_mut).map_err(|_| ParseError::InvalidUtf8)?;
-        #[cfg(feature = "nightly")]
-        let _v = str::from_utf8_mut(_self_mut).map_err(|_| ParseError::InvalidUtf8)?;
-        #[cfg(all(not(feature = "std"), not(feature = "nightly")))]
-        panic!("cannot get mutable reference to text without `std` or `nightly` features enabled!",);
-        #[cfg(any(feature = "std", feature = "nightly"))]
-        Ok(_v)
+        let inner_mut = self.inner.to_mut();
+        core::str::from_utf8_mut(inner_mut).map_err(|_| ParseError::InvalidUtf8)
     }
 
     /// Get a string reference
-    pub fn as_str(&self) -> Result<&str, ParseError> {
-        #[cfg(feature = "std")]
-        let _v = std::str::from_utf8(&self.inner).map_err(|_| ParseError::InvalidUtf8)?;
-        #[cfg(feature = "nightly")]
-        let _v = str::from_utf8(&self.inner).map_err(|_| ParseError::InvalidUtf8)?;
-        #[cfg(all(not(feature = "std"), not(feature = "nightly")))]
-        panic!("Cannot intrepret string without the std or nightly feature");
-        #[cfg(any(feature = "std", feature = "nightly"))]
-        Ok(_v)
+    pub const fn as_str(&self) -> Result<&str, ParseError> {
+        let Ok(res) = (match &self.inner {
+            Cow::Borrowed(inner) => str::from_utf8(inner),
+            Cow::Owned(inner) => str::from_utf8(inner.as_slice()),
+        }) else {
+            return Err(ParseError::InvalidUtf8);
+        };
+        Ok(res)
     }
 
     /// Get a (possibly) cloned string

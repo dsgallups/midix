@@ -24,7 +24,6 @@ std = [
     "crossbeam-channel/std",
 ]
 web = ["bevy_platform/web"]
-nightly = []
 bevy = [
     "dep:bevy",
     "dep:midir",
