@@ -82,8 +82,7 @@ assert_eq!(velocity.byte(), 96);
 ```
 
 
-## Semantic Versioning and Support
-`midix` will adhere to semantic versioning. This means that I've opted to use major versions, even if this crate does not consider itself feature complete (you might get a midix `v29.3.1` someday)
+
 
 
 ## Bevy Support
@@ -201,10 +200,14 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
 See `/examples` for details.
 
 
-## Acknowledgment
+## Semantic Versioning and Support
+`midix` will adhere to semantic versioning. This means that I've opted to use major versions, even if this crate does not consider itself feature complete (you might get a midix `v29.3.1` someday)
+
+The current MSRV is rust `1.87`
+
+## Acknowledgments
 
 This crate was originally forked from [`bevy_midi`](https://github.com/BlackPhlox/bevy_midi). Please check them out if this crate doesn't suit your needs!
-
 
 ## MIDIx feature roadmap
 - `no_std`
