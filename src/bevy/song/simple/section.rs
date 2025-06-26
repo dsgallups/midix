@@ -1,5 +1,7 @@
+use std::vec::Vec;
+
+use crate::{Key, Velocity, prelude::VoiceEvent};
 use fnv::FnvHashMap;
-use midix::{Key, Velocity, prelude::VoiceEvent};
 
 /// Create a section that can be used for looping
 #[derive(Default)]

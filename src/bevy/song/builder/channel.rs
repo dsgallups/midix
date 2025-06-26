@@ -1,4 +1,4 @@
-use midix::{
+use crate::{
     Controller, Key, PitchBend, Program, Velocity,
     prelude::{Channel, ChannelVoiceMessage, Timed, VoiceEvent},
 };

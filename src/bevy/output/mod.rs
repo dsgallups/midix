@@ -1,7 +1,6 @@
 #![doc = r#"
 A plugin and types for handling MIDI output
 "#]
-use midix::MidiMessageBytes;
 
 mod connection;
 use connection::*;
@@ -15,7 +14,7 @@ pub use plugin::*;
 use bevy::prelude::*;
 use midir::{MidiOutputPort, SendError};
 
-use crate::MidiSettings;
+use crate::{MidiMessageBytes, bevy::MidiSettings};
 
 enum MidiOutputState {
     Listening(midir::MidiOutput),

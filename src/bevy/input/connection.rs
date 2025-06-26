@@ -1,7 +1,7 @@
+use crate::events::{FromLiveEventBytes, LiveEvent};
 use bevy::prelude::*;
 use crossbeam_channel::{Receiver, TryRecvError};
 use midir::MidiInputPort;
-use midix::events::{FromLiveEventBytes, LiveEvent};
 
 use super::MidiInputError;
 

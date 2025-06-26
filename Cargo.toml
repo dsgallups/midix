@@ -24,6 +24,8 @@ bevy = [
     "dep:itertools",
     "dep:fnv",
     "dep:rustysynth",
+    "dep:crossbeam-channel",
+    "std",
 ]
 debug = ["bevy"]
 
@@ -46,6 +48,7 @@ thiserror = { version = "2.0", default-features = false }
 web-time = { version = "1.1.0", optional = true }
 # Bevy feature deps
 midir = { version = "0.10", optional = true }
+crossbeam-channel = { version = "0.5.15", optional = true }
 tinyaudio = { version = "1.1.0", optional = true }
 itertools = { version = "0.14.0", optional = true }
 fnv = { version = "1.0.7", optional = true }

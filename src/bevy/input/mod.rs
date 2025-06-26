@@ -15,7 +15,7 @@ pub use plugin::*;
 use bevy::prelude::*;
 use midir::MidiInputPort;
 
-use crate::MidiSettings;
+use crate::bevy::MidiSettings;
 
 // you can't actually have multiple MidiInputs on one device, it's really strange.
 enum MidiInputState {

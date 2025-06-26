@@ -1,6 +1,6 @@
+use crate::MidiMessageBytes;
 use bevy::prelude::*;
 use midir::{MidiOutputPort, SendError};
-use midix::MidiMessageBytes;
 
 use super::MidiOutputError;
 

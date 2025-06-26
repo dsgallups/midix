@@ -13,7 +13,7 @@ use crate::{
 /// [`LiveEvent::parse`](live/enum.LiveEvent.html#method.parse) method instead and ignore all
 /// variants except for [`LiveEvent::Midi`](live/enum.LiveEvent.html#variant.Midi).
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-#[cfg_attr(feature = "bevy", derive(bevy::prelude::Event))]
+#[cfg_attr(feature = "bevy", derive(::bevy::prelude::Event))]
 pub struct ChannelVoiceMessage {
     /// The MIDI channel that this event is associated with.
     /// Used for getting the channel as the status' lsb contains the channel

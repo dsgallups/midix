@@ -1,13 +1,13 @@
 use std::{sync::Mutex, time::Instant};
 
+use crate::prelude::ChannelVoiceMessage;
 use bevy::{prelude::*, tasks::IoTaskPool};
 use crossbeam_channel::{Receiver, Sender, TryIter};
 use itertools::Itertools;
-use midix::prelude::ChannelVoiceMessage;
 use rustysynth::{Synthesizer, SynthesizerSettings};
 use tinyaudio::{OutputDeviceParameters, run_output_device};
 
-use crate::asset::{SoundFont, SoundFontLoader};
+use crate::bevy::asset::{SoundFont, SoundFontLoader};
 
 use super::{SinkTask, Synth, SynthState};
 

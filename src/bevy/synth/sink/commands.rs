@@ -1,6 +1,8 @@
-use midix::prelude::*;
+use std::vec::Vec;
 
-use crate::song::SongId;
+use crate::prelude::*;
+
+use crate::bevy::song::SongId;
 
 /// Command the sink to do something
 pub(crate) enum SinkCommand {

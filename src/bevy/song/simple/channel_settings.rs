@@ -1,4 +1,4 @@
-use midix::{
+use crate::{
     Key, Program, Velocity,
     prelude::{Channel, ChannelVoiceMessage, VoiceEvent},
 };
@@ -43,6 +43,7 @@ impl<'s> ChannelModifier<'s> {
                 .copied()
                 .unwrap_or_default()
                 .velocity;
+            //TODO: look at this
             self.song.add_events(
                 absolute_beat,
                 event.iter().map(|e| {

@@ -11,24 +11,24 @@ use bevy::{
     prelude::*,
 };
 
-use midix::{
+use crate::{
     events::LiveEvent,
     file::MidiFile as Mf,
     prelude::{FormatType, Timed, Timing},
     reader::ReaderError,
 };
 
-use crate::song::MidiSong;
+use crate::bevy::song::MidiSong;
 
 /// Sound font asset. Wraps a midix MidiFile
 ///
 /// TODO(before v4: do not wrap midix MidiFile)
 #[derive(Asset, TypePath)]
-pub struct MidiFile {
+pub struct LoadedMidiFile {
     inner: Mf<'static>,
 }
 
-impl MidiFile {
+impl LoadedMidiFile {
     /// Create a new midifile with the given inner midix MidiFile
     pub fn new(file: Mf<'static>) -> Self {
         Self { inner: file }
@@ -226,7 +226,7 @@ impl<'a> From<&Mf<'a>> for MidiSong {
 pub struct MidiFileLoader;
 
 impl AssetLoader for MidiFileLoader {
-    type Asset = MidiFile;
+    type Asset = LoadedMidiFile;
     type Settings = ();
     type Error = ReaderError;
     async fn load(
@@ -240,7 +240,7 @@ impl AssetLoader for MidiFileLoader {
 
         let inner = Mf::parse(bytes)?;
 
-        let res = MidiFile::new(inner);
+        let res = LoadedMidiFile::new(inner);
 
         Ok(res)
     }

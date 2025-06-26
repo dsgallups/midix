@@ -2733,6 +2733,7 @@ name = "midix"
 version = "4.0.0-alpha"
 dependencies = [
  "bevy",
+ "crossbeam-channel",
  "fnv",
  "itertools 0.14.0",
  "midir",

@@ -1,6 +1,6 @@
-use std::{collections::HashMap, hash::BuildHasher, iter};
+use std::{collections::HashMap, hash::BuildHasher, iter, vec::Vec};
 
-use midix::prelude::{Channel, ChannelVoiceMessage, Timed, VoiceEvent};
+use crate::prelude::{Channel, ChannelVoiceMessage, Timed, VoiceEvent};
 
 use super::SongId;
 

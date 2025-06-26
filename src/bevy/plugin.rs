@@ -3,9 +3,9 @@ Module for the [`MidiPlugin`]
 "#]
 use bevy::prelude::*;
 
-use crate::{
+use crate::bevy::{
     MidiSettings,
-    asset::{MidiFile, MidiFileLoader},
+    asset::{LoadedMidiFile, MidiFileLoader},
     input::MidiInputPlugin,
     output::MidiOutputPlugin,
     synth::{SynthParams, SynthPlugin},
@@ -40,7 +40,7 @@ impl Default for MidiPlugin {
 impl Plugin for MidiPlugin {
     fn build(&self, app: &mut App) {
         app.init_asset_loader::<MidiFileLoader>()
-            .init_asset::<MidiFile>();
+            .init_asset::<LoadedMidiFile>();
         if let Some(settings) = self.input {
             app.add_plugins(MidiInputPlugin { settings });
         }

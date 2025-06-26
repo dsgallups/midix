@@ -3,6 +3,8 @@ Components to make songs programatically
 "#]
 
 pub mod simple;
+use std::vec::Vec;
+
 pub use simple::*;
 
 mod song_writer;
@@ -11,8 +13,8 @@ pub use song_writer::*;
 mod builder;
 pub use builder::*;
 
-use bevy::asset::uuid::Uuid;
-use midix::prelude::*;
+use crate::prelude::*;
+use ::bevy::asset::uuid::Uuid;
 
 /// The identifier of a certain midi song
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]

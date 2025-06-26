@@ -1,7 +1,7 @@
 //! Utils for simple song making
-use bevy::prelude::*;
+use crate::prelude::*;
+use ::bevy::prelude::*;
 use fnv::FnvHashMap;
-use midix::prelude::*;
 
 mod beat;
 pub use beat::*;

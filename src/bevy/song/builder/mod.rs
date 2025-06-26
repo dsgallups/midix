@@ -1,7 +1,9 @@
 mod channel;
+use std::vec::Vec;
+
 pub use channel::*;
 
-use midix::prelude::{Channel, ChannelVoiceMessage, Timed};
+use crate::prelude::{Channel, ChannelVoiceMessage, Timed};
 
 use super::MidiSong;
 

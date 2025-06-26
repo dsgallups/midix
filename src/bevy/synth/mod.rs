@@ -2,13 +2,13 @@
 Synthesizer resources, setup and plugins
 "#]
 
+use crate::prelude::{ChannelVoiceMessage, Timed};
 use crate::{
+    bevy::song::{SongId, SongWriter},
     prelude::SoundFont,
-    song::{SongId, SongWriter},
 };
 use bevy::prelude::*;
 use crossbeam_channel::{SendError, Sender};
-use midix::prelude::{ChannelVoiceMessage, Timed};
 use std::{collections::HashMap, sync::Mutex};
 use thiserror::Error;
 use tinyaudio::OutputDevice;
