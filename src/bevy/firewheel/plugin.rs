@@ -3,6 +3,7 @@ use crate::bevy::firewheel::components::*;
 use crate::bevy::firewheel::node::{MidiNodeEvent, MidiSynthNodeConfig, MidiSynthProcessor};
 use bevy::prelude::*;
 use bevy_seedling::prelude::*;
+use firewheel::event::NodeEvent;
 
 /// Plugin for MIDI synthesis using Firewheel/bevy_seedling
 pub struct FirewheelMidiPlugin;
@@ -10,16 +11,19 @@ pub struct FirewheelMidiPlugin;
 impl Plugin for FirewheelMidiPlugin {
     fn build(&self, app: &mut App) {
         // Register our custom node type with bevy_seedling
-        app.register_audio_node::<MidiSynthNodeConfig>();
+        app.register_node::<MidiSynthNodeConfig, MidiSynthProcessor>();
 
         // Initialize soundfont assets
-        app.init_asset::<SoundFont>()
-            .init_asset_loader::<crate::bevy::asset::SoundFontLoader>();
+        #[cfg(feature = "std")]
+        {
+            app.init_asset::<SoundFont>()
+                .init_asset_loader::<crate::bevy::asset::SoundFontLoader>();
+        }
 
-        // Add systems
+        // Add our systems
         app.add_systems(
             Update,
-            (spawn_midi_nodes, process_midi_commands, update_midi_config)
+            (spawn_midi_nodes, process_midi_commands)
                 .chain()
                 .run_if(resource_exists::<AudioContext>),
         );
@@ -29,7 +33,7 @@ impl Plugin for FirewheelMidiPlugin {
 /// System that spawns MIDI synthesizer nodes for entities with soundfonts
 fn spawn_midi_nodes(
     mut commands: Commands,
-    mut audio_context: ResMut<AudioContext>,
+    audio_context: Res<AudioContext>,
     soundfont_assets: Res<Assets<SoundFont>>,
     query: Query<
         (Entity, &MidiSoundfont, Option<&MidiSynthConfig>),
@@ -45,23 +49,20 @@ fn spawn_midi_nodes(
         // Get config or use defaults
         let config = config.cloned().unwrap_or_default();
 
-        // Get sample rate from audio context
-        let sample_rate = audio_context.sample_rate() as f32;
-
         // Create node configuration
         let node_config = MidiSynthNodeConfig {
             soundfont: soundfont_asset.file.clone(),
-            sample_rate,
+            sample_rate: 44100.0, // Default, will be overridden by audio context
             enable_reverb: config.enable_reverb,
             enable_chorus: config.enable_chorus,
             volume: config.volume,
         };
 
-        // Spawn the audio node through bevy_seedling
-        let node = audio_context.add_audio_node(node_config);
+        // Spawn the audio node
+        let node = audio_context.spawn_node(node_config);
 
-        // Connect the node to the main output
-        audio_context.connect(&node, &AudioContext::main_output());
+        // Connect to main output
+        audio_context.connect(&node, &MainBus);
 
         // Add the node component to the entity
         commands.entity(entity).insert(MidiSynthNode { node });
@@ -70,8 +71,8 @@ fn spawn_midi_nodes(
 
 /// System that processes MIDI commands and sends them to the audio nodes
 fn process_midi_commands(
-    mut audio_context: ResMut<AudioContext>,
-    mut query: Query<(&MidiSynthNode, &mut MidiCommands), Changed<MidiCommands>>,
+    mut events: EventWriter<NodeEventOf<MidiNodeEvent>>,
+    mut query: Query<(&MidiSynthNode, &mut MidiCommands)>,
 ) {
     for (synth_node, mut commands) in &mut query {
         if commands.queue.is_empty() {
@@ -83,23 +84,19 @@ fn process_midi_commands(
 
         // Send commands to the audio node as events
         for command in pending {
-            audio_context.send_event(&synth_node.node, MidiNodeEvent { command });
+            events.send(NodeEventOf {
+                node: synth_node.node,
+                event: MidiNodeEvent { command },
+            });
         }
     }
 }
 
-/// System that updates MIDI synthesizer configuration
-fn update_midi_config(
-    mut audio_context: ResMut<AudioContext>,
-    query: Query<(&MidiSynthNode, &MidiSynthConfig), Changed<MidiSynthConfig>>,
-) {
-    for (synth_node, config) in &query {
-        // Update volume parameter on the node
-        audio_context.set_node_param(&synth_node.node, "volume", config.volume);
-
-        // Note: Reverb and chorus changes would require recreating the node
-        // as rustysynth doesn't support changing these at runtime
-    }
+/// Helper event type for sending events to specific nodes
+#[derive(Event)]
+struct NodeEventOf<T: NodeEvent> {
+    node: FirewheelNode,
+    event: T,
 }
 
 /// Extension trait for Commands to easily spawn MIDI synths
@@ -138,15 +135,5 @@ impl MidiCommandsExt for Commands<'_, '_> {
             Name::new("MIDI Synthesizer"),
         ))
         .id()
-    }
-}
-
-/// Helper module for system run conditions
-pub mod conditions {
-    use super::*;
-
-    /// Condition that returns true when the audio context is ready
-    pub fn audio_ready() -> impl Condition<()> {
-        resource_exists::<AudioContext>
     }
 }

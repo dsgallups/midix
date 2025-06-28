@@ -1,11 +1,7 @@
 use crate::prelude::ChannelVoiceMessage;
-use firewheel::{
-    clock::ClockInfo,
-    graph::{AudioNodeProcessor, FirewheelGraphCtx, NodeEventIter, ProcInfo},
-    node::{AudioNode, AudioNodeConfig, AudioNodeInfo, ChannelConfig, ChannelCount},
-};
+use firewheel::node::{AudioNode, AudioNodeInfo, AudioNodeProcessor};
 use rustysynth::{Synthesizer, SynthesizerSettings};
-use std::sync::Arc;
+use std::{boxed::Box, sync::Arc, vec::Vec};
 
 /// Configuration for the MIDI synthesizer node
 #[derive(Debug, Clone)]
@@ -162,5 +158,3 @@ impl AudioNodeProcessor for MidiSynthProcessor {
 pub struct MidiNodeEvent {
     pub command: ChannelVoiceMessage,
 }
-
-impl firewheel::event::NodeEvent for MidiNodeEvent {}

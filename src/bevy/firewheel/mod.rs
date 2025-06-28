@@ -37,7 +37,7 @@ mod systems;
 // Re-export main types
 pub use components::{MidiCommands, MidiSoundfont, MidiSynthConfig, MidiSynthNode};
 pub use node::{MidiNodeEvent, MidiSynthNodeConfig, MidiSynthProcessor};
-pub use plugin::{FirewheelMidiPlugin, MidiCommandsExt, conditions};
+pub use plugin::{FirewheelMidiPlugin, MidiCommandsExt};
 pub use systems::{
     MidiInstrument, MidiSynthBundle, MidiSystemSet, debug_midi_commands, handle_note_input,
     panic_button, play_midi_file, play_scale, set_instrument, volume_control,
