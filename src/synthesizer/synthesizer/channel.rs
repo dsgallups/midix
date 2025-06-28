@@ -79,10 +79,13 @@ impl SynthChannel {
 
     pub(crate) fn reset_all_controllers(&mut self) {
         self.modulation = 0;
+        self.volume = 100 << 7;
+        self.pan = 64 << 7;
         self.expression = 127 << 7;
         self.hold_pedal = false;
 
         self.rpn = 0xFFFF;
+        self.pitch_bend_range = 2 << 7;
 
         self.pitch_bend = 0_f32;
     }
