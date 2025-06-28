@@ -28,24 +28,3 @@ impl MidiCommands {
 /// Component that specifies which soundfont to use for a MIDI synth
 #[derive(Component)]
 pub struct MidiSoundfont(pub Handle<SoundFont>);
-
-/// Optional component for MIDI synth configuration
-#[derive(Component, Clone)]
-pub struct MidiSynthConfig {
-    /// Enable reverb effect
-    pub enable_reverb: bool,
-    /// Enable chorus effect
-    pub enable_chorus: bool,
-    /// Volume level (0.0 to 1.0)
-    pub volume: f32,
-}
-
-impl Default for MidiSynthConfig {
-    fn default() -> Self {
-        Self {
-            enable_reverb: true,
-            enable_chorus: true,
-            volume: 1.0,
-        }
-    }
-}

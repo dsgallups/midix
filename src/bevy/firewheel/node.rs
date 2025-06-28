@@ -4,54 +4,34 @@ use firewheel::{
     channel_config::{ChannelConfig, ChannelCount},
     event::{NodeEventList, NodeEventType},
     node::{
-        AudioNode, AudioNodeInfo, AudioNodeProcessor, ConstructProcessorContext, ProcBuffers,
-        ProcInfo, ProcessStatus,
+        AudioNode, AudioNodeInfo, AudioNodeProcessor, ConstructProcessorContext, EmptyConfig,
+        ProcBuffers, ProcInfo, ProcessStatus,
     },
 };
 use rustysynth::{Synthesizer, SynthesizerSettings};
 use std::sync::Arc;
 
-/// MIDI synthesizer node component
-#[derive(Component, Clone)]
-pub struct MidiSynthNode {
-    /// Master volume (0.0 to 1.0)
-    pub volume: f32,
-}
-
-impl Default for MidiSynthNode {
-    fn default() -> Self {
-        Self { volume: 1.0 }
-    }
-}
-
 /// Configuration for the MIDI synthesizer node
 #[derive(Debug, Clone, Component)]
-pub struct MidiSynthNodeConfig {
+pub struct MidiSynthNode {
     /// The soundfont data
     pub soundfont: Arc<rustysynth::SoundFont>,
-    /// Sample rate
-    pub sample_rate: f32,
-    /// Enable reverb
-    pub enable_reverb: bool,
-    /// Enable chorus
-    pub enable_chorus: bool,
+    /// Enable reverb and chorus
+    pub enable_reverb_and_chorus: bool,
 }
 
-impl Default for MidiSynthNodeConfig {
-    fn default() -> Self {
+impl MidiSynthNode {
+    /// Create a new node with a loaded soundfont and reverb/chorus param
+    pub fn new(soundfont: Arc<rustysynth::SoundFont>, enable_reverb_and_chorus: bool) -> Self {
         Self {
-            soundfont: Arc::new(
-                rustysynth::SoundFont::new(&mut std::io::Cursor::new(Vec::<u8>::new())).unwrap(),
-            ),
-            sample_rate: 44100.0,
-            enable_reverb: true,
-            enable_chorus: true,
+            soundfont,
+            enable_reverb_and_chorus,
         }
     }
 }
 
 impl AudioNode for MidiSynthNode {
-    type Configuration = MidiSynthNodeConfig;
+    type Configuration = EmptyConfig;
 
     fn info(&self, _config: &Self::Configuration) -> AudioNodeInfo {
         AudioNodeInfo::new()
@@ -65,38 +45,35 @@ impl AudioNode for MidiSynthNode {
 
     fn construct_processor(
         &self,
-        config: &Self::Configuration,
-        _cx: ConstructProcessorContext,
+        _config: &Self::Configuration,
+        cx: ConstructProcessorContext,
     ) -> impl AudioNodeProcessor {
-        MidiSynthProcessor::new(config.clone(), self.volume)
+        MidiSynthProcessor::new(self, cx)
     }
 }
 
 /// MIDI synthesizer audio node processor
 pub struct MidiSynthProcessor {
     synthesizer: Synthesizer,
-    volume: f32,
-    sample_rate: f32,
     left_buffer: Vec<f32>,
     right_buffer: Vec<f32>,
 }
 
 impl MidiSynthProcessor {
     /// Create a new MIDI synthesizer processor
-    pub fn new(config: MidiSynthNodeConfig, volume: f32) -> Self {
-        let mut settings = SynthesizerSettings::new(config.sample_rate as i32);
-        settings.enable_reverb_and_chorus = config.enable_reverb && config.enable_chorus;
+    pub fn new(config: &MidiSynthNode, cx: ConstructProcessorContext) -> Self {
+        let mut settings = SynthesizerSettings::new(cx.stream_info.sample_rate.get() as i32);
+        settings.enable_reverb_and_chorus = config.enable_reverb_and_chorus;
+        settings.block_size = cx.stream_info.max_block_frames.get() as usize;
 
         let synthesizer =
             Synthesizer::new(&config.soundfont, &settings).expect("Failed to create synthesizer");
 
         // Pre-allocate buffers
-        let buffer_size = 512; // Default size, will be resized as needed
+        let buffer_size = 1024; // Default size, will be resized as needed
 
         Self {
             synthesizer,
-            volume,
-            sample_rate: config.sample_rate,
             left_buffer: vec![0.0; buffer_size],
             right_buffer: vec![0.0; buffer_size],
         }
@@ -156,15 +133,8 @@ impl AudioNodeProcessor for MidiSynthProcessor {
                 let left_out = &mut left_out[0][..frames];
                 let right_out = &mut rest[0][..frames];
 
-                if self.volume == 1.0 {
-                    left_out.copy_from_slice(&self.left_buffer[..frames]);
-                    right_out.copy_from_slice(&self.right_buffer[..frames]);
-                } else {
-                    for i in 0..frames {
-                        left_out[i] = self.left_buffer[i] * self.volume;
-                        right_out[i] = self.right_buffer[i] * self.volume;
-                    }
-                }
+                left_out.copy_from_slice(&self.left_buffer[..frames]);
+                right_out.copy_from_slice(&self.right_buffer[..frames]);
             }
         }
 
