@@ -108,17 +108,24 @@ impl VolumeEnvelope {
             }
         }
         match self.stage {
-            EnvelopeStage::Delay => Some(0.),
-            EnvelopeStage::Attack => {
-                Some((self.attack_slope * (current_time - self.attack_start_time)) as f32)
+            EnvelopeStage::Delay => {
+                self.value = 0.;
+                Some(0.)
             }
-            EnvelopeStage::Hold => Some(1_f32),
+            EnvelopeStage::Attack => {
+                self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
+                Some(self.value)
+            }
+            EnvelopeStage::Hold => {
+                self.value = 1_f32;
+                Some(1_f32)
+            }
             EnvelopeStage::Decay => {
                 let val =
                     (utils::exp_cutoff(self.decay_slope * (current_time - self.decay_start_time))
                         as f32)
                         .max(self.sustain_level);
-
+                self.value = val;
                 (val > utils::NON_AUDIBLE).then_some(val)
             }
             EnvelopeStage::Release => {
@@ -126,7 +133,8 @@ impl VolumeEnvelope {
                     * utils::exp_cutoff(
                         self.release_slope * (current_time - self.release_start_time),
                     )) as f32;
-                (val > utils::NON_AUDIBLE).then_some(val)
+                self.value = val;
+                Some(val)
             }
         }
     }

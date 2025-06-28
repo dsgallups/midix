@@ -41,15 +41,12 @@ fn debug_note_off_behavior() {
     let mut rright = [0_f32; FRAMES];
 
     // Render a few frames before note_off
-    println!(
-        "\n=== Rendering {} frames before note_off ===",
-        FRAMES_BEFORE_OFF
-    );
+    println!("\n=== Rendering {FRAMES_BEFORE_OFF} frames before note_off ===",);
     for frame_idx in 0..FRAMES_BEFORE_OFF {
         midix_synth.render(&mut mleft[..], &mut mright[..]);
         rs_synth.render(&mut rleft[..], &mut rright[..]);
 
-        println!("\nFrame {} (before note_off):", frame_idx);
+        println!("\nFrame {frame_idx} (before note_off):");
         println!("  First 10 samples:");
         for i in 0..10.min(FRAMES) {
             let diff = (mleft[i] - rleft[i]).abs();
@@ -66,7 +63,7 @@ fn debug_note_off_behavior() {
             .zip(rleft.iter())
             .map(|(m, r)| (m - r).abs())
             .fold(0.0f32, f32::max);
-        println!("  Max difference in frame: {:.8e}", max_diff);
+        println!("  Max difference in frame: {max_diff:.8e}");
     }
 
     // Call note_off
@@ -75,15 +72,12 @@ fn debug_note_off_behavior() {
     rs_synth.note_off(channel.to_byte() as i32, key.byte() as i32);
 
     // Render frames after note_off
-    println!(
-        "\n=== Rendering {} frames after note_off ===",
-        FRAMES_AFTER_OFF
-    );
+    println!("\n=== Rendering {FRAMES_AFTER_OFF} frames after note_off ===",);
     for frame_idx in 0..FRAMES_AFTER_OFF {
         midix_synth.render(&mut mleft[..], &mut mright[..]);
         rs_synth.render(&mut rleft[..], &mut rright[..]);
 
-        println!("\nFrame {} (after note_off):", frame_idx);
+        println!("\nFrame {frame_idx} (after note_off):");
 
         // Print more samples for the first frame after note_off
         let samples_to_print = if frame_idx == 0 {
@@ -92,7 +86,7 @@ fn debug_note_off_behavior() {
             10.min(FRAMES)
         };
 
-        println!("  First {} samples:", samples_to_print);
+        println!("  First {samples_to_print} samples:");
         for i in 0..samples_to_print {
             let diff = (mleft[i] - rleft[i]).abs();
             let match_str = if diff < 0.0001 { "✓" } else { "✗" };
@@ -115,8 +109,8 @@ fn debug_note_off_behavior() {
             .sum::<f32>()
             / FRAMES as f32;
 
-        println!("  Max difference in frame: {:.8e}", max_diff);
-        println!("  Avg difference in frame: {:.8e}", avg_diff);
+        println!("  Max difference in frame: {max_diff:.8e}");
+        println!("  Avg difference in frame: {avg_diff:.8e}");
 
         // Find first mismatching sample
         if let Some((idx, (m, r))) = mleft
@@ -125,16 +119,13 @@ fn debug_note_off_behavior() {
             .enumerate()
             .find(|(_, (m, r))| (*m - *r).abs() > 0.0001)
         {
-            println!(
-                "  First mismatch at sample {}: midix={:+.8}, rusty={:+.8}",
-                idx, m, r
-            );
+            println!("  First mismatch at sample {idx}: midix={m:+.8}, rusty={r:+.8}",);
         }
 
         // Print some statistics
         let midix_rms = (mleft.iter().map(|x| x * x).sum::<f32>() / FRAMES as f32).sqrt();
         let rusty_rms = (rleft.iter().map(|x| x * x).sum::<f32>() / FRAMES as f32).sqrt();
-        println!("  RMS - midix: {:.8}, rusty: {:.8}", midix_rms, rusty_rms);
+        println!("  RMS - midix: {midix_rms:.8}, rusty: {rusty_rms:.8}");
 
         if frame_idx == 0 {
             // Additional debugging for the first frame after note_off
@@ -149,8 +140,8 @@ fn debug_note_off_behavior() {
             // Check if either synth is producing silence
             let midix_silent = mleft.iter().all(|&x| x.abs() < 0.00001);
             let rusty_silent = rleft.iter().all(|&x| x.abs() < 0.00001);
-            println!("  Midix producing silence: {}", midix_silent);
-            println!("  Rusty producing silence: {}", rusty_silent);
+            println!("  Midix producing silence: {midix_silent}");
+            println!("  Rusty producing silence: {rusty_silent}");
         }
     }
 
@@ -241,8 +232,8 @@ fn debug_single_sample_after_note_off() {
     let discontinuity_rusty = (rfirst_left[0] - rlast_left[0]).abs();
 
     println!("\nDiscontinuity magnitude:");
-    println!("  midix: {:.8}", discontinuity_midix);
-    println!("  rusty: {:.8}", discontinuity_rusty);
+    println!("  midix: {discontinuity_midix:.8}");
+    println!("  rusty: {discontinuity_rusty:.8}");
 
     if discontinuity_midix > 0.01 || discontinuity_rusty > 0.01 {
         println!("\nWARNING: Large discontinuity detected! This could cause the 'chirp' sound.");

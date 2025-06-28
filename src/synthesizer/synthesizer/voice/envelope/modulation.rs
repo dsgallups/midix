@@ -106,15 +106,22 @@ impl ModulationEnvelope {
             }
         }
         match self.stage {
-            EnvelopeStage::Delay => Some(0.),
-            EnvelopeStage::Attack => {
-                Some((self.attack_slope * (current_time - self.attack_start_time)) as f32)
+            EnvelopeStage::Delay => {
+                self.value = 0.;
+                Some(0.)
             }
-            EnvelopeStage::Hold => Some(1.),
+            EnvelopeStage::Attack => {
+                self.value = (self.attack_slope * (current_time - self.attack_start_time)) as f32;
+                Some(self.value)
+            }
+            EnvelopeStage::Hold => {
+                self.value = 1.;
+                Some(1.)
+            }
             EnvelopeStage::Decay => {
                 let val = ((self.decay_slope * (self.decay_end_time - current_time)) as f32)
                     .max(self.sustain_level);
-
+                self.value = val;
                 (val > utils::NON_AUDIBLE).then_some(val)
             }
             EnvelopeStage::Release => {
@@ -122,8 +129,8 @@ impl ModulationEnvelope {
                     * self.release_slope
                     * (self.release_end_time - current_time)) as f32)
                     .max(0.);
-
-                (val > utils::NON_AUDIBLE).then_some(val)
+                self.value = val;
+                Some(val)
             }
         }
     }
