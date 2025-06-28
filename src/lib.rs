@@ -48,6 +48,7 @@ mod target;
 pub use target::*;
 
 #[cfg(feature = "synthesizer")]
+#[allow(missing_docs)]
 pub mod synthesizer;
 
 #[cfg(feature = "bevy")]
@@ -80,12 +81,15 @@ pub mod prelude {
     pub use crate::bevy::prelude::*;
 
     #[cfg(feature = "synthesizer")]
-    pub(crate) use crate::synthesizer::utils::{self};
-    #[cfg(feature = "synthesizer")]
     pub use crate::synthesizer::{
         reader::*,
-        soundfont::{generator::*, instrument::*, preset::*, *},
-        synthesizer::{voice::*, *},
+        soundfont::{instrument::*, preset::*, *},
+        synthesizer::*,
+    };
+    #[cfg(feature = "synthesizer")]
+    pub(crate) use crate::synthesizer::{
+        soundfont::generator::*,
+        utils::{self},
     };
 
     #[cfg(feature = "synthesizer")]
