@@ -103,7 +103,7 @@ impl MidiSynthProcessor {
     }
 
     /// Process a MIDI command
-    fn process_command(&mut self, command: ChannelVoiceMessage) {
+    fn process_message(&mut self, command: ChannelVoiceMessage) {
         let channel = (command.status() & 0x0F) as i32;
         let command_type = (command.status() & 0xF0) as i32;
         let data1 = command.data_1_byte() as i32;
@@ -124,8 +124,8 @@ impl AudioNodeProcessor for MidiSynthProcessor {
         // Process incoming MIDI events
         events.for_each(|event| {
             if let NodeEventType::Custom(boxed) = event {
-                if let Some(midi_event) = boxed.downcast_ref::<MidiNodeEvent>() {
-                    self.process_command(midi_event.command);
+                if let Some(message) = boxed.downcast_ref::<ChannelVoiceMessage>() {
+                    self.process_message(*message);
                 }
             }
         });
@@ -170,10 +170,4 @@ impl AudioNodeProcessor for MidiSynthProcessor {
 
         ProcessStatus::outputs_not_silent()
     }
-}
-
-/// Node event for sending MIDI commands to the synthesizer
-#[derive(Debug, Clone)]
-pub struct MidiNodeEvent {
-    pub command: ChannelVoiceMessage,
 }

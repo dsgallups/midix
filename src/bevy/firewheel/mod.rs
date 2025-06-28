@@ -2,17 +2,12 @@ use bevy::prelude::*;
 use bevy_seedling::{node::Events, prelude::*};
 use firewheel::event::NodeEventType;
 
-use crate::{
-    bevy::firewheel::{
-        components::{MidiCommands, MidiSoundfont, MidiSynthConfig},
-        node::{MidiNodeEvent, MidiSynthNode, MidiSynthNodeConfig},
-    },
-    prelude::SoundFont,
-};
+use crate::prelude::SoundFont;
 
 mod components;
+pub use components::*;
 mod node;
-mod plugin;
+pub use node::*;
 
 /// Plugin for MIDI synthesis using Firewheel/bevy_seedling
 pub struct FirewheelMidiPlugin;
@@ -47,7 +42,7 @@ fn spawn_midi_nodes(
 ) {
     for (entity, soundfont, config) in &query {
         // Check if soundfont is loaded
-        let Some(soundfont_asset) = soundfont_assets.get(&soundfont.handle) else {
+        let Some(soundfont_asset) = soundfont_assets.get(&soundfont.0) else {
             continue;
         };
 
@@ -85,7 +80,7 @@ fn process_midi_commands(mut query: Query<(&FirewheelNode, &mut MidiCommands, &m
 
         // Send commands to the audio node as custom events
         for command in pending {
-            events.push(NodeEventType::Custom(Box::new(MidiNodeEvent { command })));
+            events.push(NodeEventType::Custom(Box::new(command)));
         }
     }
 }
@@ -106,7 +101,7 @@ pub trait MidiCommandsExt {
 impl MidiCommandsExt for Commands<'_, '_> {
     fn spawn_midi_synth(&mut self, soundfont: Handle<SoundFont>) -> EntityCommands<'_> {
         self.spawn((
-            MidiSoundfont { handle: soundfont },
+            MidiSoundfont(soundfont),
             MidiCommands::default(),
             MidiSynthConfig::default(),
             Name::new("MIDI Synthesizer"),
@@ -119,7 +114,7 @@ impl MidiCommandsExt for Commands<'_, '_> {
         config: MidiSynthConfig,
     ) -> Entity {
         self.spawn((
-            MidiSoundfont { handle: soundfont },
+            MidiSoundfont(soundfont),
             MidiCommands::default(),
             config,
             Name::new("MIDI Synthesizer"),

@@ -1,13 +1,5 @@
-use crate::prelude::ChannelVoiceMessage;
+use crate::prelude::{ChannelVoiceMessage, SoundFont};
 use bevy::prelude::*;
-use bevy_seedling::node::FirewheelNode;
-
-/// Component that holds a reference to a MIDI synthesizer audio node
-#[derive(Component)]
-pub struct OtherOtherMidiSynthNode {
-    /// The firewheel audio node handle
-    pub node: FirewheelNode,
-}
 
 /// Component for sending MIDI commands to a synthesizer node
 #[derive(Component, Default)]
@@ -35,10 +27,7 @@ impl MidiCommands {
 
 /// Component that specifies which soundfont to use for a MIDI synth
 #[derive(Component)]
-pub struct MidiSoundfont {
-    /// Handle to the soundfont asset
-    pub handle: Handle<crate::bevy::asset::SoundFont>,
-}
+pub struct MidiSoundfont(pub Handle<SoundFont>);
 
 /// Optional component for MIDI synth configuration
 #[derive(Component, Clone)]
