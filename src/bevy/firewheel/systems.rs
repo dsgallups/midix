@@ -1,27 +1,7 @@
-use crate::bevy::asset::{MidiFile, SoundFont};
+use crate::bevy::asset::SoundFont;
 use crate::bevy::firewheel::components::*;
 use crate::prelude::*;
 use bevy::prelude::*;
-
-/// System for playing a MIDI file through a synthesizer
-pub fn play_midi_file(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    midi_assets: Res<Assets<MidiFile>>,
-    mut query: Query<(&Handle<MidiFile>, &mut MidiCommands), Added<Handle<MidiFile>>>,
-) {
-    for (midi_handle, mut commands) in &mut query {
-        if let Some(midi_file) = midi_assets.get(midi_handle) {
-            // Convert MIDI file to song and extract commands
-            let song = midi_file.to_song();
-
-            // Send all MIDI events as commands
-            for timed_event in song.events() {
-                commands.send(timed_event.event);
-            }
-        }
-    }
-}
 
 /// System for note input handling
 pub fn handle_note_input(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut MidiCommands>) {
@@ -45,11 +25,21 @@ pub fn handle_note_input(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&
         for (key, note) in key_to_note {
             if keyboard.just_pressed(key) {
                 // Send note on
-                commands.send(ChannelVoiceMessage::note_on(0, note, 100));
+                if let Ok(midi_key) = Key::from_databyte(note) {
+                    commands.send(ChannelVoiceMessage::new(
+                        Channel::One,
+                        VoiceEvent::note_on(midi_key, Velocity::new_unchecked(100)),
+                    ));
+                }
             }
             if keyboard.just_released(key) {
                 // Send note off
-                commands.send(ChannelVoiceMessage::note_off(0, note, 0));
+                if let Ok(midi_key) = Key::from_databyte(note) {
+                    commands.send(ChannelVoiceMessage::new(
+                        Channel::One,
+                        VoiceEvent::note_off(midi_key, Velocity::ZERO),
+                    ));
+                }
             }
         }
     }
@@ -76,12 +66,22 @@ pub fn play_scale(
             // Turn off previous note
             if *note_index > 0 {
                 let prev_note = scale[(*note_index - 1) % scale.len()];
-                commands.send(ChannelVoiceMessage::note_off(0, prev_note, 0));
+                if let Ok(key) = Key::from_databyte(prev_note) {
+                    commands.send(ChannelVoiceMessage::new(
+                        Channel::One,
+                        VoiceEvent::note_off(key, Velocity::ZERO),
+                    ));
+                }
             }
 
             // Play current note
             let note = scale[*note_index % scale.len()];
-            commands.send(ChannelVoiceMessage::note_on(0, note, 80));
+            if let Ok(key) = Key::from_databyte(note) {
+                commands.send(ChannelVoiceMessage::new(
+                    Channel::One,
+                    VoiceEvent::note_on(key, Velocity::new_unchecked(80)),
+                ));
+            }
 
             *note_index += 1;
         }
@@ -93,10 +93,33 @@ pub fn set_instrument(
     mut query: Query<(&mut MidiCommands, &MidiInstrument), Changed<MidiInstrument>>,
 ) {
     for (mut commands, instrument) in &mut query {
-        commands.send(ChannelVoiceMessage::program_change(
-            instrument.channel,
-            instrument.program,
-        ));
+        // Map channel index to Channel enum
+        let channel = match instrument.channel {
+            0 => Channel::One,
+            1 => Channel::Two,
+            2 => Channel::Three,
+            3 => Channel::Four,
+            4 => Channel::Five,
+            5 => Channel::Six,
+            6 => Channel::Seven,
+            7 => Channel::Eight,
+            8 => Channel::Nine,
+            9 => Channel::Ten,
+            10 => Channel::Eleven,
+            11 => Channel::Twelve,
+            12 => Channel::Thirteen,
+            13 => Channel::Fourteen,
+            14 => Channel::Fifteen,
+            15 => Channel::Sixteen,
+            _ => Channel::One, // Default to channel 1 for invalid values
+        };
+
+        if let Ok(program) = Program::new(instrument.program) {
+            commands.send(ChannelVoiceMessage::new(
+                channel,
+                VoiceEvent::program_change(program),
+            ));
+        }
     }
 }
 
@@ -120,9 +143,16 @@ impl Default for MidiInstrument {
 pub fn panic_button(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut MidiCommands>) {
     if keyboard.just_pressed(KeyCode::Escape) {
         for mut commands in &mut query {
-            // Send all notes off on all channels
-            for channel in 0..16 {
-                commands.send(ChannelVoiceMessage::all_notes_off(channel));
+            // Send note off for all notes on all channels
+            for channel in Channel::all() {
+                for note_num in 0..128 {
+                    if let Ok(key) = Key::from_databyte(note_num) {
+                        commands.send(ChannelVoiceMessage::new(
+                            channel,
+                            VoiceEvent::note_off(key, Velocity::ZERO),
+                        ));
+                    }
+                }
             }
         }
     }
