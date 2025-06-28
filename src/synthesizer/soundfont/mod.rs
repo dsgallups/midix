@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use bevy_platform::prelude::*;
+use std::{io::Read, sync::Arc};
 use tracing::error;
 
 pub mod generator;
@@ -21,7 +22,7 @@ pub use error::*;
 mod sample_header;
 pub use sample_header::*;
 
-use crate::prelude::*;
+use crate::{prelude::*, synthesizer::reader::BinaryReader};
 
 /// Reperesents a SoundFont.
 #[derive(Clone, Debug)]
@@ -70,7 +71,8 @@ impl SoundFont {
         };
 
         if let Err(e) = sound_font.sanity_check() {
-            error!("Sanity Check Failed: {e}");
+            //TODO: need tracing
+            error!("sanity check faile: {e:?}");
         };
 
         Ok(sound_font)

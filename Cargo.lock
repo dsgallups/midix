@@ -2338,6 +2338,7 @@ dependencies = [
  "rustysynth",
  "thiserror 2.0.12",
  "tinyaudio",
+ "tracing",
 ]
 
 [[package]]

@@ -5,7 +5,7 @@ use instrument::info::InstrumentInfo;
 use preset::info::PresetInfo;
 use zone::ZoneInfo;
 
-use crate::prelude::*;
+use crate::prelude::{generator::Generator, zone::Zone, *};
 
 pub(crate) struct SoundFontParameters {
     pub(crate) sample_headers: Vec<SampleHeader>,

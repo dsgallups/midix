@@ -23,7 +23,7 @@ use channel::*;
 use voice::{RegionPair, Voice};
 
 use crate::{prelude::*, utils};
-use bevy_platform::prelude::*;
+use bevy_platform::{collections::HashMap, prelude::*};
 
 /// An instance of the SoundFont synthesizer.
 pub struct Synthesizer {

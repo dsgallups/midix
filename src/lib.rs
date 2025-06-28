@@ -47,6 +47,9 @@ pub use song_position_pointer::*;
 mod target;
 pub use target::*;
 
+//#[cfg(feature = "synthesizer")]
+//pub mod synthesizer;
+
 #[cfg(feature = "bevy")]
 pub mod bevy;
 
@@ -75,4 +78,16 @@ pub mod prelude {
 
     #[cfg(feature = "bevy")]
     pub use crate::bevy::prelude::*;
+
+    // #[cfg(feature = "synthesizer")]
+    // pub(crate) use crate::synthesizer::utils;
+    // #[cfg(feature = "synthesizer")]
+    // pub use crate::synthesizer::{
+    //     reader::*,
+    //     soundfont::{generator::*, instrument::*, preset::*, *},
+    //     synthesizer::*,
+    // };
+
+    #[cfg(feature = "synthesizer")]
+    pub use std::io::Read;
 }
