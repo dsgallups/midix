@@ -1,4 +1,6 @@
-use bevy_platform::prelude::*;
+use core::error;
+use core::fmt;
+
 /// Represents an error when initializing a synthesizer.
 #[derive(Debug)]
 pub enum SynthesizerError {

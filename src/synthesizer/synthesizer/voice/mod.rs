@@ -1,3 +1,5 @@
+use core::f32::consts;
+
 use bevy_platform::prelude::*;
 mod envelope;
 use envelope::*;
@@ -10,9 +12,9 @@ use oscillator::*;
 mod bi_quad_filter;
 use bi_quad_filter::*;
 
-use crate::{prelude::*, utils};
+use crate::prelude::*;
 
-use super::Channel;
+use super::SynthChannel;
 
 pub(crate) struct Voice {
     block_size: usize,
@@ -215,7 +217,7 @@ impl Voice {
     /// 3. mod env is just hanging around, so it's definitely not supposed to
     ///    return a bool
     ///
-    pub(crate) fn process(&mut self, data: &[i16], channels: &[Channel]) -> bool {
+    pub(crate) fn process(&mut self, data: &[i16], channels: &[SynthChannel]) -> bool {
         if self.note_gain < utils::NON_AUDIBLE {
             return false;
         }
@@ -306,7 +308,7 @@ impl Voice {
         true
     }
 
-    fn release_if_necessary(&mut self, channel_info: &Channel) {
+    fn release_if_necessary(&mut self, channel_info: &SynthChannel) {
         if self.voice_length < self.min_voice_length {
             return;
         }

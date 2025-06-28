@@ -1,4 +1,5 @@
-use bevy_platform::prelude::*;
+use std::io::Read;
+
 pub struct ReadCounter<'a, R: Read + ?Sized> {
     reader: &'a mut R,
     count: usize,

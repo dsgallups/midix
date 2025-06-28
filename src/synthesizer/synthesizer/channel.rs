@@ -5,7 +5,7 @@ enum DataType {
     Nrpn,
 }
 
-pub(crate) struct Channel {
+pub(crate) struct SynthChannel {
     pub(crate) is_percussion_channel: bool,
 
     bank_number: u8,
@@ -30,7 +30,7 @@ pub(crate) struct Channel {
     last_data_type: DataType,
 }
 
-impl Channel {
+impl SynthChannel {
     pub(crate) fn new(is_percussion_channel: bool) -> Self {
         let mut channel = Self {
             is_percussion_channel,

@@ -1,3 +1,5 @@
+use core::f64::consts;
+
 use bevy_platform::prelude::*;
 pub(crate) struct Chorus {
     buffer_l: Vec<f32>,

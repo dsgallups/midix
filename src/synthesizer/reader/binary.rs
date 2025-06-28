@@ -1,7 +1,12 @@
 #![allow(dead_code)]
+use core::slice;
+use std::{
+    io::{self, ErrorKind},
+    string::{String, ToString},
+    vec::Vec,
+};
 
-use crate::soundfont::FourCC;
-use bevy_platform::prelude::*;
+use crate::prelude::*;
 
 #[allow(unused)]
 pub struct BinaryReader {}
@@ -87,7 +92,7 @@ impl BinaryReader {
         reader: &mut R,
         length: usize,
     ) -> Result<String, io::Error> {
-        let mut data: Vec<u8> = vec![0; length];
+        let mut data: Vec<u8> = std::vec![0; length];
         reader.read_exact(&mut data)?;
 
         let mut actual_length: usize = 0;
@@ -110,7 +115,7 @@ impl BinaryReader {
     }
 
     pub fn discard_data<R: Read + ?Sized>(reader: &mut R, size: usize) -> Result<(), io::Error> {
-        let mut data: Vec<u8> = vec![0; size];
+        let mut data: Vec<u8> = std::vec![0; size];
         reader.read_exact(&mut data)
     }
 
@@ -119,7 +124,7 @@ impl BinaryReader {
         size: usize,
     ) -> Result<Vec<i16>, io::Error> {
         let length = size / 2;
-        let mut samples: Vec<i16> = vec![0; length];
+        let mut samples: Vec<i16> = std::vec![0; length];
 
         let ptr = samples.as_mut_ptr() as *mut u8;
         let data = unsafe { slice::from_raw_parts_mut(ptr, size) };

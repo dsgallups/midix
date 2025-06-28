@@ -3,10 +3,12 @@
 pub(super) mod info;
 
 mod region;
+use std::{string::String, vec::Vec};
+
 use info::InstrumentInfo;
 pub use region::*;
 
-use crate::prelude::*;
+use crate::prelude::{zone::Zone, *};
 
 /// Represents an instrument in the SoundFont.
 #[derive(Clone, Debug)]

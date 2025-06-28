@@ -1,5 +1,7 @@
 mod info;
 
+use std::vec::Vec;
+
 pub(super) use info::ZoneInfo;
 
 use crate::prelude::*;

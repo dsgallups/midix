@@ -3,10 +3,12 @@
 pub(super) mod info;
 
 mod region;
+use std::{string::String, vec::Vec};
+
 use info::PresetInfo;
 pub use region::*;
 
-use crate::prelude::*;
+use crate::prelude::{zone::Zone, *};
 
 /// Represents a preset in the SoundFont.
 #[derive(Clone, Debug)]

@@ -1,6 +1,8 @@
 pub mod voice;
 
 mod chorus;
+use core::cmp;
+
 use chorus::*;
 
 mod reverb;
@@ -22,7 +24,7 @@ mod channel;
 use channel::*;
 use voice::{RegionPair, Voice};
 
-use crate::{prelude::*, utils};
+use crate::prelude::*;
 use bevy_platform::{collections::HashMap, prelude::*};
 
 /// An instance of the SoundFont synthesizer.
@@ -37,7 +39,7 @@ pub struct Synthesizer {
     preset_lookup: HashMap<i32, usize>,
     default_preset: usize,
 
-    channels: Vec<Channel>,
+    channels: Vec<SynthChannel>,
 
     voices: Vec<Voice>,
 
@@ -96,8 +98,8 @@ impl Synthesizer {
             });
 
         const CHANNEL_COUNT: usize = 16;
-        let channels: Vec<Channel> = (0..CHANNEL_COUNT)
-            .map(|i| Channel::new(i == Synthesizer::PERCUSSION_CHANNEL))
+        let channels: Vec<SynthChannel> = (0..CHANNEL_COUNT)
+            .map(|i| SynthChannel::new(i == Synthesizer::PERCUSSION_CHANNEL))
             .collect();
 
         let block_left: Vec<f32> = vec![0_f32; settings.block_size];

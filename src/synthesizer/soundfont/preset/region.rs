@@ -1,8 +1,10 @@
 #![allow(dead_code)]
 
+use std::vec::Vec;
+
 use generator::GeneratorType;
 
-use crate::{prelude::*, utils};
+use crate::prelude::{zone::Zone, *};
 
 fn set_parameter(gs: &mut [i16; GeneratorType::COUNT], generator: &Generator) {
     let index = generator.generator_type as usize;

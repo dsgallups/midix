@@ -1,5 +1,6 @@
-use bevy_platform::prelude::*;
-use bevy_platform::prelude::*;
+use core::fmt::{self, Display, Formatter, Write};
+use std::{error, io, string::String};
+
 /// Represents an error when loading a SoundFont.
 #[derive(Debug)]
 pub enum SoundFontError {
@@ -159,7 +160,7 @@ impl FourCC {
 }
 
 impl Display for FourCC {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         for byte in &self.0 {
             f.write_char(*byte as char)?;
         }
@@ -167,8 +168,8 @@ impl Display for FourCC {
     }
 }
 
-impl Debug for FourCC {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl std::fmt::Debug for FourCC {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_char('"')?;
         for byte in &self.0 {
             f.write_char(*byte as char)?;

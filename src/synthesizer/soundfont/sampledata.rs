@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use core::slice;
+
 use crate::prelude::*;
 use bevy_platform::prelude::*;
 
