@@ -32,25 +32,26 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
 
     // Instructions
-    commands.spawn(
-        TextBundle::from_section(
+    commands.spawn((
+        Text::new(
             "Firewheel MIDI Example\n\
             Press A-K keys to play notes\n\
             Press Space to play a scale\n\
             Press +/- to adjust volume\n\
             Press Escape to stop all notes",
-            TextStyle {
-                font_size: 20.0,
-                ..default()
-            },
-        )
-        .with_style(Style {
+        ),
+        TextFont::default(),
+        // TextStyle {
+        //     font_size: 20.0,
+        //     ..default()
+        // },
+        Node {
             position_type: PositionType::Absolute,
             top: Val::Px(10.0),
             left: Val::Px(10.0),
             ..default()
-        }),
-    );
+        },
+    ));
 }
 
 /// Play a C major scale when space is pressed
@@ -71,7 +72,13 @@ fn play_scale(
         if !*playing {
             for mut commands in &mut query {
                 for i in 0..127 {
-                    commands.send(ChannelVoiceMessage::note_off(0, i, 0));
+                    commands.send(ChannelVoiceMessage::new(
+                        Channel::One,
+                        VoiceEvent::note_off(
+                            Key::from_databyte(i).unwrap(),
+                            Velocity::new_unchecked(0),
+                        ),
+                    ));
                 }
             }
         }
@@ -92,22 +99,37 @@ fn play_scale(
             // Turn off previous note
             if *note_index > 0 {
                 let prev_note = scale[(*note_index - 1) % scale.len()];
-                commands.send(ChannelVoiceMessage::note_off(0, prev_note, 0));
+                commands.send(ChannelVoiceMessage::new(
+                    Channel::One,
+                    VoiceEvent::note_off(
+                        Key::from_databyte(prev_note).unwrap(),
+                        Velocity::new_unchecked(0),
+                    ),
+                ));
             }
 
             // Play current note
             let note = scale[*note_index % scale.len()];
-            commands.send(ChannelVoiceMessage::note_on(0, note, 80));
+            commands.send(ChannelVoiceMessage::new(
+                Channel::One,
+                VoiceEvent::note_on(
+                    Key::from_databyte(note).unwrap(),
+                    Velocity::new_unchecked(80),
+                ),
+            ));
 
             *note_index += 1;
 
             // Stop after playing the scale twice
             if *note_index >= scale.len() * 2 {
                 *playing = false;
-                commands.send(ChannelVoiceMessage::note_off(
-                    0,
-                    scale[(*note_index - 1) % scale.len()],
-                    0,
+
+                commands.send(ChannelVoiceMessage::new(
+                    Channel::One,
+                    VoiceEvent::note_off(
+                        Key::from_databyte(scale[(*note_index - 1) % scale.len()]).unwrap(),
+                        Velocity::new_unchecked(0),
+                    ),
                 ));
             }
         }
@@ -149,7 +171,7 @@ fn keyboard_input(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut Mid
                 commands.send(ChannelVoiceMessage::new(
                     Channel::One,
                     VoiceEvent::note_off(
-                        Key::from_databyte(i).unwrap(),
+                        Key::from_databyte(note).unwrap(),
                         Velocity::new_unchecked(0),
                     ),
                 ));
