@@ -115,6 +115,8 @@ fn scale_me(synth: Res<Synth>, time: Res<Time>, mut scale: Local<Scale>) {
 
 #[cfg(feature = "std")]
 pub mod asset;
+#[cfg(all(feature = "bevy", feature = "std"))]
+pub mod firewheel;
 pub mod input;
 pub mod output;
 pub mod plugin;
