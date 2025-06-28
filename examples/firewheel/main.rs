@@ -29,7 +29,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Name::new("Main Synthesizer"));
 
     // Spawn a camera
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 
     // Instructions
     commands.spawn(
@@ -137,17 +137,35 @@ fn keyboard_input(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut Mid
         // Handle note on/off for each key
         for (key, note) in key_to_note {
             if keyboard.just_pressed(key) {
-                commands.send(ChannelVoiceMessage::note_on(0, note, 100));
+                commands.send(ChannelVoiceMessage::new(
+                    Channel::One,
+                    VoiceEvent::note_on(
+                        Key::from_databyte(note).unwrap(),
+                        Velocity::new_unchecked(0),
+                    ),
+                ));
             }
             if keyboard.just_released(key) {
-                commands.send(ChannelVoiceMessage::note_off(0, note, 0));
+                commands.send(ChannelVoiceMessage::new(
+                    Channel::One,
+                    VoiceEvent::note_off(
+                        Key::from_databyte(i).unwrap(),
+                        Velocity::new_unchecked(0),
+                    ),
+                ));
             }
         }
 
         // Panic button - stop all notes
         if keyboard.just_pressed(KeyCode::Escape) {
             for i in 0..127 {
-                commands.send(ChannelVoiceMessage::note_off(0, i, 0));
+                commands.send(ChannelVoiceMessage::new(
+                    Channel::One,
+                    VoiceEvent::note_off(
+                        Key::from_databyte(i).unwrap(),
+                        Velocity::new_unchecked(0),
+                    ),
+                ));
             }
         }
     }

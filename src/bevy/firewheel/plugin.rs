@@ -84,7 +84,7 @@ fn process_midi_commands(mut query: Query<(&FirewheelNode, &mut MidiCommands, &m
 /// Extension trait for Commands to easily spawn MIDI synths
 pub trait MidiCommandsExt {
     /// Spawn a MIDI synthesizer with the given soundfont
-    fn spawn_midi_synth(&mut self, soundfont: Handle<SoundFont>) -> Entity;
+    fn spawn_midi_synth(&mut self, soundfont: Handle<SoundFont>) -> EntityCommands<'_>;
 
     /// Spawn a MIDI synthesizer with custom configuration
     fn spawn_midi_synth_with_config(
@@ -95,14 +95,13 @@ pub trait MidiCommandsExt {
 }
 
 impl MidiCommandsExt for Commands<'_, '_> {
-    fn spawn_midi_synth(&mut self, soundfont: Handle<SoundFont>) -> Entity {
+    fn spawn_midi_synth(&mut self, soundfont: Handle<SoundFont>) -> EntityCommands<'_> {
         self.spawn((
             MidiSoundfont { handle: soundfont },
             MidiCommands::default(),
             MidiSynthConfig::default(),
             Name::new("MIDI Synthesizer"),
         ))
-        .id()
     }
 
     fn spawn_midi_synth_with_config(

@@ -40,7 +40,7 @@ pub use node::{MidiNodeEvent, MidiSynthNodeConfig, MidiSynthProcessor};
 pub use plugin::{FirewheelMidiPlugin, MidiCommandsExt};
 pub use systems::{
     MidiInstrument, MidiSynthBundle, MidiSystemSet, debug_midi_commands, handle_note_input,
-    panic_button, play_midi_file, play_scale, set_instrument, volume_control,
+    panic_button, play_scale, set_instrument, volume_control,
 };
 
 /// Prelude for common imports

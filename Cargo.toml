@@ -117,3 +117,7 @@ required-features = ["example"]
 [[example]]
 name = "scale"
 required-features = ["example"]
+
+[[example]]
+name = "firewheel"
+required-features = ["example"]
