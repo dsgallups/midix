@@ -1,10 +1,31 @@
 use crate::prelude::ChannelVoiceMessage;
-use firewheel::node::{AudioNode, AudioNodeInfo, AudioNodeProcessor};
+use bevy::prelude::*;
+use firewheel::{
+    channel_config::{ChannelConfig, ChannelCount},
+    event::{NodeEventList, NodeEventType},
+    node::{
+        AudioNode, AudioNodeInfo, AudioNodeProcessor, ConstructProcessorContext, ProcBuffers,
+        ProcInfo, ProcessStatus,
+    },
+};
 use rustysynth::{Synthesizer, SynthesizerSettings};
-use std::{boxed::Box, sync::Arc, vec::Vec};
+use std::sync::Arc;
+
+/// MIDI synthesizer node component
+#[derive(Component, Clone)]
+pub struct MidiSynthNode {
+    /// Master volume (0.0 to 1.0)
+    pub volume: f32,
+}
+
+impl Default for MidiSynthNode {
+    fn default() -> Self {
+        Self { volume: 1.0 }
+    }
+}
 
 /// Configuration for the MIDI synthesizer node
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Component)]
 pub struct MidiSynthNodeConfig {
     /// The soundfont data
     pub soundfont: Arc<rustysynth::SoundFont>,
@@ -14,33 +35,40 @@ pub struct MidiSynthNodeConfig {
     pub enable_reverb: bool,
     /// Enable chorus
     pub enable_chorus: bool,
-    /// Master volume (0.0 to 1.0)
-    pub volume: f32,
 }
 
-impl AudioNodeConfig for MidiSynthNodeConfig {
-    fn into_node_info(self: Box<Self>) -> AudioNodeInfo {
-        AudioNodeInfo {
-            num_min_supported_inputs: ChannelCount::ZERO,
-            num_max_supported_inputs: ChannelCount::ZERO,
-            num_min_supported_outputs: ChannelCount::STEREO,
-            num_max_supported_outputs: ChannelCount::STEREO,
-            default_channel_config: ChannelConfig {
-                num_inputs: ChannelCount::ZERO,
-                num_outputs: ChannelCount::STEREO,
-            },
-            equal_num_ins_and_outs: false,
-            updates: Default::default(),
-            label: Some("MIDI Synthesizer".into()),
+impl Default for MidiSynthNodeConfig {
+    fn default() -> Self {
+        Self {
+            soundfont: Arc::new(
+                rustysynth::SoundFont::new(&mut std::io::Cursor::new(Vec::<u8>::new())).unwrap(),
+            ),
+            sample_rate: 44100.0,
+            enable_reverb: true,
+            enable_chorus: true,
         }
     }
+}
 
-    fn build_node(
-        self: Box<Self>,
-        _sample_rate: f64,
-        _max_block_frames: usize,
-    ) -> Box<dyn AudioNodeProcessor + Send> {
-        Box::new(MidiSynthProcessor::new(*self))
+impl AudioNode for MidiSynthNode {
+    type Configuration = MidiSynthNodeConfig;
+
+    fn info(&self, _config: &Self::Configuration) -> AudioNodeInfo {
+        AudioNodeInfo::new()
+            .debug_name("MIDI Synthesizer")
+            .channel_config(ChannelConfig {
+                num_inputs: ChannelCount::ZERO,
+                num_outputs: ChannelCount::STEREO,
+            })
+            .uses_events(true)
+    }
+
+    fn construct_processor(
+        &self,
+        config: &Self::Configuration,
+        _cx: ConstructProcessorContext,
+    ) -> impl AudioNodeProcessor {
+        MidiSynthProcessor::new(config.clone(), self.volume)
     }
 }
 
@@ -55,7 +83,7 @@ pub struct MidiSynthProcessor {
 
 impl MidiSynthProcessor {
     /// Create a new MIDI synthesizer processor
-    pub fn new(config: MidiSynthNodeConfig) -> Self {
+    pub fn new(config: MidiSynthNodeConfig, volume: f32) -> Self {
         let mut settings = SynthesizerSettings::new(config.sample_rate as i32);
         settings.enable_reverb_and_chorus = config.enable_reverb && config.enable_chorus;
 
@@ -67,7 +95,7 @@ impl MidiSynthProcessor {
 
         Self {
             synthesizer,
-            volume: config.volume,
+            volume,
             sample_rate: config.sample_rate,
             left_buffer: vec![0.0; buffer_size],
             right_buffer: vec![0.0; buffer_size],
@@ -86,35 +114,21 @@ impl MidiSynthProcessor {
     }
 }
 
-impl AudioNode for MidiSynthProcessor {
-    fn debug_name(&self) -> &'static str {
-        "MidiSynthProcessor"
-    }
-
-    fn set_param(&mut self, name: &str, value: f32) {
-        match name {
-            "volume" => self.volume = value.clamp(0.0, 1.0),
-            _ => {}
-        }
-    }
-}
-
 impl AudioNodeProcessor for MidiSynthProcessor {
     fn process(
         &mut self,
-        _inputs: &[&[f32]],
-        outputs: &mut [&mut [f32]],
-        events: NodeEventIter,
-        proc_info: ProcInfo,
-        _clock_info: &ClockInfo,
-        _ctx: &mut FirewheelGraphCtx,
-    ) {
+        ProcBuffers { outputs, .. }: ProcBuffers,
+        proc_info: &ProcInfo,
+        mut events: NodeEventList,
+    ) -> ProcessStatus {
         // Process incoming MIDI events
-        for event in events {
-            if let Some(midi_event) = event.as_any().downcast_ref::<MidiNodeEvent>() {
-                self.process_command(midi_event.command);
+        events.for_each(|event| {
+            if let NodeEventType::Custom(boxed) = event {
+                if let Some(midi_event) = boxed.downcast_ref::<MidiNodeEvent>() {
+                    self.process_command(midi_event.command);
+                }
             }
-        }
+        });
 
         let frames = proc_info.frames;
 
@@ -137,19 +151,24 @@ impl AudioNodeProcessor for MidiSynthProcessor {
             );
 
             // Copy to output buffers and apply volume
-            let left_out = &mut outputs[0][..frames];
-            let right_out = &mut outputs[1][..frames];
+            if outputs.len() >= 2 {
+                let (left_out, rest) = outputs.split_at_mut(1);
+                let left_out = &mut left_out[0][..frames];
+                let right_out = &mut rest[0][..frames];
 
-            if self.volume == 1.0 {
-                left_out.copy_from_slice(&self.left_buffer[..frames]);
-                right_out.copy_from_slice(&self.right_buffer[..frames]);
-            } else {
-                for i in 0..frames {
-                    left_out[i] = self.left_buffer[i] * self.volume;
-                    right_out[i] = self.right_buffer[i] * self.volume;
+                if self.volume == 1.0 {
+                    left_out.copy_from_slice(&self.left_buffer[..frames]);
+                    right_out.copy_from_slice(&self.right_buffer[..frames]);
+                } else {
+                    for i in 0..frames {
+                        left_out[i] = self.left_buffer[i] * self.volume;
+                        right_out[i] = self.right_buffer[i] * self.volume;
+                    }
                 }
             }
         }
+
+        ProcessStatus::outputs_not_silent()
     }
 }
 

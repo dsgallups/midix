@@ -1,9 +1,10 @@
 use crate::bevy::asset::SoundFont;
 use crate::bevy::firewheel::components::*;
-use crate::bevy::firewheel::node::{MidiNodeEvent, MidiSynthNodeConfig, MidiSynthProcessor};
+use crate::bevy::firewheel::node::{MidiNodeEvent, MidiSynthNode, MidiSynthNodeConfig};
 use bevy::prelude::*;
+use bevy_seedling::node::Events;
 use bevy_seedling::prelude::*;
-use firewheel::event::NodeEvent;
+use firewheel::event::NodeEventType;
 
 /// Plugin for MIDI synthesis using Firewheel/bevy_seedling
 pub struct FirewheelMidiPlugin;
@@ -11,7 +12,8 @@ pub struct FirewheelMidiPlugin;
 impl Plugin for FirewheelMidiPlugin {
     fn build(&self, app: &mut App) {
         // Register our custom node type with bevy_seedling
-        app.register_node::<MidiSynthNodeConfig, MidiSynthProcessor>();
+        // Since MidiSynthNode doesn't implement Diff/Patch, we use register_simple_node
+        app.register_simple_node::<MidiSynthNode>();
 
         // Initialize soundfont assets
         #[cfg(feature = "std")]
@@ -21,23 +23,17 @@ impl Plugin for FirewheelMidiPlugin {
         }
 
         // Add our systems
-        app.add_systems(
-            Update,
-            (spawn_midi_nodes, process_midi_commands)
-                .chain()
-                .run_if(resource_exists::<AudioContext>),
-        );
+        app.add_systems(Update, (spawn_midi_nodes, process_midi_commands).chain());
     }
 }
 
 /// System that spawns MIDI synthesizer nodes for entities with soundfonts
 fn spawn_midi_nodes(
     mut commands: Commands,
-    audio_context: Res<AudioContext>,
     soundfont_assets: Res<Assets<SoundFont>>,
     query: Query<
         (Entity, &MidiSoundfont, Option<&MidiSynthConfig>),
-        (Without<MidiSynthNode>, With<MidiCommands>),
+        (Without<FirewheelNode>, With<MidiCommands>),
     >,
 ) {
     for (entity, soundfont, config) in &query {
@@ -52,29 +48,25 @@ fn spawn_midi_nodes(
         // Create node configuration
         let node_config = MidiSynthNodeConfig {
             soundfont: soundfont_asset.file.clone(),
-            sample_rate: 44100.0, // Default, will be overridden by audio context
+            sample_rate: 44100.0, // This will be overridden by the audio context
             enable_reverb: config.enable_reverb,
             enable_chorus: config.enable_chorus,
+        };
+
+        // Create the node with the initial volume
+        let node = MidiSynthNode {
             volume: config.volume,
         };
 
-        // Spawn the audio node
-        let node = audio_context.spawn_node(node_config);
-
-        // Connect to main output
-        audio_context.connect(&node, &MainBus);
-
-        // Add the node component to the entity
-        commands.entity(entity).insert(MidiSynthNode { node });
+        // Add the node and its configuration to the entity
+        // bevy_seedling will automatically handle node creation and connection
+        commands.entity(entity).insert((node, node_config));
     }
 }
 
 /// System that processes MIDI commands and sends them to the audio nodes
-fn process_midi_commands(
-    mut events: EventWriter<NodeEventOf<MidiNodeEvent>>,
-    mut query: Query<(&MidiSynthNode, &mut MidiCommands)>,
-) {
-    for (synth_node, mut commands) in &mut query {
+fn process_midi_commands(mut query: Query<(&FirewheelNode, &mut MidiCommands, &mut Events)>) {
+    for (_, mut commands, mut events) in &mut query {
         if commands.queue.is_empty() {
             continue;
         }
@@ -82,21 +74,11 @@ fn process_midi_commands(
         // Take all pending commands
         let pending = commands.take();
 
-        // Send commands to the audio node as events
+        // Send commands to the audio node as custom events
         for command in pending {
-            events.send(NodeEventOf {
-                node: synth_node.node,
-                event: MidiNodeEvent { command },
-            });
+            events.push(NodeEventType::Custom(Box::new(MidiNodeEvent { command })));
         }
     }
-}
-
-/// Helper event type for sending events to specific nodes
-#[derive(Event)]
-struct NodeEventOf<T: NodeEvent> {
-    node: FirewheelNode,
-    event: T,
 }
 
 /// Extension trait for Commands to easily spawn MIDI synths
