@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(missing_docs)]
 
 use bevy_platform::prelude::*;
 use std::{io::Read, sync::Arc};
