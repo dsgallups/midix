@@ -81,7 +81,7 @@ pub struct SynthPlugin {
 impl Plugin for SynthPlugin {
     fn build(&self, app: &mut App) {
         #[cfg(feature = "std")]
-        app.init_asset::<SoundFont>()
+        app.init_asset::<SoundFontAsset>()
             .init_asset_loader::<SoundFontLoader>();
         app.init_state::<SynthStatus>()
             .insert_resource(Synth::new(self.params))
@@ -141,7 +141,7 @@ impl Synth {
 fn load_audio_font(
     receiver: Option<ResMut<SynthEventReceiver>>,
     mut synth: ResMut<Synth>,
-    assets: Res<Assets<SoundFont>>,
+    assets: Res<Assets<SoundFontAsset>>,
 ) {
     use bevy::tasks::IoTaskPool;
 
