@@ -2335,7 +2335,6 @@ dependencies = [
  "midir",
  "num_enum",
  "pretty_assertions",
- "rustysynth",
  "thiserror 2.0.12",
  "tinyaudio",
  "tracing",
@@ -3174,12 +3173,6 @@ dependencies = [
  "unicode-properties",
  "unicode-script",
 ]
-
-[[package]]
-name = "rustysynth"
-version = "1.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "523310a56cc070bdd24d85d0c6b595d4eae53cfca155114381fcab1176b43da1"
 
 [[package]]
 name = "same-file"

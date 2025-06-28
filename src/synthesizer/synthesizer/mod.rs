@@ -2,6 +2,7 @@ pub mod voice;
 
 mod chorus;
 use core::cmp;
+use std::sync::Arc;
 
 use chorus::*;
 
@@ -29,7 +30,7 @@ use bevy_platform::{collections::HashMap, prelude::*};
 
 /// An instance of the SoundFont synthesizer.
 pub struct Synthesizer {
-    pub(crate) sound_font: SoundFont,
+    pub(crate) sound_font: Arc<SoundFont>,
     pub(crate) sample_rate: i32,
     pub(crate) block_size: usize,
     pub(crate) maximum_polyphony: usize,
@@ -67,7 +68,7 @@ impl Synthesizer {
     /// * `sound_font` - The SoundFont instance.
     /// * `settings` - The settings for synthesis.
     pub fn new(
-        sound_font: SoundFont,
+        sound_font: Arc<SoundFont>,
         settings: &SynthesizerSettings,
     ) -> Result<Self, SynthesizerError> {
         settings.validate()?;

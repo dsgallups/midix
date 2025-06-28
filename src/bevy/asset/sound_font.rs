@@ -4,7 +4,8 @@ Asset types
 TODO
 "#]
 
-use alloc::sync::Arc;
+use std::sync::Arc;
+
 use bevy_platform::prelude::*;
 use thiserror::Error;
 
@@ -12,19 +13,20 @@ use bevy::{
     asset::{AssetLoader, LoadContext, io::Reader},
     prelude::*,
 };
-use rustysynth::SoundFont as Sf;
+
+use crate::prelude::SoundFont;
 
 /// Sound font asset
 #[derive(Asset, TypePath)]
 pub struct SoundFontAsset {
     /// The inner parsed soundfont
-    pub file: Arc<Sf>,
+    pub file: Arc<SoundFont>,
 }
 
 impl SoundFontAsset {
     /// Create a new
     fn new(file: &mut &[u8]) -> Self {
-        let sf = Sf::new(file).unwrap();
+        let sf = SoundFont::new(file).unwrap();
 
         Self { file: Arc::new(sf) }
     }
