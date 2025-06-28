@@ -4,7 +4,7 @@ use bevy_seedling::node::FirewheelNode;
 
 /// Component that holds a reference to a MIDI synthesizer audio node
 #[derive(Component)]
-pub struct MidiSynthNode {
+pub struct OtherOtherMidiSynthNode {
     /// The firewheel audio node handle
     pub node: FirewheelNode,
 }

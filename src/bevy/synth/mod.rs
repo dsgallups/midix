@@ -236,6 +236,11 @@ impl Synth {
     /// Provide a handle to the soundfont file
     pub fn use_soundfont(&mut self, sound_font: Handle<SoundFont>) {
         self.synthesizer = SynthState::LoadHandle { sound_font };
+        if let Some(dev) = &self._device
+            && let Ok(mut lock) = dev.lock()
+        {
+            lock.close();
+        }
         self._device = None;
     }
 }

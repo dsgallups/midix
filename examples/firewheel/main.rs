@@ -1,6 +1,6 @@
 //! Simple example demonstrating MIDI synthesis using the firewheel backend
 
-use bevy::prelude::*;
+use bevy::prelude::{Val::*, *};
 use midix::bevy::firewheel::prelude::*;
 use midix::prelude::*;
 
@@ -21,18 +21,30 @@ fn main() {
 /// Set up the MIDI synthesizer
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // Load a soundfont file
-    let soundfont = asset_server.load("soundfont.sf2");
+    info!("Setting up!");
+    let soundfont = asset_server.load("8bitsf.SF2");
 
     // Spawn a MIDI synthesizer entity
-    commands
-        .spawn_midi_synth(soundfont)
-        .insert(Name::new("Main Synthesizer"));
+    commands.spawn((
+        MidiSoundfont { handle: soundfont },
+        MidiCommands::default(),
+        MidiSynthConfig::default(),
+        Name::new("MIDI Synthesizer"),
+    ));
 
     // Spawn a camera
     commands.spawn(Camera2d);
 
     // Instructions
     commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            width: Percent(100.),
+            height: Percent(100.),
+            top: Px(10.0),
+            left: Px(10.0),
+            ..default()
+        },
         Text::new(
             "Firewheel MIDI Example\n\
             Press A-K keys to play notes\n\
@@ -40,17 +52,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             Press +/- to adjust volume\n\
             Press Escape to stop all notes",
         ),
-        TextFont::default(),
-        // TextStyle {
-        //     font_size: 20.0,
-        //     ..default()
-        // },
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(10.0),
-            left: Val::Px(10.0),
-            ..default()
-        },
+        TextFont::from_font_size(40.),
     ));
 }
 

@@ -172,7 +172,10 @@ fn load_audio_font(
     };
 
     let _device = if let Some(mut receiver) = receiver {
-        let send = receiver.take_sender();
+        let Some(send) = receiver.take_sender() else {
+            return;
+        };
+        std::println!("here");
         run_output_device(output_device_params, {
             move |data| {
                 for command in synth_receiver.try_iter() {
@@ -283,9 +286,8 @@ impl SynthEventReceiver {
     pub fn receiver(&self) -> &Receiver<SynthEvent> {
         &self.receiver
     }
-    #[allow(dead_code)]
-    pub(crate) fn take_sender(&mut self) -> Sender<SynthEvent> {
-        self._sender.take().unwrap()
+    pub(crate) fn take_sender(&mut self) -> Option<Sender<SynthEvent>> {
+        self._sender.take()
     }
 }
 

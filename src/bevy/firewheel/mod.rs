@@ -1,55 +1,129 @@
-//! Firewheel-based MIDI synthesizer integration for Bevy
-//!
-//! This module provides a fast, component-based MIDI synthesizer using bevy_seedling
-//! and firewheel audio nodes. It allows you to:
-//!
-//! - Spawn MIDI synthesizer nodes on entities with soundfont files
-//! - Send MIDI commands instantly to those nodes
-//! - Hear audio output with minimal latency
-//!
-//! # Example
-//!
-//! ```no_run
-//! use bevy::prelude::*;
-//! use midix::bevy::firewheel::prelude::*;
-//!
-//! fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-//!     // Load a soundfont
-//!     let soundfont = asset_server.load("sounds/my_soundfont.sf2");
-//!
-//!     // Spawn a MIDI synthesizer
-//!     let synth = commands.spawn_midi_synth(soundfont);
-//! }
-//!
-//! fn play_note(mut query: Query<&mut MidiCommands>) {
-//!     for mut commands in &mut query {
-//!         // Play middle C
-//!         commands.send(ChannelVoiceMessage::note_on(0, 60, 100));
-//!     }
-//! }
-//! ```
+use bevy::prelude::*;
+use bevy_seedling::{node::Events, prelude::*};
+use firewheel::event::NodeEventType;
+
+use crate::{
+    bevy::firewheel::{
+        components::{MidiCommands, MidiSoundfont, MidiSynthConfig},
+        node::{MidiNodeEvent, MidiSynthNode, MidiSynthNodeConfig},
+    },
+    prelude::SoundFont,
+};
 
 mod components;
 mod node;
 mod plugin;
-mod systems;
 
-// Re-export main types
-pub use components::{MidiCommands, MidiSoundfont, MidiSynthConfig, MidiSynthNode};
-pub use node::{MidiNodeEvent, MidiSynthNodeConfig, MidiSynthProcessor};
-pub use plugin::{FirewheelMidiPlugin, MidiCommandsExt};
-pub use systems::{
-    MidiInstrument, MidiSynthBundle, MidiSystemSet, debug_midi_commands, handle_note_input,
-    panic_button, play_scale, set_instrument, volume_control,
-};
+/// Plugin for MIDI synthesis using Firewheel/bevy_seedling
+pub struct FirewheelMidiPlugin;
 
-/// Prelude for common imports
-pub mod prelude {
-    pub use super::{
-        FirewheelMidiPlugin, MidiCommands, MidiCommandsExt, MidiInstrument, MidiSoundfont,
-        MidiSynthBundle, MidiSynthConfig, MidiSynthNode, MidiSystemSet,
-    };
+impl Plugin for FirewheelMidiPlugin {
+    fn build(&self, app: &mut App) {
+        // Register our custom node type with bevy_seedling
+        // Since MidiSynthNode doesn't implement Diff/Patch, we use register_simple_node
+        app.register_simple_node::<MidiSynthNode>();
 
-    // Re-export ChannelVoiceMessage for convenience
-    pub use crate::prelude::ChannelVoiceMessage;
+        // Initialize soundfont assets
+        #[cfg(feature = "std")]
+        {
+            app.init_asset::<SoundFont>()
+                .init_asset_loader::<crate::bevy::asset::SoundFontLoader>();
+        }
+
+        // Add our systems
+        app.add_systems(Update, (spawn_midi_nodes, process_midi_commands).chain());
+    }
+}
+
+/// System that spawns MIDI synthesizer nodes for entities with soundfonts
+#[allow(clippy::type_complexity)]
+fn spawn_midi_nodes(
+    mut commands: Commands,
+    soundfont_assets: Res<Assets<SoundFont>>,
+    query: Query<
+        (Entity, &MidiSoundfont, Option<&MidiSynthConfig>),
+        (Without<FirewheelNode>, With<MidiCommands>),
+    >,
+) {
+    for (entity, soundfont, config) in &query {
+        // Check if soundfont is loaded
+        let Some(soundfont_asset) = soundfont_assets.get(&soundfont.handle) else {
+            continue;
+        };
+
+        // Get config or use defaults
+        let config = config.cloned().unwrap_or_default();
+
+        // Create node configuration
+        let node_config = MidiSynthNodeConfig {
+            soundfont: soundfont_asset.file.clone(),
+            sample_rate: 44100.0, // This will be overridden by the audio context
+            enable_reverb: config.enable_reverb,
+            enable_chorus: config.enable_chorus,
+        };
+
+        // Create the node with the initial volume
+        let node = MidiSynthNode {
+            volume: config.volume,
+        };
+
+        // Add the node and its configuration to the entity
+        // bevy_seedling will automatically handle node creation and connection
+        commands.entity(entity).insert((node, node_config));
+    }
+}
+
+/// System that processes MIDI commands and sends them to the audio nodes
+fn process_midi_commands(mut query: Query<(&FirewheelNode, &mut MidiCommands, &mut Events)>) {
+    for (_, mut commands, mut events) in &mut query {
+        if commands.queue.is_empty() {
+            continue;
+        }
+
+        // Take all pending commands
+        let pending = commands.take();
+
+        // Send commands to the audio node as custom events
+        for command in pending {
+            events.push(NodeEventType::Custom(Box::new(MidiNodeEvent { command })));
+        }
+    }
+}
+
+/// Extension trait for Commands to easily spawn MIDI synths
+pub trait MidiCommandsExt {
+    /// Spawn a MIDI synthesizer with the given soundfont
+    fn spawn_midi_synth(&mut self, soundfont: Handle<SoundFont>) -> EntityCommands<'_>;
+
+    /// Spawn a MIDI synthesizer with custom configuration
+    fn spawn_midi_synth_with_config(
+        &mut self,
+        soundfont: Handle<SoundFont>,
+        config: MidiSynthConfig,
+    ) -> Entity;
+}
+
+impl MidiCommandsExt for Commands<'_, '_> {
+    fn spawn_midi_synth(&mut self, soundfont: Handle<SoundFont>) -> EntityCommands<'_> {
+        self.spawn((
+            MidiSoundfont { handle: soundfont },
+            MidiCommands::default(),
+            MidiSynthConfig::default(),
+            Name::new("MIDI Synthesizer"),
+        ))
+    }
+
+    fn spawn_midi_synth_with_config(
+        &mut self,
+        soundfont: Handle<SoundFont>,
+        config: MidiSynthConfig,
+    ) -> Entity {
+        self.spawn((
+            MidiSoundfont { handle: soundfont },
+            MidiCommands::default(),
+            config,
+            Name::new("MIDI Synthesizer"),
+        ))
+        .id()
+    }
 }
