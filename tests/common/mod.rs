@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use midix::prelude::*;
 use std::{fs, io::Cursor, sync::Arc};
 
@@ -314,8 +316,8 @@ impl SynthesizerComparison {
         total_samples: usize,
     ) {
         println!("\n=== Comparison Report ===");
-        println!("Total samples compared: {}", total_samples);
-        println!("Maximum difference: {:.9e}", max_difference);
+        println!("Total samples compared: {total_samples}");
+        println!("Maximum difference: {max_difference:.9e}");
         println!(
             "Samples exceeding epsilon ({}): {}",
             self.config.epsilon,
@@ -339,7 +341,7 @@ impl SynthesizerComparison {
             }
 
             // Find and show largest differences
-            let mut sorted_diffs: Vec<_> = differences.iter().cloned().collect();
+            let mut sorted_diffs = differences.to_vec();
             sorted_diffs.sort_by(|a, b| b.difference.partial_cmp(&a.difference).unwrap());
 
             if sorted_diffs.len() > self.config.max_differences_to_report {
@@ -369,6 +371,7 @@ pub struct TestScenario {
     pub name: String,
     pub setup: Box<dyn FnMut(&mut SynthesizerComparison)>,
     pub frames_before_action: usize,
+    #[allow(clippy::type_complexity)]
     pub action: Option<Box<dyn FnMut(&mut SynthesizerComparison)>>,
     pub frames_after_action: usize,
 }
@@ -383,10 +386,7 @@ impl TestScenario {
         frames_after_off: usize,
     ) -> Self {
         Self {
-            name: format!(
-                "Note on/off - channel:{}, key:{}, velocity:{}",
-                channel, key, velocity
-            ),
+            name: format!("Note on/off - channel:{channel}, key:{key}, velocity:{velocity}",),
             setup: Box::new(move |synth| synth.note_on(channel, key, velocity)),
             frames_before_action: frames_before_off,
             action: Some(Box::new(move |synth| synth.note_off(channel, key))),
@@ -404,7 +404,7 @@ impl TestScenario {
         frames_after_bend: usize,
     ) -> Self {
         Self {
-            name: format!("Pitch bend - channel:{}, bend:{}", channel, bend_value),
+            name: format!("Pitch bend - channel:{channel}, bend:{bend_value}"),
             setup: Box::new(move |synth| synth.note_on(channel, key, velocity)),
             frames_before_action: frames_before_bend,
             action: Some(Box::new(move |synth| synth.pitch_bend(channel, bend_value))),
@@ -424,8 +424,7 @@ impl TestScenario {
     ) -> Self {
         Self {
             name: format!(
-                "Controller change - channel:{}, controller:{}, value:{}",
-                channel, controller, value
+                "Controller change - channel:{channel}, controller:{controller}, value:{value}",
             ),
             setup: Box::new(move |synth| synth.note_on(channel, key, velocity)),
             frames_before_action: frames_before,

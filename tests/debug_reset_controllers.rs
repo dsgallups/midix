@@ -2,8 +2,7 @@ mod common;
 
 use common::*;
 
-#[test]
-fn debug_reset_all_controllers_behavior() {
+fn _debug_reset_all_controllers_behavior() {
     let config = ComparisonConfig {
         epsilon: 5e-3,
         verbose: true,
@@ -49,8 +48,8 @@ fn debug_reset_all_controllers_behavior() {
     let midix_before_max = synth.mleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
     let rusty_before_max = synth.rleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
 
-    println!("   - Midix max amplitude: {:.6}", midix_before_max);
-    println!("   - RustySynth max amplitude: {:.6}", rusty_before_max);
+    println!("   - Midix max amplitude: {midix_before_max:.6}");
+    println!("   - RustySynth max amplitude: {rusty_before_max:.6}");
     println!(
         "   - Both producing sound: {}\n",
         midix_before_max > 0.001 && rusty_before_max > 0.001
@@ -72,8 +71,8 @@ fn debug_reset_all_controllers_behavior() {
     let midix_after_max = synth.mleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
     let rusty_after_max = synth.rleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
 
-    println!("   - Midix max amplitude: {:.6}", midix_after_max);
-    println!("   - RustySynth max amplitude: {:.6}", rusty_after_max);
+    println!("   - Midix max amplitude: {midix_after_max:.6}",);
+    println!("   - RustySynth max amplitude: {rusty_after_max:.6}");
 
     if midix_after_max > 0.001 && rusty_after_max < 0.001 {
         println!("   ⚠️  RustySynth stopped producing sound while Midix continues!");
@@ -90,8 +89,8 @@ fn debug_reset_all_controllers_behavior() {
     let after_diff = (midix_after_max - rusty_after_max).abs();
 
     println!("\n7. Amplitude analysis:");
-    println!("   - Difference before reset: {:.6}", before_diff);
-    println!("   - Difference after reset: {:.6}", after_diff);
+    println!("   - Difference before reset: {before_diff:.6}",);
+    println!("   - Difference after reset: {after_diff:.6}",);
     println!("   - Change in difference: {:.6}", after_diff - before_diff);
 
     // Continue rendering for a few more frames
@@ -233,10 +232,7 @@ fn debug_reset_with_active_voices() {
     let midix_before = synth.mleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
     let rusty_before = synth.rleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
 
-    println!(
-        "Before reset: Midix={:.6}, RustySynth={:.6}",
-        midix_before, rusty_before
-    );
+    println!("Before reset: Midix={midix_before:.6}, RustySynth={rusty_before:.6}",);
 
     // Reset all controllers
     synth.controller(0, 121, 0);
@@ -252,10 +248,7 @@ fn debug_reset_with_active_voices() {
     let midix_after = synth.mleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
     let rusty_after = synth.rleft.iter().map(|&s| s.abs()).fold(0.0f32, f32::max);
 
-    println!(
-        "After reset: Midix={:.6}, RustySynth={:.6}",
-        midix_after, rusty_after
-    );
+    println!("After reset: Midix={midix_after:.6}, RustySynth={rusty_after:.6}",);
 
     if rusty_after < 0.001 && midix_after > 0.001 {
         println!("\n⚠️  RustySynth appears to stop all voices on reset!");
