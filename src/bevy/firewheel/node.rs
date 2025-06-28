@@ -55,8 +55,6 @@ impl AudioNode for MidiSynthNode {
 /// MIDI synthesizer audio node processor
 pub struct MidiSynthProcessor {
     synthesizer: Synthesizer,
-    left_buffer: Vec<f32>,
-    right_buffer: Vec<f32>,
 }
 
 impl MidiSynthProcessor {
@@ -64,19 +62,11 @@ impl MidiSynthProcessor {
     pub fn new(config: &MidiSynthNode, cx: ConstructProcessorContext) -> Self {
         let mut settings = SynthesizerSettings::new(cx.stream_info.sample_rate.get() as i32);
         settings.enable_reverb_and_chorus = config.enable_reverb_and_chorus;
-        settings.block_size = cx.stream_info.max_block_frames.get() as usize;
 
         let synthesizer =
             Synthesizer::new(&config.soundfont, &settings).expect("Failed to create synthesizer");
 
-        // Pre-allocate buffers
-        let buffer_size = 1024; // Default size, will be resized as needed
-
-        Self {
-            synthesizer,
-            left_buffer: vec![0.0; buffer_size],
-            right_buffer: vec![0.0; buffer_size],
-        }
+        Self { synthesizer }
     }
 
     /// Process a MIDI command
@@ -109,35 +99,11 @@ impl AudioNodeProcessor for MidiSynthProcessor {
 
         let frames = proc_info.frames;
 
-        // Ensure we have stereo output
-        if outputs.len() >= 2 {
-            // Resize buffers if needed
-            if self.left_buffer.len() < frames {
-                self.left_buffer.resize(frames, 0.0);
-                self.right_buffer.resize(frames, 0.0);
-            }
-
-            // Clear buffers
-            self.left_buffer[..frames].fill(0.0);
-            self.right_buffer[..frames].fill(0.0);
-
-            // Render audio from the synthesizer
-            self.synthesizer.render(
-                &mut self.left_buffer[..frames],
-                &mut self.right_buffer[..frames],
-            );
-
-            // Copy to output buffers and apply volume
-            if outputs.len() >= 2 {
-                let (left_out, rest) = outputs.split_at_mut(1);
-                let left_out = &mut left_out[0][..frames];
-                let right_out = &mut rest[0][..frames];
-
-                left_out.copy_from_slice(&self.left_buffer[..frames]);
-                right_out.copy_from_slice(&self.right_buffer[..frames]);
-            }
-        }
-
+        // guaranteed to be 2 due to our node's STEREO value.
+        let (left, right) = outputs.split_at_mut(1);
+        // Render audio from the synthesizer
+        self.synthesizer
+            .render(&mut left[0][..frames], &mut right[0][..frames]);
         ProcessStatus::outputs_not_silent()
     }
 }
