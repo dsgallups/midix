@@ -17,7 +17,7 @@ use rustysynth::SoundFont as Sf;
 /// Sound font asset
 #[derive(Asset, TypePath)]
 pub struct SoundFont {
-    pub file: Arc<Sf>,
+    pub(crate) file: Arc<Sf>,
 }
 
 impl SoundFont {

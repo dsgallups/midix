@@ -1,8 +1,10 @@
 //! Simple example demonstrating MIDI synthesis using the firewheel backend
 
 use bevy::prelude::{Val::*, *};
-use midix::bevy::firewheel::prelude::*;
-use midix::prelude::*;
+use midix::{
+    bevy::firewheel::{FirewheelMidiPlugin, MidiCommands, MidiSoundfont},
+    prelude::*,
+};
 
 fn main() {
     App::new()
@@ -14,7 +16,7 @@ fn main() {
             FirewheelMidiPlugin,
         ))
         .add_systems(Startup, setup)
-        .add_systems(Update, (play_scale, keyboard_input, volume_control))
+        .add_systems(Update, (play_scale, keyboard_input))
         .run();
 }
 
@@ -26,9 +28,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // Spawn a MIDI synthesizer entity
     commands.spawn((
-        MidiSoundfont { handle: soundfont },
+        MidiSoundfont(soundfont),
         MidiCommands::default(),
-        MidiSynthConfig::default(),
         Name::new("MIDI Synthesizer"),
     ));
 
@@ -195,16 +196,16 @@ fn keyboard_input(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut Mid
     }
 }
 
-/// Handle volume control
-fn volume_control(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut MidiSynthConfig>) {
-    for mut config in &mut query {
-        if keyboard.just_pressed(KeyCode::Equal) || keyboard.just_pressed(KeyCode::NumpadAdd) {
-            config.volume = (config.volume + 0.1).min(1.0);
-            info!("Volume: {:.1}", config.volume);
-        }
-        if keyboard.just_pressed(KeyCode::Minus) || keyboard.just_pressed(KeyCode::NumpadSubtract) {
-            config.volume = (config.volume - 0.1).max(0.0);
-            info!("Volume: {:.1}", config.volume);
-        }
-    }
-}
+// /// Handle volume control
+// fn volume_control(keyboard: Res<ButtonInput<KeyCode>>, mut query: Query<&mut MidiSynthConfig>) {
+//     for mut config in &mut query {
+//         if keyboard.just_pressed(KeyCode::Equal) || keyboard.just_pressed(KeyCode::NumpadAdd) {
+//             config.volume = (config.volume + 0.1).min(1.0);
+//             info!("Volume: {:.1}", config.volume);
+//         }
+//         if keyboard.just_pressed(KeyCode::Minus) || keyboard.just_pressed(KeyCode::NumpadSubtract) {
+//             config.volume = (config.volume - 0.1).max(0.0);
+//             info!("Volume: {:.1}", config.volume);
+//         }
+//     }
+// }
