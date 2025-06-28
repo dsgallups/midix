@@ -45,11 +45,11 @@ fn compare_waveforms() {
         rs_synth.render(&mut rleft[..], &mut rright[..]);
 
         for ((i, v1), v2) in mleft.iter().enumerate().zip(rleft) {
-            println!("left I: {i}");
+            println!("note_on left I: {i}");
             assert_eq!(*v1, v2);
         }
         for ((i, v1), v2) in mright.iter().enumerate().zip(rright) {
-            println!("right I: {i}");
+            println!("note_on right I: {i}");
             assert_eq!(*v1, v2);
         }
     }
@@ -60,11 +60,11 @@ fn compare_waveforms() {
         rs_synth.render(&mut rleft[..], &mut rright[..]);
 
         for ((i, v1), v2) in mleft.iter().enumerate().zip(rleft) {
-            println!("left I: {i}");
+            println!("note_off left I: {i}");
             assert_eq!(*v1, v2);
         }
         for ((i, v1), v2) in mright.iter().enumerate().zip(rright) {
-            println!("right I: {i}");
+            println!("note_off right I: {i}");
             assert_eq!(*v1, v2);
         }
     }
