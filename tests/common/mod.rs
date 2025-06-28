@@ -104,13 +104,14 @@ impl SynthesizerComparison {
     }
 
     /// Process MIDI message for both synthesizers
+    #[allow(dead_code)]
     pub fn process_midi_message(&mut self, channel: u8, message: &[u8]) {
         // For midix, we need to handle different message types
         // This is a simplified version - you might want to expand this
-        match message.get(0) {
+        match message.first() {
             Some(&(0x80..=0x8F)) => {
                 // Note off
-                if let (Some(&key), Some(&velocity)) = (message.get(1), message.get(2)) {
+                if let (Some(&key), Some(&_velocity)) = (message.get(1), message.get(2)) {
                     self.note_off(channel, key);
                 }
             }

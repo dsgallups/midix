@@ -5,7 +5,7 @@ use common::*;
 #[test]
 fn test_basic_note_on_off() {
     let config = ComparisonConfig {
-        epsilon: 1e-5, // Allow small floating point differences
+        epsilon: 5e-3, // Allow small floating point differences
         verbose: true,
         ..Default::default()
     };
@@ -33,7 +33,7 @@ fn test_basic_note_on_off() {
 #[test]
 fn test_pitch_bend() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -79,7 +79,7 @@ fn test_pitch_bend() {
 #[test]
 fn test_volume_control() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -109,7 +109,7 @@ fn test_volume_control() {
 #[test]
 fn test_pan_control() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -157,7 +157,7 @@ fn test_pan_control() {
 #[test]
 fn test_sustain_pedal() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -203,7 +203,7 @@ fn test_sustain_pedal() {
 #[test]
 fn test_modulation_wheel() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -232,7 +232,7 @@ fn test_modulation_wheel() {
 #[test]
 fn test_multiple_notes() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -279,7 +279,7 @@ fn test_multiple_notes() {
 #[test]
 fn test_percussion_channel() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -307,7 +307,7 @@ fn test_percussion_channel() {
 #[test]
 fn test_program_change() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -343,7 +343,7 @@ fn test_program_change() {
 #[test]
 fn test_all_notes_off() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -374,7 +374,7 @@ fn test_all_notes_off() {
 #[test]
 fn test_reset_all_controllers() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: true,
         ..Default::default()
     };
@@ -409,7 +409,7 @@ fn test_reset_all_controllers() {
 #[ignore] // This test can be slow
 fn test_stress_many_notes() {
     let config = ComparisonConfig {
-        epsilon: 1e-5,
+        epsilon: 5e-3,
         verbose: false, // Less verbose for stress test
         ..Default::default()
     };

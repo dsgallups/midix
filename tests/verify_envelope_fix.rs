@@ -38,15 +38,14 @@ fn verify_no_chirp_on_note_off() {
     let discontinuity = (first_sample_after - last_sample_before).abs();
 
     println!("\n=== Chirp Detection Test ===");
-    println!("Last sample before note_off: {:.9}", last_sample_before);
-    println!("First sample after note_off: {:.9}", first_sample_after);
-    println!("Discontinuity: {:.9}", discontinuity);
+    println!("Last sample before note_off: {last_sample_before:.9}");
+    println!("First sample after note_off: {first_sample_after:.9}");
+    println!("Discontinuity: {discontinuity:.9}");
 
     // The discontinuity should be small (no abrupt cutoff)
     assert!(
         discontinuity < 0.01,
-        "Large discontinuity detected: {}. This would cause a chirp!",
-        discontinuity
+        "Large discontinuity detected: {discontinuity}. This would cause a chirp!",
     );
 
     // Both synthesizers should match
@@ -102,21 +101,19 @@ fn verify_envelope_continues_during_release() {
         // The synthesizers should match
         assert!(
             result.passed,
-            "Synthesizers diverged during release at frame {}",
-            frame
+            "Synthesizers diverged during release at frame {frame}",
         );
     }
 
     println!("\n=== Release Phase Analysis ===");
-    println!("Frames with audio: {}", non_zero_frames);
-    println!("Silent frames: {}", all_zero_frames);
-    println!("Max amplitude during release: {:.9}", max_amplitude);
+    println!("Frames with audio: {non_zero_frames}",);
+    println!("Silent frames: {all_zero_frames}",);
+    println!("Max amplitude during release: {max_amplitude:.9}",);
 
     // The envelope should produce sound for multiple frames during release
     assert!(
         non_zero_frames > 10,
-        "Envelope released too quickly. Only {} frames had audio.",
-        non_zero_frames
+        "Envelope released too quickly. Only {non_zero_frames} frames had audio.",
     );
 }
 
@@ -162,7 +159,7 @@ fn verify_envelope_value_tracking() {
         / 100.0;
 
     println!("\n=== Envelope Tracking Test ===");
-    println!("Approximate sustain level: {:.9}", sustain_level);
+    println!("Approximate sustain level: {sustain_level:.9}",);
 
     // Note off
     synth.note_off(0, 60);
@@ -171,15 +168,13 @@ fn verify_envelope_value_tracking() {
     let result = synth.render_and_compare();
     let release_start = synth.mleft[0].abs();
 
-    println!("Release started at: {:.9}", release_start);
+    println!("Release started at: {release_start:.9}",);
     println!("Ratio to sustain: {:.3}", release_start / sustain_level);
 
     // The release should start from a value close to the sustain level
     assert!(
         (release_start / sustain_level - 1.0).abs() < 0.1,
-        "Release didn't start from the correct envelope level. Expected ~{}, got {}",
-        sustain_level,
-        release_start
+        "Release didn't start from the correct envelope level. Expected ~{sustain_level}, got {release_start}",
     );
 
     assert!(result.passed, "Synthesizers don't match at release start");
@@ -322,8 +317,7 @@ fn verify_extreme_release_times() {
         let result = synth.render_and_compare_frames(20);
         assert!(
             result.passed,
-            "Synthesizers don't match for program {} during release",
-            program
+            "Synthesizers don't match for program {program} during release",
         );
     }
 }
