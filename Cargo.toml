@@ -17,7 +17,6 @@ exclude = ["assets/*"]
 default = ["std"]
 all = ["std", "bevy_resources", "web"]
 std = ["thiserror/std", "num_enum/std", "crossbeam-channel/std"]
-only_std = ["thiserror/std", "num_enum/std", "crossbeam-channel/std"]
 web = ["bevy_platform/web"]
 bevy_resources = [
     "dep:bevy",
@@ -44,13 +43,7 @@ example = [
 
 
 [dependencies.bevy]
-features = [
-    "async_executor",
-    "bevy_log",
-    "bevy_state",
-    "bevy/bevy_asset",
-    "bevy_platform/std",
-]
+features = ["async_executor", "bevy_log", "bevy_state", "bevy_asset", "std"]
 version = "0.16"
 optional = true
 default-features = false
