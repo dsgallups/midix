@@ -165,4 +165,11 @@ impl Controller {
             Other { byte_1, byte_2 } => [byte_1.value(), byte_2.value()],
         }
     }
+    /// the damper pedal message
+    pub fn damper_pedal(value: DataByte) -> Self {
+        Self::Other {
+            byte_1: DataByte::new_unchecked(0x40),
+            byte_2: value,
+        }
+    }
 }

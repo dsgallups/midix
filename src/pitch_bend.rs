@@ -45,7 +45,7 @@ impl PitchBend {
         self.msb.0
     }
 
-    /// Represents a pitch bend
+    /// Represents a pitch bend in the range of [0, 0x3FFF]
     pub const fn value(&self) -> u16 {
         let lsb = self.lsb.value();
         let msb = self.msb.value();
@@ -53,18 +53,6 @@ impl PitchBend {
         combined
     }
 
-    /// Represents a u16, lsb then msb, as a pitch bend.
-    ///
-    /// Note that this treats the u16 as two u7 values, each preceded by a leading 0, to match the
-    /// two bytes of a pitch bend MIDI message, i.e. `0lllllll 0mmmmmmm`. See [`PitchBend::from_u16`]
-    /// for converting a u16 value to a pitch bend.
-    ///
-    /// Returns a `ParseError` if any of the bytes have a value greater than 127.
-    pub fn from_bits(rep: u16) -> Result<Self, ParseError> {
-        let lsb = (rep >> 8) as u8;
-        let msb = rep as u8;
-        Self::new(lsb, msb)
-    }
     /// Represents a u16, lsb then msb, as a pitch bend.
     ///
     /// Note that this treats the u16 as two u7 values, each preceded by a leading 0, to match the

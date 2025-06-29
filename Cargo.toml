@@ -71,40 +71,40 @@ pretty_assertions = { default-features = false, features = [
 # version = "0.16"
 # default-features = true
 
-[[example]]
-name = "2dpiano"
-required-features = ["example"]
+# [[example]]
+# name = "2dpiano"
+# required-features = ["example"]
 
-[[example]]
-name = "input"
-path = "examples/input/main.rs"
-required-features = ["example"]
+# [[example]]
+# name = "input"
+# path = "examples/input/main.rs"
+# required-features = ["example"]
 
-[[example]]
-name = "input_2dpiano"
-path = "examples/input_2dpiano/main.rs"
-required-features = ["example"]
+# [[example]]
+# name = "input_2dpiano"
+# path = "examples/input_2dpiano/main.rs"
+# required-features = ["example"]
 
-[[example]]
-name = "iterate_voices"
-required-features = ["example"]
+# [[example]]
+# name = "iterate_voices"
+# required-features = ["example"]
 
-[[example]]
-name = "pitchbend"
-required-features = ["example"]
+# [[example]]
+# name = "pitchbend"
+# required-features = ["example"]
 
-[[example]]
-name = "play_file"
-required-features = ["example"]
+# [[example]]
+# name = "play_file"
+# required-features = ["example"]
 
-[[example]]
-name = "programmatic_complex_song"
-required-features = ["example"]
+# [[example]]
+# name = "programmatic_complex_song"
+# required-features = ["example"]
 
-[[example]]
-name = "programmatic_simple_song"
-required-features = ["example"]
+# [[example]]
+# name = "programmatic_simple_song"
+# required-features = ["example"]
 
-[[example]]
-name = "scale"
-required-features = ["example"]
+# [[example]]
+# name = "scale"
+# required-features = ["example"]
