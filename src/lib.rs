@@ -47,8 +47,8 @@ pub use song_position_pointer::*;
 mod target;
 pub use target::*;
 
-#[cfg(feature = "bevy_resources")]
-pub mod bevy;
+//#[cfg(feature = "bevy_resources")]
+//pub mod bevy;
 
 pub mod prelude {
     #![doc = r#"
@@ -73,6 +73,6 @@ pub mod prelude {
 
     pub use core::fmt::Display;
 
-    #[cfg(feature = "bevy_resources")]
-    pub use crate::bevy::prelude::*;
+    //#[cfg(feature = "bevy_resources")]
+    //pub use crate::bevy::prelude::*;
 }

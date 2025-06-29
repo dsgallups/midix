@@ -26,6 +26,7 @@ bevy_resources = [
     "dep:rustysynth",
     "dep:crossbeam-channel",
 ]
+bevy = ["dep:bevy"]
 debug = ["bevy_resources"]
 example = [
     "bevy_resources",
@@ -43,10 +44,10 @@ example = [
 
 
 [dependencies.bevy]
-features = ["async_executor", "bevy_log", "bevy_state", "bevy_asset", "std"]
 version = "0.16"
 optional = true
 default-features = false
+# features = ["async_executor", "bevy_log", "bevy_state", "bevy_asset", "std"]
 
 [dependencies]
 num_enum = { version = "0.7.3", default-features = false }
