@@ -12,7 +12,7 @@ use thiserror::Error;
 use tinyaudio::OutputDevice;
 
 #[cfg(feature = "std")]
-use crate::bevy::prelude::SoundFont;
+use crate::bevy::prelude::SoundFontAsset;
 
 mod plugin;
 pub use plugin::*;
@@ -24,7 +24,7 @@ enum SynthState {
     NotLoaded,
     #[cfg(feature = "std")]
     LoadHandle {
-        sound_font: Handle<SoundFont>,
+        sound_font: Handle<SoundFontAsset>,
     },
     #[allow(dead_code)]
     Loaded {
@@ -234,7 +234,7 @@ impl Synth {
 
     #[cfg(feature = "std")]
     /// Provide a handle to the soundfont file
-    pub fn use_soundfont(&mut self, sound_font: Handle<SoundFont>) {
+    pub fn use_soundfont(&mut self, sound_font: Handle<SoundFontAsset>) {
         self.synthesizer = SynthState::LoadHandle { sound_font };
         self._device = None;
     }

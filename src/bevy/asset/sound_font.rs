@@ -4,7 +4,8 @@ Asset types
 TODO
 "#]
 
-use alloc::sync::Arc;
+use std::sync::Arc;
+
 use bevy_platform::prelude::*;
 use thiserror::Error;
 
@@ -12,18 +13,20 @@ use bevy::{
     asset::{AssetLoader, LoadContext, io::Reader},
     prelude::*,
 };
-use rustysynth::SoundFont as Sf;
+
+use crate::prelude::SoundFont;
 
 /// Sound font asset
 #[derive(Asset, TypePath)]
-pub struct SoundFont {
-    pub(crate) file: Arc<Sf>,
+pub struct SoundFontAsset {
+    /// The inner parsed soundfont
+    pub file: Arc<SoundFont>,
 }
 
-impl SoundFont {
+impl SoundFontAsset {
     /// Create a new
     fn new(file: &mut &[u8]) -> Self {
-        let sf = Sf::new(file).unwrap();
+        let sf = SoundFont::new(file).unwrap();
 
         Self { file: Arc::new(sf) }
     }
@@ -41,7 +44,7 @@ pub enum SoundFontLoadError {
 pub struct SoundFontLoader;
 
 impl AssetLoader for SoundFontLoader {
-    type Asset = SoundFont;
+    type Asset = SoundFontAsset;
     type Settings = ();
     type Error = SoundFontLoadError;
     async fn load(
@@ -57,7 +60,7 @@ impl AssetLoader for SoundFontLoader {
         reader.read_to_end(&mut bytes).await?;
 
         info!("Loaded!");
-        let res = SoundFont::new(&mut bytes.as_slice());
+        let res = SoundFontAsset::new(&mut bytes.as_slice());
 
         Ok(res)
     }

@@ -9,8 +9,6 @@ use bevy_platform::sync::Mutex;
 #[cfg(feature = "std")]
 use itertools::Itertools;
 #[cfg(feature = "std")]
-use rustysynth::{Synthesizer, SynthesizerSettings};
-#[cfg(feature = "std")]
 use tinyaudio::{OutputDeviceParameters, run_output_device};
 
 use crate::bevy::prelude::*;
@@ -81,7 +79,7 @@ pub struct SynthPlugin {
 impl Plugin for SynthPlugin {
     fn build(&self, app: &mut App) {
         #[cfg(feature = "std")]
-        app.init_asset::<SoundFont>()
+        app.init_asset::<SoundFontAsset>()
             .init_asset_loader::<SoundFontLoader>();
         app.init_state::<SynthStatus>()
             .insert_resource(Synth::new(self.params))
@@ -141,9 +139,11 @@ impl Synth {
 fn load_audio_font(
     receiver: Option<ResMut<SynthEventReceiver>>,
     mut synth: ResMut<Synth>,
-    assets: Res<Assets<SoundFont>>,
+    assets: Res<Assets<SoundFontAsset>>,
 ) {
     use bevy::tasks::IoTaskPool;
+
+    use crate::prelude::{Synthesizer, SynthesizerSettings};
 
     let SynthState::LoadHandle { sound_font } = &synth.synthesizer else {
         warn!(
@@ -160,7 +160,7 @@ fn load_audio_font(
     let mut synth_settings = SynthesizerSettings::new(synth.params.sample_rate as i32);
     synth_settings.enable_reverb_and_chorus = synth.params.enable_reverb_and_chorus;
 
-    let mut synthesizer = Synthesizer::new(&sound_font.file, &synth_settings).unwrap();
+    let mut synthesizer = Synthesizer::new(sound_font.file.clone(), &synth_settings).unwrap();
 
     let mut left = vec![0f32; synth.params.channel_sample_count];
     let mut right = vec![0f32; synth.params.channel_sample_count];
@@ -182,11 +182,11 @@ fn load_audio_font(
                         message: command,
                     })
                     .unwrap();
-                    let data1 = command.data_1_byte() as i32;
-                    let data2 = command.data_2_byte().unwrap_or(0) as i32;
-                    let channel = (command.status() & 0b0000_1111) as i32;
-                    let command = (command.status() & 0b1111_0000) as i32;
-                    synthesizer.process_midi_message(channel, command, data1, data2);
+                    let data1 = command.data_1_byte();
+                    let data2 = command.data_2_byte().unwrap_or(0);
+                    //let channel = (command.status() & 0b0000_1111) as i32;
+                    //let command = (command.status() & 0b1111_0000) as i32;
+                    synthesizer.process_midi_message(command.status(), data1, data2);
                 }
                 synthesizer.render(&mut left[..], &mut right[..]);
                 for (i, value) in left.iter().interleave(right.iter()).enumerate() {
@@ -198,11 +198,9 @@ fn load_audio_font(
         run_output_device(output_device_params, {
             move |data| {
                 for command in synth_receiver.try_iter() {
-                    let data1 = command.data_1_byte() as i32;
-                    let data2 = command.data_2_byte().unwrap_or(0) as i32;
-                    let channel = (command.status() & 0b0000_1111) as i32;
-                    let command = (command.status() & 0b1111_0000) as i32;
-                    synthesizer.process_midi_message(channel, command, data1, data2);
+                    let data1 = command.data_1_byte();
+                    let data2 = command.data_2_byte().unwrap_or(0);
+                    synthesizer.process_midi_message(command.status(), data1, data2);
                 }
                 synthesizer.render(&mut left[..], &mut right[..]);
                 for (i, value) in left.iter().interleave(right.iter()).enumerate() {
