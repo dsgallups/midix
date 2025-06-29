@@ -15,7 +15,7 @@ exclude = ["assets/*"]
 
 [features]
 default = ["std"]
-all = ["std", "bevy", "web"]
+all = ["std", "bevy_resources", "web"]
 std = [
     "bevy/bevy_asset",
     "bevy_platform/std",
@@ -24,7 +24,7 @@ std = [
     "crossbeam-channel/std",
 ]
 web = ["bevy_platform/web"]
-bevy = [
+bevy_resources = [
     "dep:bevy",
     "dep:midir",
     "dep:tinyaudio",
@@ -32,9 +32,9 @@ bevy = [
     "dep:rustysynth",
     "dep:crossbeam-channel",
 ]
-debug = ["bevy"]
+debug = ["bevy_resources"]
 example = [
-    "bevy",
+    "bevy_resources",
     "std",
     "bevy/bevy_color",
     "bevy/bevy_core_pipeline",
