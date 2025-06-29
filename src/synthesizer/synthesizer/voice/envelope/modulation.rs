@@ -130,7 +130,8 @@ impl ModulationEnvelope {
                     * (self.release_end_time - current_time)) as f32)
                     .max(0.);
                 self.value = val;
-                Some(val)
+
+                (val > utils::NON_AUDIBLE).then_some(val)
             }
         }
     }

@@ -134,7 +134,8 @@ impl VolumeEnvelope {
                         self.release_slope * (current_time - self.release_start_time),
                     )) as f32;
                 self.value = val;
-                Some(val)
+
+                (val > utils::NON_AUDIBLE).then_some(val)
             }
         }
     }
